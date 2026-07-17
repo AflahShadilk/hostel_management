@@ -5,6 +5,11 @@ import '../database/app_database.dart';
 import '../services/secure_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/data/services/credential_hash_service.dart';
+import '../../features/auth/domain/services/auth_security_service.dart';
+import '../../features/auth/data/services/auth_security_service_impl.dart';
+import '../../features/auth/domain/services/auth_session_service.dart';
+import '../../features/auth/data/services/auth_session_service_impl.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -26,5 +31,20 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  getIt.registerLazySingleton<CredentialHashService>(
+    () => const CredentialHashService(),
+  );
+
+  getIt.registerLazySingleton<AuthSecurityService>(
+    () => AuthSecurityServiceImpl(
+      getIt<SecureStorageService>(),
+      getIt<CredentialHashService>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<AuthSessionService>(
+    () => AuthSessionServiceImpl(getIt<SecureStorageService>()),
   );
 }
