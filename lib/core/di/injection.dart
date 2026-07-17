@@ -3,6 +3,8 @@ import 'package:get_it/get_it.dart';
 
 import '../database/app_database.dart';
 import '../services/secure_storage_service.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -20,5 +22,9 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<SecureStorageService>(
     () => SecureStorageService(getIt<FlutterSecureStorage>()),
+  );
+
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(getIt<AppDatabase>()),
   );
 }

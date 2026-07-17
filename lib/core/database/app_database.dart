@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'database_constants.dart';
+import '../../features/auth/data/datasources/auth_local_schema.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -38,6 +39,11 @@ class AppDatabase {
 
   Future<void> _onCreate(Database db, int version) async {
     // Feature tables are added here as each feature module is implemented.
+
+    // NOTE: Because the app is in early development and remains on database
+    // version 1, any existing local development database created prior to this
+    // addition must be cleared (uninstall/reinstall app) to trigger onCreate.
+    await AuthLocalSchema.createTables(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
