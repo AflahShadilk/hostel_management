@@ -10,6 +10,7 @@ import '../../features/auth/domain/services/auth_security_service.dart';
 import '../../features/auth/data/services/auth_security_service_impl.dart';
 import '../../features/auth/domain/services/auth_session_service.dart';
 import '../../features/auth/data/services/auth_session_service_impl.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -46,5 +47,13 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<AuthSessionService>(
     () => AuthSessionServiceImpl(getIt<SecureStorageService>()),
+  );
+
+  getIt.registerFactory<AuthCubit>(
+    () => AuthCubit(
+      getIt<AuthRepository>(),
+      getIt<AuthSecurityService>(),
+      getIt<AuthSessionService>(),
+    ),
   );
 }

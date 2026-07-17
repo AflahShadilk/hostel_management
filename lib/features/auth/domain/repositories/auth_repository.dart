@@ -8,4 +8,5 @@ abstract interface class AuthRepository {
   Future<List<UserEntity>> getUsersByRole(UserRole role);
   Future<bool> emailExists(String email);
   Future<bool> phoneExists(String phone);
+  Future<void> deleteUser(int id);
 }

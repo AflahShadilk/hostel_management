@@ -105,4 +105,14 @@ class AuthRepositoryImpl implements AuthRepository {
     );
     return results.isNotEmpty;
   }
+
+  @override
+  Future<void> deleteUser(int id) async {
+    final db = await _appDatabase.database;
+    await db.delete(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }
