@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/theme/app_theme.dart';
+
 class HostelManagementApp extends StatelessWidget {
   const HostelManagementApp({super.key});
 
@@ -8,7 +10,7 @@ class HostelManagementApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hostel Management',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true),
+      theme: AppTheme.lightTheme,
       home: const Scaffold(
         body: Center(
           child: Text('Hostel Management'),
