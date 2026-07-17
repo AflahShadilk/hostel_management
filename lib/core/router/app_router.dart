@@ -4,11 +4,42 @@ import 'package:go_router/go_router.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import 'app_routes.dart';
 
+import '../../features/auth/presentation/pages/splash_page.dart';
+import '../../features/auth/presentation/pages/role_selection_page.dart';
+
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.homePath,
+    initialLocation: AppRoutes.splashPath,
     errorBuilder: (context, state) => const _RouteErrorPage(),
     routes: [
+      GoRoute(
+        name: AppRoutes.splashName,
+        path: AppRoutes.splashPath,
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.roleSelectionName,
+        path: AppRoutes.roleSelectionPath,
+        builder: (context, state) => const RoleSelectionPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.ownerLoginName,
+        path: AppRoutes.ownerLoginPath,
+        builder: (context, state) =>
+            const _PlaceholderPage(title: 'Owner Login — Coming next'),
+      ),
+      GoRoute(
+        name: AppRoutes.ownerSignUpName,
+        path: AppRoutes.ownerSignUpPath,
+        builder: (context, state) =>
+            const _PlaceholderPage(title: 'Owner Sign Up — Coming next'),
+      ),
+      GoRoute(
+        name: AppRoutes.managerLoginName,
+        path: AppRoutes.managerLoginPath,
+        builder: (context, state) =>
+            const _PlaceholderPage(title: 'Manager Login — Coming next'),
+      ),
       GoRoute(
         name: AppRoutes.homeName,
         path: AppRoutes.homePath,
@@ -16,6 +47,19 @@ abstract final class AppRouter {
       ),
     ],
   );
+}
+
+class _PlaceholderPage extends StatelessWidget {
+  final String title;
+  const _PlaceholderPage({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Placeholder')),
+      body: Center(child: Text(title)),
+    );
+  }
 }
 
 class _RouteErrorPage extends StatelessWidget {
