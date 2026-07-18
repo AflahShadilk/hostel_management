@@ -261,7 +261,8 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            mainAxisExtent: 150, // Fixed extent avoids aspect ratio overflow issues
+            mainAxisExtent:
+                150, // Fixed extent avoids aspect ratio overflow issues
           ),
           itemCount: cards.length,
           itemBuilder: (context, index) => cards[index],

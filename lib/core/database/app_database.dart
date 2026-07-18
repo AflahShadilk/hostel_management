@@ -5,6 +5,7 @@ import 'database_constants.dart';
 import '../../features/auth/data/datasources/auth_local_schema.dart';
 import '../../features/hostel/data/datasources/hostel_local_schema.dart';
 import '../../features/room/data/datasources/room_local_schema.dart';
+import '../../features/tenant/data/datasources/tenant_local_schema.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -52,12 +53,18 @@ class AppDatabase {
 
     // rooms references hostels, beds references rooms.
     await RoomLocalSchema.createTables(db);
+
+    // tenants references beds.
+    await TenantLocalSchema.createTable(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Sequential version checks (if oldVersion < N) will be added here as
-    // the schema evolves, safely handling multi-version upgrades without
-    // data loss.
+    // Sequential version checks ensure multi-version upgrades are handled
+    // safely in a single pass without data loss.
+    if (oldVersion < 2) {
+      // v1 → v2: introduce the tenants table.
+      await TenantLocalSchema.createTable(db);
+    }
   }
 
   Future<void> close() async {
