@@ -134,7 +134,8 @@ class FakeDashboardRepository implements DashboardRepository {
 
 void main() {
   setUpAll(() {
-    GetIt.I.registerFactory<DashboardCubit>(() => DashboardCubit(FakeDashboardRepository()));
+    GetIt.I.registerFactory<DashboardCubit>(
+        () => DashboardCubit(FakeDashboardRepository()));
   });
 
   testWidgets(

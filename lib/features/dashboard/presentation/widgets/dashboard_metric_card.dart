@@ -31,6 +31,7 @@ class DashboardMetricCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(

@@ -32,7 +32,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _loadInitialData() {
     final hostelState = context.read<HostelCubit>().state;
 
-    // Only load if we have a resolved hostel. 
+    // Only load if we have a resolved hostel.
     // Manager fallback handles the null hostel case safely below.
     if (hostelState.hostel?.id != null) {
       context.read<DashboardCubit>().loadDashboard(hostelState.hostel!.id!);
@@ -42,7 +42,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _refresh() async {
     final hostelState = context.read<HostelCubit>().state;
     if (hostelState.hostel?.id != null) {
-      await context.read<DashboardCubit>().refreshDashboard(hostelState.hostel!.id!);
+      await context
+          .read<DashboardCubit>()
+          .refreshDashboard(hostelState.hostel!.id!);
     }
   }
 
@@ -115,7 +117,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 return const Center(child: AppLoadingIndicator());
               }
 
-              if (state.status == DashboardOperationStatus.failure && state.summary == null) {
+              if (state.status == DashboardOperationStatus.failure &&
+                  state.summary == null) {
                 return AppEmptyState(
                   icon: Icons.warning_amber_rounded,
                   title: 'Dashboard Error',
@@ -258,8 +261,7 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            mainAxisExtent:
-                130, // Fixed extent avoids aspect ratio overflow issues
+            mainAxisExtent: 150, // Fixed extent avoids aspect ratio overflow issues
           ),
           itemCount: cards.length,
           itemBuilder: (context, index) => cards[index],

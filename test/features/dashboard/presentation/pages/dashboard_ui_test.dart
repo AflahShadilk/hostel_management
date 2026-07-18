@@ -24,10 +24,16 @@ class FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   FakeAuthCubit(super.initialState);
 
   @override
-  Future<void> loginWithPassword({required String email, required String password, required UserRole role}) async {}
+  Future<void> loginWithPassword(
+      {required String email,
+      required String password,
+      required UserRole role}) async {}
 
   @override
-  Future<void> loginWithPin({required String email, required String pin, required UserRole role}) async {}
+  Future<void> loginWithPin(
+      {required String email,
+      required String pin,
+      required UserRole role}) async {}
 
   @override
   Future<void> logout() async {}
@@ -39,7 +45,11 @@ class FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
   Future<void> checkSession() async {}
 
   @override
-  Future<void> registerOwner({required String name, required String phone, required String email, required String password}) async {}
+  Future<void> registerOwner(
+      {required String name,
+      required String phone,
+      required String email,
+      required String password}) async {}
 
   @override
   Future<void> setupPin(String pin) async {}
@@ -152,7 +162,7 @@ void main() {
         dashboardCubit: dashboardCubit,
       ));
 
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(dashboardCubit.loadCalls, 1);
     });
