@@ -239,9 +239,9 @@ void main() {
 
     // Enter valid details
     await tester.enterText(find.byType(TextField).at(0), 'John Doe');
-    await tester.enterText(find.byType(TextField).at(1), '1234567890');
+    await tester.enterText(find.byType(TextField).at(1), '9876543210');
     await tester.enterText(find.byType(TextField).at(2), 'john@example.com');
-    await tester.enterText(find.byType(TextField).at(3), 'password123');
+    await tester.enterText(find.byType(TextField).at(3), 'Password123');
 
     // Test password visibility toggles
     final passwordField =
@@ -256,7 +256,7 @@ void main() {
     expect(passwordFieldVisible.obscureText, false);
 
     // Mismatched confirm password
-    await tester.enterText(find.byType(TextField).at(4), 'password124');
+    await tester.enterText(find.byType(TextField).at(4), 'Password124');
 
     final confirmPasswordField =
         tester.widget<TextField>(find.byType(TextField).at(4));
@@ -275,14 +275,15 @@ void main() {
     expect(find.text('Passwords do not match'), findsOneWidget);
 
     // Matching confirm password
-    await tester.enterText(find.byType(TextField).at(4), 'password123');
+    await tester.enterText(find.byType(TextField).at(4), 'Password123');
+    await tester.pumpAndSettle();
     await tester.ensureVisible(createAccountFinder);
     await tester.tap(createAccountFinder);
 
     // We might need to wait for the bloc to emit the new state and GoRouter to push Replacement.
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle(const Duration(seconds: 5));
 
     // We should be on PIN Setup Page
     expect(find.text('Set Up PIN'), findsOneWidget);

@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/app_database.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/entities/user_role.dart';
@@ -24,20 +25,39 @@ class AuthRepositoryImpl implements AuthRepository {
       createdAt: user.createdAt,
     );
 
-    final id = await db.insert(
-      'users',
-      UserModel.toMap(normalisedUser),
-    );
+    try {
+      final id = await db.insert(
+        'users',
+        UserModel.toMap(normalisedUser),
+      );
 
-    return UserEntity(
-      id: id,
-      name: normalisedUser.name,
-      phone: normalisedUser.phone,
-      email: normalisedUser.email,
-      role: normalisedUser.role,
-      isActive: normalisedUser.isActive,
-      createdAt: normalisedUser.createdAt,
-    );
+      return UserEntity(
+        id: id,
+        name: normalisedUser.name,
+        phone: normalisedUser.phone,
+        email: normalisedUser.email,
+        role: normalisedUser.role,
+        isActive: normalisedUser.isActive,
+        createdAt: normalisedUser.createdAt,
+      );
+    } on DatabaseException catch (e) {
+      if (e.isUniqueConstraintError()) {
+        final errorMsg = e.toString();
+        // SQLite error format: "UNIQUE constraint failed: users.<column>"
+        // Parse the last segment after the final dot to get the exact column name
+        final match = RegExp(r'UNIQUE constraint failed: \w+\.(\w+)', caseSensitive: false).firstMatch(errorMsg);
+        final column = match?.group(1)?.toLowerCase();
+        if (column == 'email') {
+          throw StateError('This email address is already registered.');
+        }
+        if (column == 'phone') {
+          throw StateError('This phone number is already registered.');
+        }
+      }
+      throw Exception('Database error: ${e.toString()}');
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
+    }
   }
 
   @override

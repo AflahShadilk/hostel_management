@@ -1,0 +1,4 @@
+# dart_test.yaml
+# Run test files serially to prevent SQLite "database is locked" errors
+# when multiple integration test suites share the AppDatabase singleton.
+concurrency: 1

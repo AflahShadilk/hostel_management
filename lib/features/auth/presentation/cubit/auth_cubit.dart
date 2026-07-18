@@ -18,8 +18,7 @@ class AuthCubit extends Cubit<AuthState> {
   ) : super(const AuthState());
 
   bool _isValidEmail(String email) {
-    // A simple, maintainable email regex checking for 'text@text.text'
-    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email);
   }
 
@@ -66,7 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (emailExists) {
         emit(state.copyWith(
             status: AuthStatus.failure,
-            errorMessage: 'An account with this email already exists.'));
+            errorMessage: 'This email address is already registered.'));
         return;
       }
 
@@ -74,7 +73,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (phoneExists) {
         emit(state.copyWith(
             status: AuthStatus.failure,
-            errorMessage: 'An account with this phone number already exists.'));
+            errorMessage: 'This phone number is already registered.'));
         return;
       }
 
@@ -101,7 +100,7 @@ class AuthCubit extends Cubit<AuthState> {
       try {
         await _authSecurityService.savePassword(
             userId: userId, password: password);
-      } catch (_) {
+      } catch (e) {
         // Rollback safety
         await _authRepository.deleteUser(userId);
         emit(state.copyWith(
@@ -113,10 +112,13 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(state.copyWith(
           status: AuthStatus.registrationPendingPin, user: persistedUser));
-    } catch (_) {
+    } on StateError catch (e) {
+      emit(state.copyWith(
+          status: AuthStatus.failure, errorMessage: e.message));
+    } catch (e) {
       emit(state.copyWith(
           status: AuthStatus.failure,
-          errorMessage: 'Unable to complete registration. Please try again.'));
+          errorMessage: 'Something went wrong. Please try again.'));
     }
   }
 

@@ -134,6 +134,44 @@ void main() {
   });
 
   group('AuthCubit Owner Registration', () {
+    test('Rejects blank name', () async {
+      await authCubit.registerOwner(name: '   ', phone: '1234567890', email: 't@t.com', password: 'password123');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'Please enter your name.');
+    });
+
+    test('Rejects blank phone', () async {
+      await authCubit.registerOwner(name: 'Owner', phone: '', email: 't@t.com', password: 'password123');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'Please enter your phone number.');
+    });
+
+    test('Rejects invalid email', () async {
+      await authCubit.registerOwner(name: 'Owner', phone: '1234567890', email: 'invalid', password: 'password123');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'Please enter a valid email address.');
+    });
+
+    test('Rejects short password', () async {
+      await authCubit.registerOwner(name: 'Owner', phone: '1234567890', email: 't@example.com', password: 'short');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'Password must be at least 8 characters.');
+    });
+
+    test('Rejects duplicate email', () async {
+      authRepository.emailExistsResult = true;
+      await authCubit.registerOwner(name: 'Owner', phone: '1234567890', email: 't@example.com', password: 'password123');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'This email address is already registered.');
+    });
+
+    test('Rejects duplicate phone', () async {
+      authRepository.phoneExistsResult = true;
+      await authCubit.registerOwner(name: 'Owner', phone: '1234567890', email: 't@example.com', password: 'password123');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.errorMessage, 'This phone number is already registered.');
+    });
+
     test('Successful registration emits registrationPendingPin', () async {
       await authCubit.registerOwner(
         name: 'Test Owner',

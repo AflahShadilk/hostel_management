@@ -94,6 +94,7 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -131,8 +132,15 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.name],
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
+                            final text = value?.trim() ?? '';
+                            if (text.isEmpty) {
                               return 'Please enter your full name';
+                            }
+                            if (text.length < 3) {
+                              return 'Name must be at least 3 characters';
+                            }
+                            if (text.length > 60) {
+                              return 'Name must be less than 60 characters';
                             }
                             return null;
                           },
@@ -146,13 +154,12 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.telephoneNumber],
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your phone number';
+                            final text = value?.trim() ?? '';
+                            if (text.isEmpty) {
+                              return 'Phone number is required.';
                             }
-                            // Simple validation for basic numeric formats (allowing optional leading +)
-                            if (!RegExp(r'^\+?[0-9\s\-]{7,15}$')
-                                .hasMatch(value.trim())) {
-                              return 'Please enter a valid phone number';
+                            if (!RegExp(r'^[6-9]\d{9}$').hasMatch(text)) {
+                              return 'Enter a valid 10-digit mobile number.';
                             }
                             return null;
                           },
@@ -166,13 +173,12 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
+                            final text = value?.trim() ?? '';
+                            if (text.isEmpty) {
                               return 'Please enter your email address';
                             }
-                            // Simple email format check
-                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                .hasMatch(value.trim())) {
-                              return 'Please enter a valid email address';
+                            if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(text)) {
+                              return 'Enter a valid email address.';
                             }
                             return null;
                           },
@@ -209,6 +215,15 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                                 }
                                 if (value.length < 8) {
                                   return 'Password must be at least 8 characters';
+                                }
+                                if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
+                                  return 'Must contain at least 1 uppercase letter';
+                                }
+                                if (!RegExp(r'(?=.*[a-z])').hasMatch(value)) {
+                                  return 'Must contain at least 1 lowercase letter';
+                                }
+                                if (!RegExp(r'(?=.*\d)').hasMatch(value)) {
+                                  return 'Must contain at least 1 digit';
                                 }
                                 return null;
                               },
