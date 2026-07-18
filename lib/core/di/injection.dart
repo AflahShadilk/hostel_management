@@ -14,6 +14,10 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/hostel/domain/repositories/hostel_repository.dart';
 import '../../features/hostel/data/repositories/hostel_repository_impl.dart';
 import '../../features/hostel/presentation/cubit/hostel_cubit.dart';
+import '../../features/room/domain/repositories/room_repository.dart';
+import '../../features/room/data/repositories/room_repository_impl.dart';
+import '../../features/room/domain/repositories/bed_repository.dart';
+import '../../features/room/data/repositories/bed_repository_impl.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -62,6 +66,14 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<HostelRepository>(
     () => HostelRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  getIt.registerLazySingleton<RoomRepository>(
+    () => RoomRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  getIt.registerLazySingleton<BedRepository>(
+    () => BedRepositoryImpl(getIt<AppDatabase>()),
   );
 
   getIt.registerFactory<HostelCubit>(

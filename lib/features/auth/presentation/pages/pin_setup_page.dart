@@ -129,8 +129,7 @@ class _PinSetupPageState extends State<PinSetupPage> {
                                 return AppTextField(
                                   controller: _pinController,
                                   label: 'Create 4-digit PIN',
-                                  prefixIcon:
-                                      const Icon(Icons.dialpad_rounded),
+                                  prefixIcon: const Icon(Icons.dialpad_rounded),
                                   obscureText: obscurePin,
                                   keyboardType: TextInputType.number,
                                   textInputAction: TextInputAction.next,
@@ -174,8 +173,7 @@ class _PinSetupPageState extends State<PinSetupPage> {
                                 return AppTextField(
                                   controller: _confirmPinController,
                                   label: 'Confirm PIN',
-                                  prefixIcon:
-                                      const Icon(Icons.dialpad_rounded),
+                                  prefixIcon: const Icon(Icons.dialpad_rounded),
                                   obscureText: obscureConfirmPin,
                                   keyboardType: TextInputType.number,
                                   textInputAction: TextInputAction.done,
@@ -226,9 +224,8 @@ class _PinSetupPageState extends State<PinSetupPage> {
                                   label: 'Set PIN & Continue',
                                   isLoading: isLoading,
                                   isFullWidth: true,
-                                  onPressed: isLoading
-                                      ? null
-                                      : () => _submit(context),
+                                  onPressed:
+                                      isLoading ? null : () => _submit(context),
                                 );
                               },
                             ),

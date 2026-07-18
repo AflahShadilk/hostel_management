@@ -196,13 +196,11 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         'Set up your hostel',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -306,8 +304,7 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
                             label: 'Complete Setup',
                             isLoading: isSaving,
                             isFullWidth: true,
-                            onPressed:
-                                isSaving ? null : () => _submit(context),
+                            onPressed: isSaving ? null : () => _submit(context),
                           );
                         },
                       ),

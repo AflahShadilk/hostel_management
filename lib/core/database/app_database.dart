@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'database_constants.dart';
 import '../../features/auth/data/datasources/auth_local_schema.dart';
 import '../../features/hostel/data/datasources/hostel_local_schema.dart';
+import '../../features/room/data/datasources/room_local_schema.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -48,6 +49,9 @@ class AppDatabase {
 
     // hostels references users(id) so must be created after users.
     await HostelLocalSchema.createTables(db);
+
+    // rooms references hostels, beds references rooms.
+    await RoomLocalSchema.createTables(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {

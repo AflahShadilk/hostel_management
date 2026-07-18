@@ -200,8 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                                   selected: {loginMode},
                                   onSelectionChanged:
                                       (Set<AuthLoginMode> newSelection) {
-                                    _onModeChanged(
-                                        context, newSelection.first);
+                                    _onModeChanged(context, newSelection.first);
                                   },
                                 );
                               },
@@ -268,8 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                                               : 'Hide password',
                                         ),
                                         validator: (value) {
-                                          if (value == null ||
-                                              value.isEmpty) {
+                                          if (value == null || value.isEmpty) {
                                             return 'Please enter a password';
                                           }
                                           return null;
@@ -313,8 +311,7 @@ class _LoginPageState extends State<LoginPage> {
                                               : 'Hide PIN',
                                         ),
                                         validator: (value) {
-                                          if (value == null ||
-                                              value.isEmpty) {
+                                          if (value == null || value.isEmpty) {
                                             return 'Please enter your PIN';
                                           }
                                           if (value.length != 4) {
@@ -340,9 +337,8 @@ class _LoginPageState extends State<LoginPage> {
                                   label: 'Sign In',
                                   isLoading: isLoading,
                                   isFullWidth: true,
-                                  onPressed: isLoading
-                                      ? null
-                                      : () => _submit(context),
+                                  onPressed:
+                                      isLoading ? null : () => _submit(context),
                                 );
                               },
                             ),

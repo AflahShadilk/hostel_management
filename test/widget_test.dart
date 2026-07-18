@@ -47,6 +47,7 @@ class FakeAuthRepository implements AuthRepository {
     }
     return null;
   }
+
   @override
   Future<UserEntity?> getUserById(int id) async => null;
   @override
@@ -102,7 +103,8 @@ class FakeHostelRepository implements HostelRepository {
   @override
   Future<HostelEntity?> getHostelById(int id) async => null;
   @override
-  Future<HostelEntity?> getHostelByOwnerUserId(int ownerUserId) async => null; // Simulate no hostel configured yet
+  Future<HostelEntity?> getHostelByOwnerUserId(int ownerUserId) async =>
+      null; // Simulate no hostel configured yet
   @override
   Future<bool> hasHostelForOwner(int ownerUserId) async => false;
   @override
@@ -110,7 +112,8 @@ class FakeHostelRepository implements HostelRepository {
 }
 
 void main() {
-  testWidgets('App renders Splash and navigates through Sign Up, PIN, and Hostel Setup',
+  testWidgets(
+      'App renders Splash and navigates through Sign Up, PIN, and Hostel Setup',
       (WidgetTester tester) async {
     final authCubit = AuthCubit(
       FakeAuthRepository(),
@@ -338,8 +341,7 @@ void main() {
 
     expect(find.text('Manager Login'), findsOneWidget);
 
-    await tester.enterText(
-        find.byType(TextField).first, 'manager@example.com');
+    await tester.enterText(find.byType(TextField).first, 'manager@example.com');
     await tester.enterText(find.byType(TextField).last, 'password123');
     await tester.tap(find.text('Sign In'));
 
@@ -350,5 +352,4 @@ void main() {
     // Managers go straight to home, bypassing HostelSetup check
     expect(find.byType(HomePage), findsOneWidget);
   });
-
 }
