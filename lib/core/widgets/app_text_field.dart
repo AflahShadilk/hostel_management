@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
+  final FocusNode? focusNode;
 
   const AppTextField({
     super.key,
@@ -37,6 +38,7 @@ class AppTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.maxLength,
     this.inputFormatters,
+    this.focusNode,
   });
 
   @override
@@ -48,6 +50,7 @@ class AppTextField extends StatelessWidget {
       textInputAction: textInputAction,
       autofillHints: autofillHints,
       onFieldSubmitted: onFieldSubmitted,
+      focusNode: focusNode,
       // maxLines must be 1 when obscureText is true (Flutter requirement).
       obscureText: obscureText,
       maxLines: obscureText ? 1 : maxLines,

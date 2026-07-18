@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/di/injection.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import 'app_routes.dart';
 
@@ -11,6 +13,11 @@ import '../../features/auth/presentation/pages/owner_sign_up_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/pin_setup_page.dart';
 import '../../features/hostel/presentation/pages/hostel_setup_page.dart';
+import '../../features/room/domain/entities/room_entity.dart';
+import '../../features/room/presentation/cubit/room_cubit.dart';
+import '../../features/room/presentation/pages/room_management_page.dart';
+import '../../features/room/presentation/pages/add_room_page.dart';
+import '../../features/room/presentation/pages/edit_room_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -56,6 +63,41 @@ abstract final class AppRouter {
         name: AppRoutes.homeName,
         path: AppRoutes.homePath,
         builder: (context, state) => const HomePage(),
+      ),
+
+      // -----------------------------------------------------------------------
+      // Room Management — RoomCubit is scoped to this route shell so it
+      // persists across Room List → Add Room → Edit Room → Room List transitions.
+      // -----------------------------------------------------------------------
+      ShellRoute(
+        builder: (context, state, child) {
+          return BlocProvider<RoomCubit>(
+            create: (_) => getIt<RoomCubit>(),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            name: AppRoutes.roomManagementName,
+            path: AppRoutes.roomManagementPath,
+            builder: (context, state) => const RoomManagementPage(),
+            routes: [
+              GoRoute(
+                name: AppRoutes.addRoomName,
+                path: AppRoutes.addRoomPath,
+                builder: (context, state) => const AddRoomPage(),
+              ),
+              GoRoute(
+                name: AppRoutes.editRoomName,
+                path: AppRoutes.editRoomPath,
+                builder: (context, state) {
+                  final room = state.extra as RoomEntity?;
+                  return EditRoomPage(room: room);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );

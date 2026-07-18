@@ -22,4 +22,13 @@ abstract final class AppRoutes {
 
   static const String homeName = 'home';
   static const String homePath = '/home';
+
+  static const String roomManagementName = 'roomManagement';
+  static const String roomManagementPath = '/rooms';
+
+  static const String addRoomName = 'addRoom';
+  static const String addRoomPath = 'add';
+
+  static const String editRoomName = 'editRoom';
+  static const String editRoomPath = ':roomId/edit';
 }
