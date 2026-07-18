@@ -2,7 +2,10 @@ import '../../../../core/database/app_database.dart';
 import '../../domain/entities/room_entity.dart';
 import '../../domain/entities/bed_status.dart';
 import '../../domain/repositories/room_management_repository.dart';
+import 'package:sqflite/sqflite.dart';
+
 import '../datasources/room_local_schema.dart';
+import '../../domain/services/room_occupancy_helper.dart';
 import '../models/room_model.dart';
 import '../models/bed_model.dart';
 
@@ -162,5 +165,43 @@ class RoomManagementRepositoryImpl implements RoomManagementRepository {
 
       return updatedRoom;
     });
+  }
+
+  @override
+  Future<void> syncRoomStatus(int roomId, {Object? txn}) async {
+    final DatabaseExecutor dbExecutor =
+        (txn as DatabaseExecutor?) ?? await _appDatabase.database;
+
+    final roomData = await dbExecutor.query(
+      RoomLocalSchema.tableRooms,
+      where: 'id = ?',
+      whereArgs: [roomId],
+    );
+    if (roomData.isEmpty) return;
+
+    final room = RoomModel.fromMap(roomData.first);
+
+    final bedsData = await dbExecutor.query(
+      RoomLocalSchema.tableBeds,
+      where: 'room_id = ?',
+      whereArgs: [roomId],
+    );
+
+    final beds = bedsData.map((e) => BedModel.fromMap(e)).toList();
+
+    final status =
+        RoomOccupancyHelper.calculateRoomStatus(room: room, beds: beds);
+
+    if (room.status != status) {
+      await dbExecutor.update(
+        RoomLocalSchema.tableRooms,
+        {
+          'status': status.databaseValue,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [roomId],
+      );
+    }
   }
 }

@@ -91,6 +91,11 @@ class FakeRoomManagementRepository implements RoomManagementRepository {
     if (shouldThrow) throw Exception('Error');
     return updatedRoom;
   }
+
+  @override
+  Future<void> syncRoomStatus(int roomId, {Object? txn}) async {
+    if (shouldThrow) throw Exception('Error');
+  }
 }
 
 void main() {

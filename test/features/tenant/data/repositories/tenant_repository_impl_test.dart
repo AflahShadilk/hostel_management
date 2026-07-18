@@ -19,14 +19,14 @@ Future<AppDatabase> _openTestDatabase() async {
   // Force AppDatabase to open a fresh in-memory instance by resetting its
   // cached database handle via the close() method.
   await AppDatabase.instance.close();
-  
+
   // Actually we need to override the path or inject the database for testing,
   // but AppDatabase uses getDatabasesPath().
   // For sqflite_common_ffi, if we use inMemoryDatabasePath, it creates a fresh DB.
   // However, AppDatabase is a singleton that joins getDatabasesPath() and 'hostel_management.db'.
   // We can't easily override it without modifying AppDatabase.
   // So instead, since databaseFactoryFfi manages databases, we'll just delete the DB file before each run.
-  
+
   return AppDatabase.instance;
 }
 
