@@ -123,7 +123,8 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> setupPin(String pin) async {
     if (state.status == AuthStatus.loading) return;
 
-    if (state.status != AuthStatus.registrationPendingPin ||
+    final canRetry = state.status == AuthStatus.failure && state.user != null;
+    if ((state.status != AuthStatus.registrationPendingPin && !canRetry) ||
         state.user == null) {
       return;
     }

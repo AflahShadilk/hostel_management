@@ -182,6 +182,70 @@ void main() {
       expect(authSecurityService.savePinCalled, isTrue);
       expect(authSessionService.savedUserId, authRepository.createdUser!.id);
     });
+
+    test('PIN setup failure retains user and emits failure', () async {
+      // Register owner to reach registrationPendingPin
+      await authCubit.registerOwner(
+        name: 'Test Owner',
+        phone: '1234567890',
+        email: 'test@example.com',
+        password: 'password123',
+      );
+      expect(authCubit.state.status, AuthStatus.registrationPendingPin);
+      final pendingUser = authCubit.state.user;
+
+      // Make PIN save fail
+      authSecurityService.savePinFails = true;
+      await authCubit.setupPin('1234');
+
+      expect(authCubit.state.status, AuthStatus.failure);
+      // Critically, the user must still be retained for retry
+      expect(authCubit.state.user, pendingUser);
+      expect(authCubit.state.errorMessage,
+          'Unable to set up PIN. Please try again.');
+    });
+
+    test('PIN setup can be retried after failure', () async {
+      // Register owner to reach registrationPendingPin
+      await authCubit.registerOwner(
+        name: 'Test Owner',
+        phone: '1234567890',
+        email: 'test@example.com',
+        password: 'password123',
+      );
+
+      // First attempt fails
+      authSecurityService.savePinFails = true;
+      await authCubit.setupPin('1234');
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.user, isNotNull);
+
+      // Second attempt succeeds
+      authSecurityService.savePinFails = false;
+      authSecurityService.savePinCalled = false;
+      await authCubit.setupPin('1234');
+
+      expect(authCubit.state.status, AuthStatus.authenticated);
+      expect(authSecurityService.savePinCalled, isTrue);
+    });
+
+    test('setupPin is a no-op when status is unrelated failure with no user',
+        () async {
+      // State: failure with no user (e.g. from a login failure)
+      await authCubit.loginWithPassword(
+        role: UserRole.owner,
+        email: 'none@example.com',
+        password: 'wrong',
+      );
+      expect(authCubit.state.status, AuthStatus.failure);
+      expect(authCubit.state.user, isNull);
+
+      // setupPin must not proceed
+      authSecurityService.savePinCalled = false;
+      await authCubit.setupPin('1234');
+
+      expect(authSecurityService.savePinCalled, isFalse);
+    });
   });
 
   group('AuthCubit Password Login', () {

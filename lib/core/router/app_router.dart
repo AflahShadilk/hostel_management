@@ -9,6 +9,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../features/auth/presentation/pages/owner_sign_up_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/pin_setup_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -43,8 +44,7 @@ abstract final class AppRouter {
       GoRoute(
         name: AppRoutes.pinSetupName,
         path: AppRoutes.pinSetupPath,
-        builder: (context, state) =>
-            const _PlaceholderPage(title: 'PIN Setup — Coming next'),
+        builder: (context, state) => const PinSetupPage(),
       ),
       GoRoute(
         name: AppRoutes.homeName,
@@ -53,19 +53,6 @@ abstract final class AppRouter {
       ),
     ],
   );
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  const _PlaceholderPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Placeholder')),
-      body: Center(child: Text(title)),
-    );
-  }
 }
 
 class _RouteErrorPage extends StatelessWidget {

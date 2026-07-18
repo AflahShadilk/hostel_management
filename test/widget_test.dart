@@ -9,6 +9,7 @@ import 'package:hostel_management/features/auth/domain/repositories/auth_reposit
 import 'package:hostel_management/features/auth/domain/services/auth_security_service.dart';
 import 'package:hostel_management/features/auth/domain/services/auth_session_service.dart';
 import 'package:hostel_management/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:hostel_management/features/home/presentation/pages/home_page.dart';
 
 // Fake implementations to prevent hitting real database
 class FakeAuthRepository implements AuthRepository {
@@ -206,8 +207,55 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
-    // The fake auth cubit registers the owner and emits registrationPendingPin,
-    // which navigates to PIN setup placeholder.
-    expect(find.text('PIN Setup — Coming next'), findsOneWidget);
+    // We should be on PIN Setup Page
+    expect(find.text('Set Up PIN'), findsOneWidget);
+    expect(find.text('Create your secure PIN'), findsOneWidget);
+
+    // Check fields
+    expect(find.text('Create 4-digit PIN'), findsOneWidget);
+    expect(find.text('Confirm PIN'), findsOneWidget);
+
+    final pinField = tester.widget<TextField>(find.byType(TextField).first);
+    expect(pinField.obscureText, true);
+
+    // Test visibility toggle
+    await tester.tap(find.byIcon(Icons.visibility_outlined).first);
+    await tester.pumpAndSettle();
+
+    final pinFieldVisible =
+        tester.widget<TextField>(find.byType(TextField).first);
+    expect(pinFieldVisible.obscureText, false);
+
+    // Empty form validation
+    final setPinButton = find.text('Set PIN & Continue');
+    await tester.ensureVisible(setPinButton);
+    await tester.tap(setPinButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Please enter a 4-digit PIN.'), findsOneWidget);
+
+    // Too short validation
+    await tester.enterText(find.byType(TextField).first, '123');
+    await tester.tap(setPinButton);
+    await tester.pumpAndSettle();
+    expect(find.text('PIN must contain exactly 4 digits.'), findsOneWidget);
+
+    // Mismatched confirm PIN
+    await tester.enterText(find.byType(TextField).first, '1234');
+    await tester.enterText(find.byType(TextField).last, '1235');
+    await tester.tap(setPinButton);
+    await tester.pumpAndSettle();
+    expect(find.text('PINs do not match.'), findsOneWidget);
+
+    // Valid setup
+    await tester.enterText(find.byType(TextField).last, '1234');
+    await tester.tap(setPinButton);
+
+    // Wait for auth cubit to save and GoRouter to push Replacement
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    // Should navigate to Home
+    expect(find.byType(HomePage), findsOneWidget);
   });
 }
