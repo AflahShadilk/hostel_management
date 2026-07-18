@@ -12,4 +12,12 @@ class AuthFormCubit extends Cubit<AuthFormState> {
   void toggleConfirmPasswordVisibility() {
     emit(state.copyWith(obscureConfirmPassword: !state.obscureConfirmPassword));
   }
+
+  void togglePinVisibility() {
+    emit(state.copyWith(obscurePin: !state.obscurePin));
+  }
+
+  void selectLoginMode(AuthLoginMode mode) {
+    emit(state.copyWith(loginMode: mode));
+  }
 }

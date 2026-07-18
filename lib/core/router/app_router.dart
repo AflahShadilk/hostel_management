@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import 'app_routes.dart';
 
+import '../../features/auth/domain/entities/user_role.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../features/auth/presentation/pages/owner_sign_up_page.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -24,10 +26,14 @@ abstract final class AppRouter {
         builder: (context, state) => const RoleSelectionPage(),
       ),
       GoRoute(
-        name: AppRoutes.ownerLoginName,
         path: AppRoutes.ownerLoginPath,
-        builder: (context, state) =>
-            const _PlaceholderPage(title: 'Owner Login — Coming next'),
+        name: AppRoutes.ownerLoginName,
+        builder: (context, state) => const LoginPage(role: UserRole.owner),
+      ),
+      GoRoute(
+        path: AppRoutes.managerLoginPath,
+        name: AppRoutes.managerLoginName,
+        builder: (context, state) => const LoginPage(role: UserRole.manager),
       ),
       GoRoute(
         name: AppRoutes.ownerSignUpName,
@@ -39,12 +45,6 @@ abstract final class AppRouter {
         path: AppRoutes.pinSetupPath,
         builder: (context, state) =>
             const _PlaceholderPage(title: 'PIN Setup — Coming next'),
-      ),
-      GoRoute(
-        name: AppRoutes.managerLoginName,
-        path: AppRoutes.managerLoginPath,
-        builder: (context, state) =>
-            const _PlaceholderPage(title: 'Manager Login — Coming next'),
       ),
       GoRoute(
         name: AppRoutes.homeName,

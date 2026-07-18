@@ -101,14 +101,47 @@ void main() {
     // Tap Owner Login
     await tester.tap(find.text('Login').first);
     await tester.pumpAndSettle();
-    expect(find.text('Owner Login — Coming next'), findsOneWidget);
 
-    // Go back
-    await tester.pageBack();
+    // We should be on Owner Login Page
+    expect(find.text('Owner Login'), findsOneWidget);
+    expect(find.text('Welcome back, Owner'), findsOneWidget);
+    expect(find.text('Sign in to manage your hostel.'), findsOneWidget);
+    expect(find.text('Don\'t have an account?'),
+        findsOneWidget); // Owner has sign up option
+    expect(find.text('Sign Up'), findsWidgets);
+    expect(find.text('Password'), findsWidgets); // Password mode is default
+
+    // Switch to PIN mode
+    await tester.tap(find.text('PIN').last);
+    await tester.pumpAndSettle();
+    expect(find.text('4-digit PIN'), findsOneWidget);
+
+    // Switch back to Password mode
+    await tester.tap(find.text('Password').last);
     await tester.pumpAndSettle();
 
-    // Tap Owner Sign Up
-    await tester.tap(find.text('Sign Up'));
+    // Go back
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+
+    // Tap Manager Login
+    await tester.tap(find.text('Login').last);
+    await tester.pumpAndSettle();
+
+    // We should be on Manager Login Page
+    expect(find.text('Manager Login'), findsOneWidget);
+    expect(find.text('Welcome back, Manager'), findsOneWidget);
+    expect(find.text('Sign in to continue managing hostel operations.'),
+        findsOneWidget);
+    expect(find.text('Don\'t have an account?'),
+        findsNothing); // Manager does NOT have sign up option
+
+    // Go back
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+
+    // Tap Owner Sign Up (last element as login is first)
+    await tester.tap(find.text('Sign Up').last);
     await tester.pumpAndSettle();
 
     // We should be on Owner Sign Up Page

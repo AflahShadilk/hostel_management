@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -15,6 +16,8 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onFieldSubmitted;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -32,6 +35,8 @@ class AppTextField extends StatelessWidget {
     this.textInputAction,
     this.autofillHints,
     this.onFieldSubmitted,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   @override
@@ -46,6 +51,8 @@ class AppTextField extends StatelessWidget {
       // maxLines must be 1 when obscureText is true (Flutter requirement).
       obscureText: obscureText,
       maxLines: obscureText ? 1 : maxLines,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       onChanged: onChanged,
       enabled: enabled,
       decoration: InputDecoration(
@@ -53,6 +60,7 @@ class AppTextField extends StatelessWidget {
         hintText: hint,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        counterText: '', // hide the default length counter
       ),
     );
   }
