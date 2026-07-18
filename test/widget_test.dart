@@ -9,7 +9,10 @@ import 'package:hostel_management/features/auth/domain/repositories/auth_reposit
 import 'package:hostel_management/features/auth/domain/services/auth_security_service.dart';
 import 'package:hostel_management/features/auth/domain/services/auth_session_service.dart';
 import 'package:hostel_management/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:hostel_management/features/home/presentation/pages/home_page.dart';
+import 'package:hostel_management/features/hostel/domain/entities/hostel_entity.dart';
+import 'package:hostel_management/features/hostel/domain/repositories/hostel_repository.dart';
+import 'package:hostel_management/features/hostel/presentation/cubit/hostel_cubit.dart';
+import 'package:hostel_management/features/hostel/presentation/pages/hostel_setup_page.dart';
 
 // Fake implementations to prevent hitting real database
 class FakeAuthRepository implements AuthRepository {
@@ -66,8 +69,33 @@ class FakeAuthSessionService implements AuthSessionService {
   Future<void> saveSession(int userId) async {}
 }
 
+class FakeHostelRepository implements HostelRepository {
+  @override
+  Future<HostelEntity> createHostel(HostelEntity hostel) async => HostelEntity(
+        id: 1,
+        name: hostel.name,
+        logoPath: hostel.logoPath,
+        address: hostel.address,
+        phone: hostel.phone,
+        email: hostel.email,
+        ownerName: hostel.ownerName,
+        ownerUserId: hostel.ownerUserId,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+  @override
+  Future<HostelEntity?> getHostelById(int id) async => null;
+  @override
+  Future<HostelEntity?> getHostelByOwnerUserId(int ownerUserId) async => null; // Simulate no hostel configured yet
+  @override
+  Future<bool> hasHostelForOwner(int ownerUserId) async => false;
+  @override
+  Future<HostelEntity> updateHostel(HostelEntity hostel) async => hostel;
+}
+
 void main() {
-  testWidgets('App renders Splash and navigates to Role Selection',
+  testWidgets('App renders Splash and navigates through Sign Up, PIN, and Hostel Setup',
       (WidgetTester tester) async {
     final authCubit = AuthCubit(
       FakeAuthRepository(),
@@ -75,9 +103,14 @@ void main() {
       FakeAuthSessionService(),
     );
 
+    final hostelCubit = HostelCubit(FakeHostelRepository());
+
     await tester.pumpWidget(
-      BlocProvider<AuthCubit>.value(
-        value: authCubit,
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<HostelCubit>.value(value: hostelCubit),
+        ],
         child: MaterialApp.router(
           title: 'Hostel Management',
           theme: AppTheme.lightTheme,
@@ -255,7 +288,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
-    // Should navigate to Home
-    expect(find.byType(HomePage), findsOneWidget);
+    // Should navigate to HostelSetupPage because FakeHostelRepository returns null for getHostelByOwnerUserId
+    expect(find.byType(HostelSetupPage), findsOneWidget);
+    expect(find.text('Set Up Your Hostel'), findsOneWidget);
   });
 }

@@ -17,6 +17,9 @@ abstract final class AppRoutes {
   static const String managerLoginName = 'managerLogin';
   static const String managerLoginPath = '/manager/login';
 
+  static const String hostelSetupName = 'hostelSetup';
+  static const String hostelSetupPath = '/hostel/setup';
+
   static const String homeName = 'home';
   static const String homePath = '/home';
 }
