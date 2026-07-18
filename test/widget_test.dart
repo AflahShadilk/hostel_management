@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hostel_management/core/router/app_router.dart';
+import 'package:hostel_management/core/router/app_routes.dart';
 import 'package:hostel_management/core/theme/app_theme.dart';
 import 'package:hostel_management/features/auth/domain/entities/user_entity.dart';
 import 'package:hostel_management/features/auth/domain/entities/user_role.dart';
@@ -13,6 +14,7 @@ import 'package:hostel_management/features/hostel/domain/entities/hostel_entity.
 import 'package:hostel_management/features/hostel/domain/repositories/hostel_repository.dart';
 import 'package:hostel_management/features/hostel/presentation/cubit/hostel_cubit.dart';
 import 'package:hostel_management/features/hostel/presentation/pages/hostel_setup_page.dart';
+import 'package:hostel_management/features/home/presentation/pages/home_page.dart';
 
 // Fake implementations to prevent hitting real database
 class FakeAuthRepository implements AuthRepository {
@@ -31,7 +33,20 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<bool> emailExists(String email) async => false;
   @override
-  Future<UserEntity?> getUserByEmail(String email) async => null;
+  Future<UserEntity?> getUserByEmail(String email) async {
+    if (email == 'manager@example.com') {
+      return UserEntity(
+        id: 2,
+        name: 'Manager',
+        email: email,
+        phone: '0987654321',
+        role: UserRole.manager,
+        isActive: true,
+        createdAt: DateTime.now(),
+      );
+    }
+    return null;
+  }
   @override
   Future<UserEntity?> getUserById(int id) async => null;
   @override
@@ -292,4 +307,48 @@ void main() {
     expect(find.byType(HostelSetupPage), findsOneWidget);
     expect(find.text('Set Up Your Hostel'), findsOneWidget);
   });
+
+  testWidgets('Manager Login navigates directly to Home',
+      (WidgetTester tester) async {
+    // Override fake to simulate manager role on login
+    final authCubit = AuthCubit(
+      FakeAuthRepository(),
+      FakeAuthSecurityService(),
+      FakeAuthSessionService(),
+    );
+    final hostelCubit = HostelCubit(FakeHostelRepository());
+
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<HostelCubit>.value(value: hostelCubit),
+        ],
+        child: MaterialApp.router(
+          title: 'Hostel Management',
+          theme: AppTheme.lightTheme,
+          routerConfig: AppRouter.router,
+        ),
+      ),
+    );
+
+    // Skip to Manager Login
+    AppRouter.router.go(AppRoutes.managerLoginPath);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Manager Login'), findsOneWidget);
+
+    await tester.enterText(
+        find.byType(TextField).first, 'manager@example.com');
+    await tester.enterText(find.byType(TextField).last, 'password123');
+    await tester.tap(find.text('Sign In'));
+
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    // Managers go straight to home, bypassing HostelSetup check
+    expect(find.byType(HomePage), findsOneWidget);
+  });
+
 }
