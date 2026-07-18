@@ -6,6 +6,7 @@ import 'app_routes.dart';
 
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
+import '../../features/auth/presentation/pages/owner_sign_up_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -31,8 +32,13 @@ abstract final class AppRouter {
       GoRoute(
         name: AppRoutes.ownerSignUpName,
         path: AppRoutes.ownerSignUpPath,
+        builder: (context, state) => const OwnerSignUpPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.pinSetupName,
+        path: AppRoutes.pinSetupPath,
         builder: (context, state) =>
-            const _PlaceholderPage(title: 'Owner Sign Up — Coming next'),
+            const _PlaceholderPage(title: 'PIN Setup — Coming next'),
       ),
       GoRoute(
         name: AppRoutes.managerLoginName,

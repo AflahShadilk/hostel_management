@@ -11,6 +11,9 @@ abstract final class AppRoutes {
   static const String ownerSignUpName = 'ownerSignUp';
   static const String ownerSignUpPath = '/owner/signup';
 
+  static const String pinSetupName = 'pinSetup';
+  static const String pinSetupPath = '/owner/pin-setup';
+
   static const String managerLoginName = 'managerLogin';
   static const String managerLoginPath = '/manager/login';
 

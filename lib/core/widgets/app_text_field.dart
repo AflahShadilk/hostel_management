@@ -12,6 +12,9 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final bool enabled;
   final int? maxLines;
+  final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const AppTextField({
     super.key,
@@ -26,6 +29,9 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.enabled = true,
     this.maxLines = 1,
+    this.textInputAction,
+    this.autofillHints,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -34,6 +40,9 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      autofillHints: autofillHints,
+      onFieldSubmitted: onFieldSubmitted,
       // maxLines must be 1 when obscureText is true (Flutter requirement).
       obscureText: obscureText,
       maxLines: obscureText ? 1 : maxLines,

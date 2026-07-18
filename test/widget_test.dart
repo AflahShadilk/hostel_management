@@ -13,7 +13,15 @@ import 'package:hostel_management/features/auth/presentation/cubit/auth_cubit.da
 // Fake implementations to prevent hitting real database
 class FakeAuthRepository implements AuthRepository {
   @override
-  Future<UserEntity> createUser(UserEntity user) async => user;
+  Future<UserEntity> createUser(UserEntity user) async => UserEntity(
+        id: 1, // Provide a non-null ID to avoid Null check operator error in AuthCubit
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: DateTime.now(),
+      );
   @override
   Future<void> deleteUser(int id) async {}
   @override
@@ -102,6 +110,71 @@ void main() {
     // Tap Owner Sign Up
     await tester.tap(find.text('Sign Up'));
     await tester.pumpAndSettle();
-    expect(find.text('Owner Sign Up — Coming next'), findsOneWidget);
+
+    // We should be on Owner Sign Up Page
+    expect(find.text('Create Owner Account'), findsOneWidget);
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.text('Phone Number'), findsOneWidget);
+    expect(find.text('Email Address'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Confirm Password'), findsOneWidget);
+
+    // Test Validation (Empty Form)
+    final createAccountFinder = find.text('Create Account');
+    await tester.ensureVisible(createAccountFinder);
+    await tester.tap(createAccountFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('Please enter your full name'), findsOneWidget);
+
+    // Enter valid details
+    await tester.enterText(find.byType(TextField).at(0), 'John Doe');
+    await tester.enterText(find.byType(TextField).at(1), '1234567890');
+    await tester.enterText(find.byType(TextField).at(2), 'john@example.com');
+    await tester.enterText(find.byType(TextField).at(3), 'password123');
+
+    // Test password visibility toggles
+    final passwordField =
+        tester.widget<TextField>(find.byType(TextField).at(3));
+    expect(passwordField.obscureText, true);
+
+    await tester.tap(find.byIcon(Icons.visibility_outlined).first);
+    await tester.pumpAndSettle();
+
+    final passwordFieldVisible =
+        tester.widget<TextField>(find.byType(TextField).at(3));
+    expect(passwordFieldVisible.obscureText, false);
+
+    // Mismatched confirm password
+    await tester.enterText(find.byType(TextField).at(4), 'password124');
+
+    final confirmPasswordField =
+        tester.widget<TextField>(find.byType(TextField).at(4));
+    expect(confirmPasswordField.obscureText, true);
+
+    await tester.tap(find.byIcon(Icons.visibility_outlined).last);
+    await tester.pumpAndSettle();
+
+    final confirmPasswordFieldVisible =
+        tester.widget<TextField>(find.byType(TextField).at(4));
+    expect(confirmPasswordFieldVisible.obscureText, false);
+
+    await tester.ensureVisible(createAccountFinder);
+    await tester.tap(createAccountFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('Passwords do not match'), findsOneWidget);
+
+    // Matching confirm password
+    await tester.enterText(find.byType(TextField).at(4), 'password123');
+    await tester.ensureVisible(createAccountFinder);
+    await tester.tap(createAccountFinder);
+
+    // We might need to wait for the bloc to emit the new state and GoRouter to push Replacement.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    // The fake auth cubit registers the owner and emits registrationPendingPin,
+    // which navigates to PIN setup placeholder.
+    expect(find.text('PIN Setup — Coming next'), findsOneWidget);
   });
 }
