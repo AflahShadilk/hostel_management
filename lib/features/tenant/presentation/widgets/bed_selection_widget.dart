@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../room/domain/entities/bed_entity.dart';
-import '../../../room/domain/entities/bed_status.dart';
-import '../../../room/domain/entities/room_entity.dart';
 import '../../../room/domain/repositories/bed_repository.dart';
 import '../../../room/domain/repositories/room_repository.dart';
+import '../cubit/bed_selection_cubit.dart';
+import '../cubit/bed_selection_state.dart';
 
-/// Encapsulates room + vacant beds for display purposes.
-class _RoomWithBeds {
-  final RoomEntity room;
-  final List<BedEntity> beds;
-  const _RoomWithBeds(this.room, this.beds);
-}
-
-/// Loads all rooms for [hostelId] and their vacant beds, then groups them for
-/// selection. Uses [FutureBuilder] internally — no extra Cubit needed.
+/// Displays all vacant beds grouped by room for selection.
 ///
-/// Calls [onBedSelected] when the user picks a bed. [selectedBed] reflects
-/// the current selection so the widget can render the highlighted state.
-class BedSelectionWidget extends StatefulWidget {
+/// Architecture: uses [BedSelectionCubit] to load data following the
+/// Presentation → Cubit → Repository → Datasource flow.
+/// No FutureBuilder, no direct repository access in the widget.
+class BedSelectionWidget extends StatelessWidget {
   final int hostelId;
   final BedEntity? selectedBed;
   final ValueChanged<BedEntity?> onBedSelected;
@@ -34,148 +28,126 @@ class BedSelectionWidget extends StatefulWidget {
   });
 
   @override
-  State<BedSelectionWidget> createState() => _BedSelectionWidgetState();
-}
-
-class _BedSelectionWidgetState extends State<BedSelectionWidget> {
-  late Future<List<_RoomWithBeds>> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = _loadAvailableBeds();
-  }
-
-  Future<List<_RoomWithBeds>> _loadAvailableBeds() async {
-    final roomRepo = getIt<RoomRepository>();
-    final bedRepo = getIt<BedRepository>();
-
-    final rooms = await roomRepo.getRoomsByHostelId(widget.hostelId);
-    final result = <_RoomWithBeds>[];
-
-    for (final room in rooms) {
-      if (room.id == null) continue;
-      final beds = await bedRepo.getVacantBedsByRoomId(room.id!);
-      // getVacantBedsByRoomId only returns BedStatus.vacant — safe to include all.
-      final activeBeds = beds.where((b) => b.status == BedStatus.vacant).toList();
-      if (activeBeds.isNotEmpty) {
-        result.add(_RoomWithBeds(room, activeBeds));
-      }
-    }
-    return result;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<_RoomWithBeds>>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(AppSpacing.md),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+    return BlocProvider(
+      create: (_) => BedSelectionCubit(
+        getIt<RoomRepository>(),
+        getIt<BedRepository>(),
+      )..loadAvailableBeds(hostelId),
+      child: BlocBuilder<BedSelectionCubit, BedSelectionState>(
+        builder: (context, state) {
+          if (state is BedSelectionLoading || state is BedSelectionInitial) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
 
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Text(
-              'Unable to load available beds.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.error),
-            ),
-          );
-        }
+          if (state is BedSelectionError) {
+            return Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Text(
+                'Unable to load available beds.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: AppColors.error),
+              ),
+            );
+          }
 
-        final groups = snapshot.data ?? [];
+          if (state is BedSelectionLoaded) {
+            final groups = state.roomWithBeds;
 
-        if (groups.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline,
-                    size: 16, color: AppColors.textSecondary),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'No vacant beds available. Add rooms and beds first.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
+            if (groups.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
-            ),
-          );
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final group in groups) ...[
-                // Room header
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    border: Border(
-                      bottom: BorderSide(color: AppColors.border),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline,
+                        size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'No vacant beds available. Add rooms and beds first.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Room ${group.room.roomNumber}',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                  ),
+                  ],
                 ),
-                // Bed tiles
-                for (final bed in group.beds)
-                  _BedTile(
-                    bed: bed,
-                    room: group.room,
-                    isSelected: widget.selectedBed?.id == bed.id,
-                    onTap: () => widget.onBedSelected(
-                      widget.selectedBed?.id == bed.id ? null : bed,
+              );
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final group in groups) ...[
+                    // Room header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                      child: Text(
+                        'Room ${group.room.roomNumber}',
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                      ),
                     ),
-                  ),
-              ],
-            ],
-          ),
-        );
-      },
+                    // Bed tiles
+                    for (final bed in group.beds)
+                      _BedTile(
+                        bed: bed,
+                        roomNumber: group.room.roomNumber,
+                        isSelected: selectedBed?.id == bed.id,
+                        onTap: () => onBedSelected(
+                          selectedBed?.id == bed.id ? null : bed,
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 }
 
 class _BedTile extends StatelessWidget {
   final BedEntity bed;
-  final RoomEntity room;
+  final String roomNumber;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _BedTile({
     required this.bed,
-    required this.room,
+    required this.roomNumber,
     required this.isSelected,
     required this.onTap,
   });
@@ -194,7 +166,8 @@ class _BedTile extends StatelessWidget {
               ? AppColors.primary.withValues(alpha: 0.08)
               : Colors.transparent,
           border: Border(
-            bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
+            bottom:
+                BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
           ),
         ),
         child: Row(
@@ -218,7 +191,8 @@ class _BedTile extends StatelessWidget {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),

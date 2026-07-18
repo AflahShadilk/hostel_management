@@ -206,4 +206,70 @@ void main() {
       expect(await getRoomStatus(1), RoomStatus.vacant);
     });
   });
+
+  group('transferTenant', () {
+    test('transfers tenant, syncs both beds and rooms', () async {
+      // Setup room 2
+      final db = await appDatabase.database;
+      await db.execute('''
+        INSERT INTO rooms (id, hostel_id, room_number, floor, room_type, number_of_beds, monthly_rent, status, created_at, updated_at)
+        VALUES (2, 1, '102', 'G', 'double', 2, 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
+      ''');
+      await db.execute('''
+        INSERT INTO beds (id, room_id, bed_number, status, created_at, updated_at)
+        VALUES 
+          (3, 2, 'B3', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000'),
+          (4, 2, 'B4', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
+      ''');
+
+      final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1));
+      
+      expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
+      expect(await getRoomStatus(2), RoomStatus.vacant);
+
+      final transferred = await managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 3);
+
+      expect(transferred.bedId, 3);
+      
+      final oldBed = await bedRepo.getBedById(1);
+      expect(oldBed!.status, BedStatus.vacant);
+
+      final newBed = await bedRepo.getBedById(3);
+      expect(newBed!.status, BedStatus.occupied);
+
+      expect(await getRoomStatus(1), RoomStatus.vacant);
+      expect(await getRoomStatus(2), RoomStatus.partiallyOccupied);
+    });
+
+    test('rejects transfer to same bed', () async {
+      final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1));
+
+      await expectLater(
+        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 1),
+        throwsStateError,
+      );
+    });
+
+    test('rejects transfer to occupied bed', () async {
+      final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1, phoneNumber: '111', email: '1@a.com'));
+      await managementRepo.assignTenant(buildTenant(bedId: 2, phoneNumber: '222', email: '2@a.com'));
+
+      await expectLater(
+        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 2),
+        throwsStateError,
+      );
+    });
+
+    test('rejects transfer to inactive bed', () async {
+      final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1));
+      
+      final db = await appDatabase.database;
+      await db.update('beds', {'status': 'inactive'}, where: 'id = ?', whereArgs: [2]);
+
+      await expectLater(
+        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 2),
+        throwsStateError,
+      );
+    });
+  });
 }

@@ -172,4 +172,85 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
       );
     });
   }
+
+  @override
+  Future<TenantEntity> transferTenant(
+    int tenantId, {
+    required int oldBedId,
+    required int newBedId,
+  }) async {
+    if (oldBedId == newBedId) {
+      throw StateError('Please select a different bed.');
+    }
+
+    final newBed = await _bedRepository.getBedById(newBedId);
+    if (newBed == null) {
+      throw StateError('This bed is no longer available.');
+    }
+    if (newBed.status != BedStatus.vacant) {
+      throw StateError('This bed is no longer available.');
+    }
+    
+    final oldBed = await _bedRepository.getBedById(oldBedId);
+    if (oldBed == null) {
+      throw StateError('Original bed not found.');
+    }
+
+    final tenant = await _tenantRepository.getTenantById(tenantId);
+    if (tenant == null) {
+      throw StateError('Tenant not found.');
+    }
+
+    final db = await _appDatabase.database;
+
+    return await db.transaction((txn) async {
+      final now = DateTime.now();
+
+      // Release old bed
+      await txn.update(
+        RoomLocalSchema.tableBeds,
+        {
+          'status': BedStatus.vacant.databaseValue,
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [oldBedId],
+      );
+
+      // Occupy new bed
+      await txn.update(
+        RoomLocalSchema.tableBeds,
+        {
+          'status': BedStatus.occupied.databaseValue,
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [newBedId],
+      );
+
+      // Update tenant
+      await txn.update(
+        TenantLocalSchema.tableTenants,
+        {
+          TenantLocalSchema.colBedId: newBedId,
+          TenantLocalSchema.colUpdatedAt: now.toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [tenantId],
+      );
+
+      // Sync rooms
+      await _roomManagementRepository.syncRoomStatus(oldBed.roomId, txn: txn);
+      // If the new bed is in a different room, sync that room too
+      if (oldBed.roomId != newBed.roomId) {
+        await _roomManagementRepository.syncRoomStatus(newBed.roomId, txn: txn);
+      }
+
+      final model = TenantModel.fromEntity(tenant);
+      return model.copyWith(
+        bedId: newBedId,
+        updatedAt: now,
+      );
+    });
+  }
 }

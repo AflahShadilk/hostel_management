@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../domain/entities/tenant_entity.dart';
+import '../../domain/entities/tenant_status.dart';
 import 'tenant_status_chip.dart';
 
 /// Displays a single [TenantEntity] in a card layout.
@@ -13,6 +14,7 @@ class TenantCard extends StatelessWidget {
   final String? roomLabel;
   final String? bedLabel;
   final bool actionsEnabled;
+  final VoidCallback? onTransfer;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -22,6 +24,7 @@ class TenantCard extends StatelessWidget {
     this.roomLabel,
     this.bedLabel,
     this.actionsEnabled = true,
+    this.onTransfer,
     this.onEdit,
     this.onDelete,
   });
@@ -116,6 +119,14 @@ class TenantCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (tenant.status == TenantStatus.active)
+                  IconButton(
+                    icon: const Icon(Icons.swap_horiz_outlined, size: 20),
+                    tooltip: 'Transfer Bed',
+                    color: AppColors.primary,
+                    onPressed: actionsEnabled ? onTransfer : null,
+                  ),
+                const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   tooltip: 'Edit Tenant',

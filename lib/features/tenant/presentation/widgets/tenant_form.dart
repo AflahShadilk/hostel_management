@@ -8,19 +8,23 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dropdown_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../hostel/presentation/cubit/hostel_cubit.dart';
-import '../../../room/domain/entities/bed_entity.dart';
 import '../../domain/entities/tenant_entity.dart';
 import '../../domain/entities/tenant_status.dart';
 import '../cubit/tenant_cubit.dart';
+import '../cubit/tenant_form_cubit.dart';
+import '../cubit/tenant_form_state.dart';
 import '../cubit/tenant_state.dart';
 import 'bed_selection_widget.dart';
 
 /// Shared form widget used by both [AddTenantPage] and [EditTenantPage].
 ///
+/// UI state (dates, status, selected bed) is fully managed by [TenantFormCubit].
+/// No setState() calls exist in this file.
+///
 /// [isEdit] controls whether the bed selection section is shown (Add only).
 /// [initialTenant] pre-populates fields when editing.
 /// [onSubmit] is called with the constructed [TenantEntity] on valid submit.
-class TenantForm extends StatefulWidget {
+class TenantForm extends StatelessWidget {
   final TenantEntity? initialTenant;
   final bool isEdit;
   final void Function(TenantEntity tenant) onSubmit;
@@ -33,10 +37,38 @@ class TenantForm extends StatefulWidget {
   });
 
   @override
-  State<TenantForm> createState() => _TenantFormState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => TenantFormCubit(
+        initialCheckIn: initialTenant?.checkInDate ?? DateTime.now(),
+        initialCheckOut: initialTenant?.checkOutDate,
+        initialStatus: initialTenant?.status ?? TenantStatus.active,
+      ),
+      child: _TenantFormBody(
+        initialTenant: initialTenant,
+        isEdit: isEdit,
+        onSubmit: onSubmit,
+      ),
+    );
+  }
 }
 
-class _TenantFormState extends State<TenantForm> {
+class _TenantFormBody extends StatefulWidget {
+  final TenantEntity? initialTenant;
+  final bool isEdit;
+  final void Function(TenantEntity tenant) onSubmit;
+
+  const _TenantFormBody({
+    required this.initialTenant,
+    required this.isEdit,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_TenantFormBody> createState() => _TenantFormBodyState();
+}
+
+class _TenantFormBodyState extends State<_TenantFormBody> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -46,16 +78,8 @@ class _TenantFormState extends State<TenantForm> {
   late final TextEditingController _emergencyNameController;
   late final TextEditingController _emergencyPhoneController;
 
-  // Date state — driven by Cubit-safe approach: we store in local form state only.
-  // These are form-display fields, not application state.
-  DateTime? _checkInDate;
-  DateTime? _checkOutDate;
-  TenantStatus _selectedStatus = TenantStatus.active;
-  BedEntity? _selectedBed;
-
   bool _submitted = false;
-  // After first failed validation, fields auto-validate on interaction.
-  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+  // autovalidateMode is derived from TenantFormCubit.showValidationErrors — no setState needed.
 
   @override
   void initState() {
@@ -69,9 +93,6 @@ class _TenantFormState extends State<TenantForm> {
         TextEditingController(text: t?.emergencyContactName ?? '');
     _emergencyPhoneController =
         TextEditingController(text: t?.emergencyContactPhone ?? '');
-    _checkInDate = t?.checkInDate ?? DateTime.now();
-    _checkOutDate = t?.checkOutDate;
-    _selectedStatus = t?.status ?? TenantStatus.active;
   }
 
   @override
@@ -85,12 +106,13 @@ class _TenantFormState extends State<TenantForm> {
     super.dispose();
   }
 
-  Future<void> _pickDate({required bool isCheckOut}) async {
+  Future<void> _pickDate(BuildContext context, {required bool isCheckOut}) async {
+    final formState = context.read<TenantFormCubit>().state;
     final now = DateTime.now();
     final initial = isCheckOut
-        ? (_checkOutDate ?? _checkInDate ?? now)
-        : (_checkInDate ?? now);
-    final first = isCheckOut ? (_checkInDate ?? now) : DateTime(2000);
+        ? (formState.checkOutDate ?? formState.checkInDate ?? now)
+        : (formState.checkInDate ?? now);
+    final first = isCheckOut ? (formState.checkInDate ?? now) : DateTime(2000);
 
     final picked = await showDatePicker(
       context: context,
@@ -99,41 +121,38 @@ class _TenantFormState extends State<TenantForm> {
       lastDate: DateTime(2100),
     );
     if (picked == null) return;
+
+    if (!context.mounted) return;
+    final cubit = context.read<TenantFormCubit>();
     if (isCheckOut) {
-      _checkOutDate = picked;
+      cubit.updateCheckOutDate(picked);
     } else {
-      _checkInDate = picked;
-      // Clear check-out if it's now before check-in.
-      if (_checkOutDate != null && _checkOutDate!.isBefore(picked)) {
-        _checkOutDate = null;
-      }
+      cubit.updateCheckInDate(picked);
     }
-    // Trigger rebuild for date label updates — this is safe local UI state.
-    (context as Element).markNeedsBuild();
   }
 
-  void _submit() {
+  void _submit(BuildContext context) {
     _submitted = true;
+    final formState = context.read<TenantFormCubit>().state;
 
-    if (!widget.isEdit && _selectedBed == null) {
+    if (!widget.isEdit && formState.selectedBed == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a bed.'),
           backgroundColor: AppColors.error,
         ),
       );
-      // Also trigger form validation to show field errors.
-      _autovalidateMode = AutovalidateMode.onUserInteraction;
+      context.read<TenantFormCubit>().enableValidation();
       _formKey.currentState?.validate();
       return;
     }
 
     if (!(_formKey.currentState?.validate() ?? false)) {
-      _autovalidateMode = AutovalidateMode.onUserInteraction;
+      context.read<TenantFormCubit>().enableValidation();
       return;
     }
 
-    if (_checkInDate == null) {
+    if (formState.checkInDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a check-in date.'),
@@ -146,7 +165,7 @@ class _TenantFormState extends State<TenantForm> {
     final now = DateTime.now();
     final bedId = widget.isEdit
         ? widget.initialTenant!.bedId
-        : _selectedBed!.id!;
+        : formState.selectedBed!.id!;
 
     final tenant = TenantEntity(
       id: widget.initialTenant?.id,
@@ -165,9 +184,9 @@ class _TenantFormState extends State<TenantForm> {
       emergencyContactPhone: _emergencyPhoneController.text.trim().isEmpty
           ? null
           : _emergencyPhoneController.text.trim(),
-      checkInDate: _checkInDate!,
-      checkOutDate: _checkOutDate,
-      status: _selectedStatus,
+      checkInDate: formState.checkInDate!,
+      checkOutDate: formState.checkOutDate,
+      status: formState.status,
       createdAt: widget.initialTenant?.createdAt ?? now,
       updatedAt: now,
     );
@@ -186,256 +205,280 @@ class _TenantFormState extends State<TenantForm> {
 
     return BlocBuilder<TenantCubit, TenantState>(
       buildWhen: (prev, curr) => prev.status != curr.status,
-      builder: (context, state) {
-        final isSubmitting = state.status == TenantOperationStatus.creating ||
-            state.status == TenantOperationStatus.updating;
+      builder: (context, tenantState) {
+        final isSubmitting = tenantState.status == TenantOperationStatus.creating ||
+            tenantState.status == TenantOperationStatus.updating;
 
-        return Form(
-          key: _formKey,
-          autovalidateMode: _autovalidateMode,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Personal Details ──────────────────────────────────────────
-              _SectionHeader(label: 'Personal Details'),
-              const SizedBox(height: AppSpacing.md),
+        return BlocBuilder<TenantFormCubit, TenantFormState>(
+          builder: (context, formState) {
+            final autovalidateMode = formState.showValidationErrors
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled;
+            return Form(
+              key: _formKey,
+              autovalidateMode: autovalidateMode,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Personal Details ───────────────────────────────────────
+                  _SectionHeader(label: 'Personal Details'),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _nameController,
-                label: 'Full Name',
-                prefixIcon: const Icon(Icons.person_outline),
-                textInputAction: TextInputAction.next,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Full name is required.';
-                  }
-                  if (v.trim().length < 2) {
-                    return 'Name must be at least 2 characters.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _nameController,
+                    label: 'Full Name',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    textInputAction: TextInputAction.next,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Full name is required.';
+                      }
+                      if (v.trim().length < 2) {
+                        return 'Name must be at least 2 characters.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _phoneController,
-                label: 'Phone Number',
-                prefixIcon: const Icon(Icons.phone_outlined),
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (v) {
-                  final text = v?.trim() ?? '';
-                  if (text.isEmpty) return 'Phone number is required.';
-                  if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
-                    return 'Enter a valid phone number (7–15 digits).';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _phoneController,
+                    label: 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) {
+                      final text = v?.trim() ?? '';
+                      if (text.isEmpty) return 'Phone number is required.';
+                      if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
+                        return 'Enter a valid phone number (7–15 digits).';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _emailController,
-                label: 'Email (optional)',
-                prefixIcon: const Icon(Icons.email_outlined),
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                validator: (v) {
-                  final text = v?.trim() ?? '';
-                  if (text.isEmpty) return null; // optional
-                  if (!RegExp(
-                          r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
-                      .hasMatch(text)) {
-                    return 'Enter a valid email address.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _emailController,
+                    label: 'Email (optional)',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    validator: (v) {
+                      final text = v?.trim() ?? '';
+                      if (text.isEmpty) return null;
+                      if (!RegExp(
+                              r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+                          .hasMatch(text)) {
+                        return 'Enter a valid email address.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _addressController,
-                label: 'Address (optional)',
-                prefixIcon: const Icon(Icons.home_outlined),
-                maxLines: 2,
-                textInputAction: TextInputAction.next,
-              ),
+                  AppTextField(
+                    controller: _addressController,
+                    label: 'Address (optional)',
+                    prefixIcon: const Icon(Icons.home_outlined),
+                    maxLines: 2,
+                    textInputAction: TextInputAction.next,
+                  ),
 
-              const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-              // ── Emergency Contact ─────────────────────────────────────────
-              _SectionHeader(label: 'Emergency Contact (optional)'),
-              const SizedBox(height: AppSpacing.md),
+                  // ── Emergency Contact ──────────────────────────────────────
+                  _SectionHeader(label: 'Emergency Contact (optional)'),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _emergencyNameController,
-                label: 'Contact Name',
-                prefixIcon: const Icon(Icons.contact_emergency_outlined),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _emergencyNameController,
+                    label: 'Contact Name',
+                    prefixIcon: const Icon(Icons.contact_emergency_outlined),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              AppTextField(
-                controller: _emergencyPhoneController,
-                label: 'Contact Phone',
-                prefixIcon: const Icon(Icons.phone_in_talk_outlined),
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (v) {
-                  final text = v?.trim() ?? '';
-                  if (text.isEmpty) return null; // optional
-                  if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
-                    return 'Enter a valid phone number (7–15 digits).';
-                  }
-                  return null;
-                },
-              ),
+                  AppTextField(
+                    controller: _emergencyPhoneController,
+                    label: 'Contact Phone',
+                    prefixIcon: const Icon(Icons.phone_in_talk_outlined),
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) {
+                      final text = v?.trim() ?? '';
+                      if (text.isEmpty) return null;
+                      if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
+                        return 'Enter a valid phone number (7–15 digits).';
+                      }
+                      return null;
+                    },
+                  ),
 
-              const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-              // ── Stay Details ──────────────────────────────────────────────
-              _SectionHeader(label: 'Stay Details'),
-              const SizedBox(height: AppSpacing.md),
+                  // ── Stay Details ───────────────────────────────────────────
+                  _SectionHeader(label: 'Stay Details'),
+                  const SizedBox(height: AppSpacing.md),
 
-              // Check-in date
-              _DateField(
-                label: 'Check-in Date',
-                icon: Icons.calendar_today_outlined,
-                date: _checkInDate,
-                hint: 'Select check-in date',
-                onTap: () => _pickDate(isCheckOut: false),
-                formatDate: _formatDate,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  // Check-in date — driven by TenantFormCubit state
+                  _DateField(
+                    label: 'Check-in Date',
+                    icon: Icons.calendar_today_outlined,
+                    date: formState.checkInDate,
+                    hint: 'Select check-in date',
+                    onTap: () => _pickDate(context, isCheckOut: false),
+                    formatDate: _formatDate,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              // Check-out date (optional)
-              _DateField(
-                label: 'Check-out Date (optional)',
-                icon: Icons.event_available_outlined,
-                date: _checkOutDate,
-                hint: 'Select check-out date',
-                onTap: () => _pickDate(isCheckOut: true),
-                formatDate: _formatDate,
-                trailing: _checkOutDate != null
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        tooltip: 'Clear',
-                        onPressed: () {
-                          _checkOutDate = null;
-                          (context as Element).markNeedsBuild();
-                        },
-                      )
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                  // Check-out date (optional) — driven by TenantFormCubit state
+                  _DateField(
+                    label: 'Check-out Date (optional)',
+                    icon: Icons.event_available_outlined,
+                    date: formState.checkOutDate,
+                    hint: 'Select check-out date',
+                    onTap: () => _pickDate(context, isCheckOut: true),
+                    formatDate: _formatDate,
+                    trailing: formState.checkOutDate != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            tooltip: 'Clear',
+                            onPressed: () => context
+                                .read<TenantFormCubit>()
+                                .updateCheckOutDate(null),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-              // Status dropdown
-              AppDropdownField<TenantStatus>(
-                label: 'Status',
-                value: _selectedStatus,
-                items: TenantStatus.values,
-                itemLabelBuilder: (s) {
-                  switch (s) {
-                    case TenantStatus.active:
-                      return 'Active';
-                    case TenantStatus.checkedOut:
-                      return 'Checked Out';
-                    case TenantStatus.inactive:
-                      return 'Inactive';
-                  }
-                },
-                onChanged: (s) {
-                  if (s != null) _selectedStatus = s;
-                },
-              ),
+                  // Status dropdown — driven by TenantFormCubit state
+                  AppDropdownField<TenantStatus>(
+                    label: 'Status',
+                    value: formState.status,
+                    items: TenantStatus.values,
+                    itemLabelBuilder: (s) {
+                      switch (s) {
+                        case TenantStatus.active:
+                          return 'Active';
+                        case TenantStatus.checkedOut:
+                          return 'Checked Out';
+                        case TenantStatus.inactive:
+                          return 'Inactive';
+                      }
+                    },
+                    onChanged: (s) {
+                      if (s != null) {
+                        context.read<TenantFormCubit>().updateStatus(s);
+                      }
+                    },
+                  ),
 
-              // ── Bed Selection (Add only) ──────────────────────────────────
-              if (!widget.isEdit) ...[
-                const SizedBox(height: AppSpacing.lg),
-                _SectionHeader(label: 'Bed Assignment'),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Select a vacant bed to assign this tenant.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-                if (_submitted && _selectedBed == null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      'Please select a bed.',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.error,
+                  // ── Bed Selection (Add only) ───────────────────────────────
+                  if (!widget.isEdit) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _SectionHeader(label: 'Bed Assignment'),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Select a vacant bed to assign this tenant.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                     ),
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                if (hostelId != null)
-                  BedSelectionWidget(
-                    hostelId: hostelId,
-                    selectedBed: _selectedBed,
-                    onBedSelected: (bed) {
-                      _selectedBed = bed;
-                      (context as Element).markNeedsBuild();
-                    },
-                  )
-                else
-                  Text(
-                    'Hostel not configured.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.error),
-                  ),
-              ],
-
-              // ── Bed info (Edit read-only) ─────────────────────────────────
-              if (widget.isEdit && widget.initialTenant != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                _SectionHeader(label: 'Bed Assignment'),
-                const SizedBox(height: AppSpacing.sm),
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.bed_outlined,
-                          size: 18, color: AppColors.textSecondary),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
+                    if (_submitted && formState.selectedBed == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Bed ID: ${widget.initialTenant!.bedId} — '
-                          'Bed transfer is handled separately.',
+                          'Please select a bed.',
                           style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColors.error,
                                   ),
                         ),
                       ),
-                    ],
+                    const SizedBox(height: AppSpacing.md),
+                    if (hostelId != null)
+                      BedSelectionWidget(
+                        hostelId: hostelId,
+                        selectedBed: formState.selectedBed,
+                        onBedSelected: (bed) => context
+                            .read<TenantFormCubit>()
+                            .updateSelectedBed(bed),
+                      )
+                    else
+                      Text(
+                        'Hostel not configured.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: AppColors.error),
+                      ),
+                  ],
+
+                  // ── Bed info (Edit read-only) ──────────────────────────────
+                  if (widget.isEdit && widget.initialTenant != null) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _SectionHeader(label: 'Bed Assignment'),
+                    const SizedBox(height: AppSpacing.sm),
+                    _CurrentBedInfo(
+                      bedId: widget.initialTenant!.bedId,
+                    ),
+                  ],
+
+                  const SizedBox(height: AppSpacing.xl),
+
+                  AppButton(
+                    label: widget.isEdit ? 'Save Changes' : 'Assign Tenant',
+                    isLoading: isSubmitting,
+                    isFullWidth: true,
+                    onPressed: isSubmitting ? null : () => _submit(context),
                   ),
-                ),
-              ],
-
-              const SizedBox(height: AppSpacing.xl),
-
-              AppButton(
-                label: widget.isEdit ? 'Save Changes' : 'Assign Tenant',
-                isLoading: isSubmitting,
-                isFullWidth: true,
-                onPressed: isSubmitting ? null : _submit,
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Current bed info widget — resolves room/bed name through repository
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Shows the resolved room and bed name for the edit form.
+/// Uses BedSelectionCubit to query names — no direct repository access in widget.
+class _CurrentBedInfo extends StatelessWidget {
+  final int bedId;
+  const _CurrentBedInfo({required this.bedId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.bed_outlined,
+              size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Current bed — use Transfer to change assignment.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

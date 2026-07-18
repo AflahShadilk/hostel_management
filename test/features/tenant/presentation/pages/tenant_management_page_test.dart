@@ -2,49 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:hostel_management/features/room/presentation/cubit/room_cubit.dart';
-import 'package:hostel_management/features/room/presentation/cubit/room_state.dart';
 import 'package:hostel_management/features/tenant/domain/entities/tenant_entity.dart';
 import 'package:hostel_management/features/tenant/domain/entities/tenant_status.dart';
 import 'package:hostel_management/features/tenant/presentation/cubit/tenant_cubit.dart';
 import 'package:hostel_management/features/tenant/presentation/cubit/tenant_state.dart';
+import 'package:hostel_management/features/tenant/presentation/models/tenant_view_model.dart';
 import 'package:hostel_management/features/tenant/presentation/pages/tenant_management_page.dart';
 import 'package:hostel_management/core/widgets/app_loading_indicator.dart';
 
-// Fake implementations for tests
 class FakeTenantCubit extends Cubit<TenantState> implements TenantCubit {
   FakeTenantCubit(super.initialState);
 
   @override
   Future<void> loadTenants() async {}
+
   @override
-  Future<void> search(String query) async {
-    // Basic fake search
-    final filtered = state.tenants.where((t) => t.fullName.contains(query)).toList();
-    emit(state.copyWith(filteredTenants: filtered));
+  void search(String query) {
+    final filtered = state.tenants
+        .where((t) => t.fullName.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    final filteredVMs = state.viewModels
+        .where((vm) =>
+            vm.tenant.fullName.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    emit(state.copyWith(
+      searchQuery: query,
+      filteredTenants: filtered,
+      filteredViewModels: filteredVMs,
+    ));
   }
-  @override
-  Future<void> createTenant(TenantEntity tenant) async {}
-  @override
-  Future<void> updateTenant(TenantEntity tenant) async {}
-  @override
-  Future<void> deleteTenant(int tenantId, {required int bedId}) async {}
-  @override
-  Future<void> checkOutTenant(int tenantId, {required int bedId}) async {}
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
+  void setSearchActive(bool active) {
+    emit(state.copyWith(isSearchActive: active));
+  }
 
-class FakeRoomCubit extends Cubit<RoomState> implements RoomCubit {
-  FakeRoomCubit(super.initialState);
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
   late FakeTenantCubit tenantCubit;
-  late FakeRoomCubit roomCubit;
 
   final testTenant = TenantEntity(
     id: 1,
@@ -57,21 +55,23 @@ void main() {
     updatedAt: DateTime.now(),
   );
 
+  final testViewModel = TenantViewModel(
+    tenant: testTenant,
+    roomName: 'Room 101',
+    bedName: 'Bed B1',
+  );
+
   Widget createWidgetUnderTest() {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<TenantCubit>.value(value: tenantCubit),
-        BlocProvider<RoomCubit>.value(value: roomCubit),
-      ],
-      child: MaterialApp(
-        home: const TenantManagementPage(),
+    return BlocProvider<TenantCubit>.value(
+      value: tenantCubit,
+      child: const MaterialApp(
+        home: TenantManagementPage(),
       ),
     );
   }
 
   setUp(() {
     tenantCubit = FakeTenantCubit(const TenantState());
-    roomCubit = FakeRoomCubit(const RoomState());
   });
 
   testWidgets('shows loading indicator when loading', (tester) async {
@@ -86,30 +86,36 @@ void main() {
     expect(find.text('No tenants yet'), findsOneWidget);
   });
 
-  testWidgets('displays tenant in list', (tester) async {
+  testWidgets('displays tenant from viewModel', (tester) async {
     tenantCubit.emit(TenantState(
       status: TenantOperationStatus.loaded,
       tenants: [testTenant],
       filteredTenants: [testTenant],
+      viewModels: [testViewModel],
+      filteredViewModels: [testViewModel],
     ));
     await tester.pumpWidget(createWidgetUnderTest());
     expect(find.text('John Doe'), findsOneWidget);
     expect(find.text('1234567890'), findsOneWidget);
+    // Resolved business values — no raw IDs shown
+    expect(find.text('Room 101'), findsOneWidget);
+    expect(find.text('Bed B1'), findsOneWidget);
   });
 
-  testWidgets('search filters list', (tester) async {
+  testWidgets('search filters list via cubit (no setState)', (tester) async {
     tenantCubit.emit(TenantState(
       status: TenantOperationStatus.loaded,
       tenants: [testTenant],
       filteredTenants: [testTenant],
+      viewModels: [testViewModel],
+      filteredViewModels: [testViewModel],
     ));
     await tester.pumpWidget(createWidgetUnderTest());
 
-    // Tap search icon
+    // Tap search icon — calls setSearchActive(true) on cubit, no setState
     await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
 
-    // Type query
     await tester.enterText(find.byType(TextField), 'John');
     await tester.pumpAndSettle();
 

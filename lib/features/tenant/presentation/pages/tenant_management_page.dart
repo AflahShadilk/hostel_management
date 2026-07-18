@@ -1,5 +1,3 @@
-// ignore_for_file: unused_local_variable
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,12 +8,17 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
-import '../../../room/presentation/cubit/room_cubit.dart';
 import '../../domain/entities/tenant_entity.dart';
 import '../cubit/tenant_cubit.dart';
 import '../cubit/tenant_state.dart';
+import '../models/tenant_view_model.dart';
 import '../widgets/tenant_card.dart';
 
+/// Tenant list page.
+///
+/// No setState() calls. Search active/inactive state is managed by [TenantCubit].
+/// Room and bed names are resolved by [TenantCubit] at load time and exposed
+/// as [TenantViewModel] objects — widgets only render them.
 class TenantManagementPage extends StatefulWidget {
   const TenantManagementPage({super.key});
 
@@ -25,7 +28,6 @@ class TenantManagementPage extends StatefulWidget {
 
 class _TenantManagementPageState extends State<TenantManagementPage> {
   final _searchController = TextEditingController();
-  bool _isSearching = false;
   bool _loadTriggered = false;
 
   @override
@@ -65,7 +67,18 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
     });
   }
 
-  Future<void> _confirmDelete(BuildContext context, TenantEntity tenant) async {
+  void _navigateToTransferTenant(BuildContext context, TenantEntity tenant) {
+    context.pushNamed(
+      AppRoutes.transferTenantName,
+      pathParameters: {'tenantId': tenant.id!.toString()},
+      extra: tenant,
+    ).then((changed) {
+      if (changed == true && mounted) _triggerLoad();
+    });
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, TenantEntity tenant) async {
     final tenantCubit = context.read<TenantCubit>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -99,18 +112,6 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
     return 1;
   }
 
-  /// Resolves room and bed strings from the RoomCubit state.
-  _ResolvedBed _resolveBed(BuildContext context, int bedId) {
-    final rooms = context.read<RoomCubit>().state.rooms;
-    for (final room in rooms) {
-      // NOTE: RoomEntity does not contain its beds in this architecture.
-      // We will need to query the BedRepository directly if we need the bed number.
-      // However, we don't want to do that synchronously in build.
-      // For now, we will return the bed ID.
-    }
-    return _ResolvedBed('Unknown', 'ID: $bedId');
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<TenantCubit, TenantState>(
@@ -127,10 +128,12 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
         }
       },
       builder: (context, state) {
+        final isSearchActive = state.isSearchActive;
+
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: _isSearching
+            title: isSearchActive
                 ? TextField(
                     controller: _searchController,
                     autofocus: true,
@@ -149,16 +152,15 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
             elevation: 0,
             actions: [
               IconButton(
-                icon: Icon(_isSearching ? Icons.close : Icons.search),
-                tooltip: _isSearching ? 'Close search' : 'Search tenants',
+                icon: Icon(isSearchActive ? Icons.close : Icons.search),
+                tooltip: isSearchActive ? 'Close search' : 'Search tenants',
                 onPressed: () {
-                  setState(() {
-                    _isSearching = !_isSearching;
-                    if (!_isSearching) {
-                      _searchController.clear();
-                      context.read<TenantCubit>().search('');
-                    }
-                  });
+                  final cubit = context.read<TenantCubit>();
+                  if (isSearchActive) {
+                    _searchController.clear();
+                    cubit.search('');
+                  }
+                  cubit.setSearchActive(!isSearchActive);
                 },
               ),
             ],
@@ -176,12 +178,12 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
 
   Widget _buildBody(BuildContext context, TenantState state) {
     if (state.status == TenantOperationStatus.loading &&
-        state.tenants.isEmpty) {
+        state.viewModels.isEmpty) {
       return const Center(child: AppLoadingIndicator());
     }
 
     if (state.status == TenantOperationStatus.failure &&
-        state.tenants.isEmpty) {
+        state.viewModels.isEmpty) {
       return AppEmptyState(
         icon: Icons.error_outline,
         title: 'Unable to load tenants',
@@ -193,7 +195,7 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
       );
     }
 
-    if (state.tenants.isEmpty) {
+    if (state.viewModels.isEmpty) {
       return AppEmptyState(
         icon: Icons.people_outline,
         title: 'No tenants yet',
@@ -206,10 +208,10 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
       );
     }
 
-    final displayTenants =
-        _isSearching ? state.filteredTenants : state.tenants;
+    final displayVMs =
+        state.isSearchActive ? state.filteredViewModels : state.viewModels;
 
-    if (displayTenants.isEmpty && _isSearching) {
+    if (displayVMs.isEmpty && state.isSearchActive) {
       return AppEmptyState(
         icon: Icons.search_off,
         title: 'No results found',
@@ -217,11 +219,9 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
         action: AppButton(
           label: 'Clear Search',
           onPressed: () {
-            setState(() {
-              _isSearching = false;
-              _searchController.clear();
-              context.read<TenantCubit>().search('');
-            });
+            _searchController.clear();
+            context.read<TenantCubit>().search('');
+            context.read<TenantCubit>().setSearchActive(false);
           },
         ),
       );
@@ -240,35 +240,35 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
             await context.read<TenantCubit>().loadTenants();
           },
           child: columns == 1
-              ? _buildList(context, displayTenants, isMutating)
-              : _buildGrid(context, displayTenants, isMutating, columns),
+              ? _buildList(context, displayVMs, isMutating)
+              : _buildGrid(context, displayVMs, isMutating, columns),
         );
       },
     );
   }
 
-  Widget _buildList(
-      BuildContext context, List<TenantEntity> tenants, bool isMutating) {
+  Widget _buildList(BuildContext context, List<TenantViewModel> viewModels,
+      bool isMutating) {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: tenants.length,
+      itemCount: viewModels.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
       itemBuilder: (context, index) {
-        final tenant = tenants[index];
-        final resolved = _resolveBed(context, tenant.bedId);
+        final vm = viewModels[index];
         return TenantCard(
-          tenant: tenant,
-          roomLabel: resolved.roomName,
-          bedLabel: resolved.bedName,
+          tenant: vm.tenant,
+          roomLabel: vm.roomName,
+          bedLabel: vm.bedName,
           actionsEnabled: !isMutating,
-          onEdit: () => _navigateToEditTenant(context, tenant),
-          onDelete: () => _confirmDelete(context, tenant),
+          onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
+          onEdit: () => _navigateToEditTenant(context, vm.tenant),
+          onDelete: () => _confirmDelete(context, vm.tenant),
         );
       },
     );
   }
 
-  Widget _buildGrid(BuildContext context, List<TenantEntity> tenants,
+  Widget _buildGrid(BuildContext context, List<TenantViewModel> viewModels,
       bool isMutating, int columns) {
     return GridView.builder(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -278,25 +278,19 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
         mainAxisSpacing: AppSpacing.md,
         childAspectRatio: 1.2,
       ),
-      itemCount: tenants.length,
+      itemCount: viewModels.length,
       itemBuilder: (context, index) {
-        final tenant = tenants[index];
-        final resolved = _resolveBed(context, tenant.bedId);
+        final vm = viewModels[index];
         return TenantCard(
-          tenant: tenant,
-          roomLabel: resolved.roomName,
-          bedLabel: resolved.bedName,
+          tenant: vm.tenant,
+          roomLabel: vm.roomName,
+          bedLabel: vm.bedName,
           actionsEnabled: !isMutating,
-          onEdit: () => _navigateToEditTenant(context, tenant),
-          onDelete: () => _confirmDelete(context, tenant),
+          onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
+          onEdit: () => _navigateToEditTenant(context, vm.tenant),
+          onDelete: () => _confirmDelete(context, vm.tenant),
         );
       },
     );
   }
-}
-
-class _ResolvedBed {
-  final String roomName;
-  final String bedName;
-  const _ResolvedBed(this.roomName, this.bedName);
 }

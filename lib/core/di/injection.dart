@@ -31,6 +31,7 @@ import '../../features/tenant/data/repositories/tenant_repository_impl.dart';
 import '../../features/tenant/domain/repositories/tenant_management_repository.dart';
 import '../../features/tenant/data/repositories/tenant_management_repository_impl.dart';
 import '../../features/tenant/presentation/cubit/tenant_cubit.dart';
+import '../../features/tenant/presentation/cubit/bed_selection_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -129,6 +130,15 @@ Future<void> configureDependencies() async {
     () => TenantCubit(
       getIt<TenantRepository>(),
       getIt<TenantManagementRepository>(),
+      getIt<RoomRepository>(),
+      getIt<BedRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<BedSelectionCubit>(
+    () => BedSelectionCubit(
+      getIt<RoomRepository>(),
+      getIt<BedRepository>(),
     ),
   );
 }

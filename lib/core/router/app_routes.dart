@@ -43,4 +43,7 @@ abstract final class AppRoutes {
 
   static const String editTenantName = 'editTenant';
   static const String editTenantPath = ':tenantId/edit';
+
+  static const String transferTenantName = 'transferTenant';
+  static const String transferTenantPath = ':tenantId/transfer';
 }

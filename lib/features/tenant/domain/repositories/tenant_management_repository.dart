@@ -35,4 +35,18 @@ abstract interface class TenantManagementRepository {
   /// 2. Updates BedStatus -> vacant.
   /// 3. Recalculates RoomStatus.
   Future<TenantEntity> checkOutTenant(int tenantId, {required int bedId});
+
+  /// Transfers a tenant from one bed to another.
+  ///
+  /// Transaction flow:
+  /// 1. Validates newBed exists and is vacant.
+  /// 2. Updates oldBed Status -> vacant.
+  /// 3. Updates newBed Status -> occupied.
+  /// 4. Updates tenant's bedId.
+  /// 5. Recalculates both old and new RoomStatus.
+  Future<TenantEntity> transferTenant(
+    int tenantId, {
+    required int oldBedId,
+    required int newBedId,
+  });
 }

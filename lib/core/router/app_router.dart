@@ -27,6 +27,7 @@ import '../../features/tenant/presentation/cubit/tenant_cubit.dart';
 import '../../features/tenant/presentation/pages/add_tenant_page.dart';
 import '../../features/tenant/presentation/pages/edit_tenant_page.dart';
 import '../../features/tenant/presentation/pages/tenant_management_page.dart';
+import '../../features/tenant/presentation/pages/transfer_tenant_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -163,6 +164,14 @@ abstract final class AppRouter {
                         builder: (context, state) {
                           final tenant = state.extra as TenantEntity?;
                           return EditTenantPage(tenant: tenant);
+                        },
+                      ),
+                      GoRoute(
+                        name: AppRoutes.transferTenantName,
+                        path: AppRoutes.transferTenantPath,
+                        builder: (context, state) {
+                          final tenant = state.extra as TenantEntity?;
+                          return TransferTenantPage(tenant: tenant);
                         },
                       ),
                     ],
