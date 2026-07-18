@@ -11,6 +11,9 @@ import '../../features/auth/data/services/auth_security_service_impl.dart';
 import '../../features/auth/domain/services/auth_session_service.dart';
 import '../../features/auth/data/services/auth_session_service_impl.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../features/hostel/domain/repositories/hostel_repository.dart';
+import '../../features/hostel/data/repositories/hostel_repository_impl.dart';
+import '../../features/hostel/presentation/cubit/hostel_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -55,5 +58,13 @@ Future<void> configureDependencies() async {
       getIt<AuthSecurityService>(),
       getIt<AuthSessionService>(),
     ),
+  );
+
+  getIt.registerLazySingleton<HostelRepository>(
+    () => HostelRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  getIt.registerFactory<HostelCubit>(
+    () => HostelCubit(getIt<HostelRepository>()),
   );
 }

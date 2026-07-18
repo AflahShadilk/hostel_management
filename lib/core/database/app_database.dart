@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'database_constants.dart';
 import '../../features/auth/data/datasources/auth_local_schema.dart';
+import '../../features/hostel/data/datasources/hostel_local_schema.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -44,6 +45,9 @@ class AppDatabase {
     // version 1, any existing local development database created prior to this
     // addition must be cleared (uninstall/reinstall app) to trigger onCreate.
     await AuthLocalSchema.createTables(db);
+
+    // hostels references users(id) so must be created after users.
+    await HostelLocalSchema.createTables(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
