@@ -7,6 +7,7 @@ import '../extensions/room_presentation_extensions.dart';
 
 class RoomCard extends StatelessWidget {
   final RoomEntity room;
+  final VoidCallback? onManageBeds;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final bool actionsEnabled;
@@ -14,6 +15,7 @@ class RoomCard extends StatelessWidget {
   const RoomCard({
     super.key,
     required this.room,
+    this.onManageBeds,
     this.onEdit,
     this.onDelete,
     this.actionsEnabled = true,
@@ -91,8 +93,22 @@ class RoomCard extends StatelessWidget {
 
             // Action row
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: actionsEnabled ? onManageBeds : null,
+                      icon:
+                          const Icon(Icons.manage_accounts_outlined, size: 18),
+                      label: const Text('Manage Beds'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   tooltip: 'Edit Room',

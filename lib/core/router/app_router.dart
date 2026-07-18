@@ -18,6 +18,8 @@ import '../../features/room/presentation/cubit/room_cubit.dart';
 import '../../features/room/presentation/pages/room_management_page.dart';
 import '../../features/room/presentation/pages/add_room_page.dart';
 import '../../features/room/presentation/pages/edit_room_page.dart';
+import '../../features/room/presentation/pages/bed_management_page.dart';
+import '../../features/room/presentation/cubit/bed_cubit.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -93,6 +95,18 @@ abstract final class AppRouter {
                 builder: (context, state) {
                   final room = state.extra as RoomEntity?;
                   return EditRoomPage(room: room);
+                },
+              ),
+              GoRoute(
+                name: AppRoutes.bedManagementName,
+                path: AppRoutes.bedManagementPath,
+                builder: (context, state) {
+                  final roomIdStr = state.pathParameters['roomId'] ?? '';
+                  final room = state.extra as RoomEntity?;
+                  return BlocProvider(
+                    create: (_) => getIt<BedCubit>(),
+                    child: BedManagementPage(roomIdStr: roomIdStr, room: room),
+                  );
                 },
               ),
             ],

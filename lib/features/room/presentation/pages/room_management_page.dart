@@ -63,6 +63,19 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
     );
   }
 
+  Future<void> _navigateToManageBeds(
+      BuildContext context, RoomEntity room) async {
+    final changed = await context.pushNamed<bool>(
+      AppRoutes.bedManagementName,
+      pathParameters: {'roomId': room.id!.toString()},
+      extra: room,
+    );
+
+    if (changed == true && mounted) {
+      _triggerLoad();
+    }
+  }
+
   Future<void> _confirmDelete(BuildContext context, RoomEntity room) async {
     final roomCubit = context.read<RoomCubit>();
     final confirmed = await showDialog<bool>(
@@ -250,6 +263,7 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
         return RoomCard(
           room: room,
           actionsEnabled: !isMutating,
+          onManageBeds: () => _navigateToManageBeds(context, room),
           onEdit: () => _navigateToEditRoom(context, room),
           onDelete: () => _confirmDelete(context, room),
         );
@@ -274,6 +288,7 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
         return RoomCard(
           room: room,
           actionsEnabled: !isMutating,
+          onManageBeds: () => _navigateToManageBeds(context, room),
           onEdit: () => _navigateToEditRoom(context, room),
           onDelete: () => _confirmDelete(context, room),
         );

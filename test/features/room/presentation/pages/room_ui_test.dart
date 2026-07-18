@@ -1,3 +1,5 @@
+// ignore_for_file: use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,7 +79,9 @@ class FakeRoomCubit extends Cubit<RoomState> implements RoomCubit {
   void simulateFailure(String msg) {
     // ignore: invalid_use_of_visible_for_testing_member
     super.emit(RoomState(
-        status: RoomOperationStatus.failure, errorMessage: msg, rooms: const []));
+        status: RoomOperationStatus.failure,
+        errorMessage: msg,
+        rooms: const []));
   }
 
   void fakeLoadRooms(int hostelId) {
