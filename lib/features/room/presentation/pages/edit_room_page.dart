@@ -136,7 +136,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
         listenWhen: (prev, curr) => prev.status != curr.status,
         listener: (context, state) {
           if (state.status == RoomOperationStatus.updated) {
-            if (context.canPop()) context.pop();
+            if (context.canPop()) context.pop(true);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Room updated successfully.')),
             );

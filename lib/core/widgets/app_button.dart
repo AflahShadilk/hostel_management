@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_button_loading.dart';
+
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -23,13 +25,8 @@ class AppButton extends StatelessWidget {
       // primary background colour is preserved around the progress indicator.
       onPressed: isLoading ? () {} : onPressed,
       child: isLoading
-          ? SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
+          ? AppButtonLoading(
+              color: Theme.of(context).colorScheme.onPrimary,
             )
           : _buildLabel(),
     );

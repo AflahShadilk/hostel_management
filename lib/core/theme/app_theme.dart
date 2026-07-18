@@ -35,13 +35,15 @@ abstract final class AppTheme {
         bodySmall: AppTextStyles.bodySmall,
         labelLarge: AppTextStyles.labelLarge,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.titleLarge,
+        titleTextStyle: AppTextStyles.titleLarge.copyWith(
+          color: AppColors.textPrimary,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

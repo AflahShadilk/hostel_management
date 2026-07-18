@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/di/injection.dart';
+import '../../core/presentation/main_shell_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'app_routes.dart';
@@ -21,6 +22,11 @@ import '../../features/room/presentation/pages/add_room_page.dart';
 import '../../features/room/presentation/pages/edit_room_page.dart';
 import '../../features/room/presentation/pages/bed_management_page.dart';
 import '../../features/room/presentation/cubit/bed_cubit.dart';
+import '../../features/tenant/domain/entities/tenant_entity.dart';
+import '../../features/tenant/presentation/cubit/tenant_cubit.dart';
+import '../../features/tenant/presentation/pages/add_tenant_page.dart';
+import '../../features/tenant/presentation/pages/edit_tenant_page.dart';
+import '../../features/tenant/presentation/pages/tenant_management_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -62,62 +68,113 @@ abstract final class AppRouter {
         path: AppRoutes.hostelSetupPath,
         builder: (context, state) => const HostelSetupPage(),
       ),
-      GoRoute(
-        name: AppRoutes.homeName,
-        path: AppRoutes.homePath,
-        builder: (context, state) => BlocProvider(
-          create: (_) => getIt<DashboardCubit>(),
-          child: const DashboardPage(),
-        ),
-      ),
-
       // -----------------------------------------------------------------------
-      // Room Management — RoomCubit is scoped to this route shell so it
-      // persists across Room List → Add Room → Edit Room → Room List transitions.
+      // Main Application Shell
       // -----------------------------------------------------------------------
-      ShellRoute(
-        builder: (context, state, child) {
-          return BlocProvider<RoomCubit>(
-            create: (_) => getIt<RoomCubit>(),
-            child: child,
-          );
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainShellPage(navigationShell: navigationShell);
         },
-        routes: [
-          GoRoute(
-            name: AppRoutes.roomManagementName,
-            path: AppRoutes.roomManagementPath,
-            builder: (context, state) => const RoomManagementPage(),
+        branches: [
+          // Branch 0: Dashboard
+          StatefulShellBranch(
             routes: [
               GoRoute(
-                name: AppRoutes.addRoomName,
-                path: AppRoutes.addRoomPath,
-                builder: (context, state) => const AddRoomPage(),
+                name: AppRoutes.homeName,
+                path: AppRoutes.homePath,
+                builder: (context, state) => BlocProvider(
+                  create: (_) => getIt<DashboardCubit>(),
+                  child: const DashboardPage(),
+                ),
               ),
-              GoRoute(
-                name: AppRoutes.editRoomName,
-                path: AppRoutes.editRoomPath,
-                builder: (context, state) {
-                  final room = state.extra as RoomEntity?;
-                  return EditRoomPage(room: room);
-                },
-              ),
-              GoRoute(
-                name: AppRoutes.bedManagementName,
-                path: AppRoutes.bedManagementPath,
-                builder: (context, state) {
-                  final roomIdStr = state.pathParameters['roomId'] ?? '';
-                  final room = state.extra as RoomEntity?;
-                  return BlocProvider(
-                    create: (_) => getIt<BedCubit>(),
-                    child: BedManagementPage(roomIdStr: roomIdStr, room: room),
+            ],
+          ),
+          // Branch 1: Room Management
+          StatefulShellBranch(
+            routes: [
+              ShellRoute(
+                builder: (context, state, child) {
+                  return BlocProvider<RoomCubit>(
+                    create: (_) => getIt<RoomCubit>(),
+                    child: child,
                   );
                 },
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.roomManagementName,
+                    path: AppRoutes.roomManagementPath,
+                    builder: (context, state) => const RoomManagementPage(),
+                    routes: [
+                      GoRoute(
+                        name: AppRoutes.addRoomName,
+                        path: AppRoutes.addRoomPath,
+                        builder: (context, state) => const AddRoomPage(),
+                      ),
+                      GoRoute(
+                        name: AppRoutes.editRoomName,
+                        path: AppRoutes.editRoomPath,
+                        builder: (context, state) {
+                          final room = state.extra as RoomEntity?;
+                          return EditRoomPage(room: room);
+                        },
+                      ),
+                      GoRoute(
+                        name: AppRoutes.bedManagementName,
+                        path: AppRoutes.bedManagementPath,
+                        builder: (context, state) {
+                          final roomIdStr = state.pathParameters['roomId'] ?? '';
+                          final room = state.extra as RoomEntity?;
+                          return BlocProvider(
+                            create: (_) => getIt<BedCubit>(),
+                            child: BedManagementPage(roomIdStr: roomIdStr, room: room),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 2: Tenant Management
+          StatefulShellBranch(
+            routes: [
+              ShellRoute(
+                builder: (context, state, child) {
+                  return BlocProvider<TenantCubit>(
+                    create: (_) => getIt<TenantCubit>(),
+                    child: child,
+                  );
+                },
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.tenantManagementName,
+                    path: AppRoutes.tenantManagementPath,
+                    builder: (context, state) => const TenantManagementPage(),
+                    routes: [
+                      GoRoute(
+                        name: AppRoutes.addTenantName,
+                        path: AppRoutes.addTenantPath,
+                        builder: (context, state) => const AddTenantPage(),
+                      ),
+                      GoRoute(
+                        name: AppRoutes.editTenantName,
+                        path: AppRoutes.editTenantPath,
+                        builder: (context, state) {
+                          final tenant = state.extra as TenantEntity?;
+                          return EditTenantPage(tenant: tenant);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
         ],
       ),
     ],
+
   );
 }
 

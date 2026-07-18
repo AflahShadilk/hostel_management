@@ -52,7 +52,9 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
   int? get _hostelId => context.read<HostelCubit>().state.hostel?.id;
 
   void _navigateToAddRoom(BuildContext context) {
-    context.pushNamed(AppRoutes.addRoomName);
+    context.pushNamed(AppRoutes.addRoomName).then((changed) {
+      if (changed == true && mounted) _triggerLoad();
+    });
   }
 
   void _navigateToEditRoom(BuildContext context, RoomEntity room) {
@@ -60,7 +62,9 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
       AppRoutes.editRoomName,
       pathParameters: {'roomId': room.id!.toString()},
       extra: room,
-    );
+    ).then((changed) {
+      if (changed == true && mounted) _triggerLoad();
+    });
   }
 
   Future<void> _navigateToManageBeds(

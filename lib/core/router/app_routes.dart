@@ -34,4 +34,13 @@ abstract final class AppRoutes {
 
   static const String bedManagementName = 'bedManagement';
   static const String bedManagementPath = ':roomId/beds';
+
+  static const String tenantManagementName = 'tenantManagement';
+  static const String tenantManagementPath = '/tenants';
+
+  static const String addTenantName = 'addTenant';
+  static const String addTenantPath = 'add';
+
+  static const String editTenantName = 'editTenant';
+  static const String editTenantPath = ':tenantId/edit';
 }

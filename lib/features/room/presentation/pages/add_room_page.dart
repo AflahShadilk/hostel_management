@@ -86,7 +86,7 @@ class _AddRoomPageState extends State<AddRoomPage> {
         listenWhen: (prev, curr) => prev.status != curr.status,
         listener: (context, state) {
           if (state.status == RoomOperationStatus.created) {
-            if (context.canPop()) context.pop();
+            if (context.canPop()) context.pop(true);
           } else if (state.status == RoomOperationStatus.failure &&
               state.errorMessage != null &&
               _submitted) {

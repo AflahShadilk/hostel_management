@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
@@ -48,13 +47,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  Future<void> _navigateManageRooms() async {
-    // Wait for the room management page to pop
-    await context.pushNamed(AppRoutes.roomManagementName);
-    // Refresh dashboard stats when returning
-    if (mounted) {
-      _refresh();
-    }
+  void _navigateManageRooms() {
+    StatefulNavigationShell.of(context).goBranch(1);
   }
 
   @override
@@ -229,6 +223,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'Manage Rooms',
                       description: 'Add, edit, and manage room capacity.',
                       onTap: _navigateManageRooms,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DashboardQuickActionCard(
+                      icon: Icons.people,
+                      title: 'Manage Tenants',
+                      description: 'Add, edit, and manage tenants.',
+                      onTap: () {
+                        StatefulNavigationShell.of(context).goBranch(2);
+                      },
                     ),
                     const SizedBox(height: AppSpacing.xl),
                   ],
