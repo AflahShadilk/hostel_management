@@ -14,7 +14,11 @@ import 'package:hostel_management/features/hostel/domain/entities/hostel_entity.
 import 'package:hostel_management/features/hostel/domain/repositories/hostel_repository.dart';
 import 'package:hostel_management/features/hostel/presentation/cubit/hostel_cubit.dart';
 import 'package:hostel_management/features/hostel/presentation/pages/hostel_setup_page.dart';
-import 'package:hostel_management/features/home/presentation/pages/home_page.dart';
+import 'package:hostel_management/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:hostel_management/features/dashboard/domain/entities/dashboard_summary_entity.dart';
+import 'package:hostel_management/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:hostel_management/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:get_it/get_it.dart';
 
 // Fake implementations to prevent hitting real database
 class FakeAuthRepository implements AuthRepository {
@@ -111,7 +115,28 @@ class FakeHostelRepository implements HostelRepository {
   Future<HostelEntity> updateHostel(HostelEntity hostel) async => hostel;
 }
 
+class FakeDashboardRepository implements DashboardRepository {
+  @override
+  Future<DashboardSummaryEntity> getSummary(int hostelId) async {
+    return const DashboardSummaryEntity(
+      totalRooms: 0,
+      vacantRooms: 0,
+      partiallyOccupiedRooms: 0,
+      occupiedRooms: 0,
+      inactiveRooms: 0,
+      totalBeds: 0,
+      vacantBeds: 0,
+      occupiedBeds: 0,
+      inactiveBeds: 0,
+    );
+  }
+}
+
 void main() {
+  setUpAll(() {
+    GetIt.I.registerFactory<DashboardCubit>(() => DashboardCubit(FakeDashboardRepository()));
+  });
+
   testWidgets(
       'App renders Splash and navigates through Sign Up, PIN, and Hostel Setup',
       (WidgetTester tester) async {
@@ -350,6 +375,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Managers go straight to home, bypassing HostelSetup check
-    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(DashboardPage), findsOneWidget);
   });
 }

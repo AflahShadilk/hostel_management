@@ -98,9 +98,9 @@ class _BedManagementPageState extends State<BedManagementPage> {
 
     if (confirmed == true && mounted) {
       context.read<BedCubit>().updateBedStatus(
-        bed: bed,
-        status: BedStatus.inactive,
-      );
+            bed: bed,
+            status: BedStatus.inactive,
+          );
     }
   }
 

@@ -23,6 +23,9 @@ import '../../features/room/domain/repositories/room_management_repository.dart'
 import '../../features/room/data/repositories/room_management_repository_impl.dart';
 import '../../features/room/presentation/cubit/room_cubit.dart';
 import '../../features/room/presentation/cubit/bed_cubit.dart';
+import '../../features/dashboard/domain/repositories/dashboard_repository.dart';
+import '../../features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import '../../features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -94,5 +97,13 @@ Future<void> configureDependencies() async {
 
   getIt.registerFactory<BedCubit>(
     () => BedCubit(getIt<BedRepository>(), getIt<RoomRepository>()),
+  );
+
+  getIt.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepositoryImpl(getIt<AppDatabase>()),
+  );
+
+  getIt.registerFactory<DashboardCubit>(
+    () => DashboardCubit(getIt<DashboardRepository>()),
   );
 }

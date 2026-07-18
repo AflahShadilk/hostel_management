@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/di/injection.dart';
-import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'app_routes.dart';
 
 import '../../features/auth/domain/entities/user_role.dart';
@@ -64,7 +65,10 @@ abstract final class AppRouter {
       GoRoute(
         name: AppRoutes.homeName,
         path: AppRoutes.homePath,
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) => BlocProvider(
+          create: (_) => getIt<DashboardCubit>(),
+          child: const DashboardPage(),
+        ),
       ),
 
       // -----------------------------------------------------------------------
