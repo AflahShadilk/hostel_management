@@ -18,6 +18,14 @@ import 'package:hostel_management/features/dashboard/domain/repositories/dashboa
 import 'package:hostel_management/features/dashboard/domain/entities/dashboard_summary_entity.dart';
 import 'package:hostel_management/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:hostel_management/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:hostel_management/features/room/domain/entities/room_entity.dart';
+import 'package:hostel_management/features/room/domain/entities/room_type.dart';
+import 'package:hostel_management/features/room/data/models/room_model.dart';
+import 'package:hostel_management/features/room/presentation/cubit/room_cubit.dart';
+import 'package:hostel_management/features/room/presentation/cubit/room_state.dart';
+import 'package:hostel_management/features/tenant/domain/entities/tenant_entity.dart';
+import 'package:hostel_management/features/tenant/presentation/cubit/tenant_cubit.dart';
+import 'package:hostel_management/features/tenant/presentation/cubit/tenant_state.dart';
 import 'package:get_it/get_it.dart';
 
 // Fake implementations to prevent hitting real database
@@ -119,23 +127,50 @@ class FakeDashboardRepository implements DashboardRepository {
   @override
   Future<DashboardSummaryEntity> getSummary(int hostelId) async {
     return const DashboardSummaryEntity(
-      totalRooms: 0,
-      vacantRooms: 0,
+      totalRooms: 10,
+      vacantRooms: 5,
       partiallyOccupiedRooms: 0,
-      occupiedRooms: 0,
+      occupiedRooms: 5,
       inactiveRooms: 0,
-      totalBeds: 0,
-      vacantBeds: 0,
-      occupiedBeds: 0,
+      totalBeds: 20,
+      vacantBeds: 10,
+      occupiedBeds: 10,
       inactiveBeds: 0,
+      totalTenants: 10,
+      activeTenants: 10,
+      checkedOutTenants: 0,
     );
   }
+}
+
+class FakeTenantCubit extends Cubit<TenantState> implements TenantCubit {
+  FakeTenantCubit(super.initialState);
+  @override void search(String query) {}
+  @override void setSearchActive(bool active) {}
+  @override Future<void> loadTenants() async {}
+  @override Future<void> createTenant(TenantEntity tenant) async {}
+  @override Future<void> updateTenant(TenantEntity tenant) async {}
+  @override Future<void> deleteTenant(int tenantId, {required int bedId}) async {}
+  @override Future<void> checkOutTenant(int tenantId, {required int bedId}) async {}
+  @override Future<void> transferTenant(int tenantId, {required int oldBedId, required int newBedId}) async {}
+}
+
+class FakeRoomCubit extends Cubit<RoomState> implements RoomCubit {
+  FakeRoomCubit(super.initialState);
+  @override Future<void> loadRooms(int hostelId) async {}
+  @override Future<void> createRoom({required int hostelId, required String roomNumber, required String floor, required RoomType roomType, required int numberOfBeds, required double monthlyRent}) async {}
+  @override Future<void> updateRoom({required RoomEntity currentRoom, required String roomNumber, required String floor, required RoomType roomType, required int numberOfBeds, required double monthlyRent}) async {}
+  @override Future<void> deleteRoom(RoomEntity room) async {}
 }
 
 void main() {
   setUpAll(() {
     GetIt.I.registerFactory<DashboardCubit>(
         () => DashboardCubit(FakeDashboardRepository()));
+    GetIt.I.registerFactory<TenantCubit>(
+        () => FakeTenantCubit(const TenantState()));
+    GetIt.I.registerFactory<RoomCubit>(
+        () => FakeRoomCubit(const RoomState()));
   });
 
   testWidgets(

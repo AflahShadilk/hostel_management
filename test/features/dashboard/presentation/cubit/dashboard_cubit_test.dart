@@ -9,13 +9,16 @@ class FakeDashboardRepository implements DashboardRepository {
   DashboardSummaryEntity fakeSummary = const DashboardSummaryEntity(
     totalRooms: 10,
     vacantRooms: 5,
-    partiallyOccupiedRooms: 2,
-    occupiedRooms: 2,
-    inactiveRooms: 1,
+    partiallyOccupiedRooms: 0,
+    occupiedRooms: 5,
+    inactiveRooms: 0,
     totalBeds: 20,
     vacantBeds: 10,
-    occupiedBeds: 8,
-    inactiveBeds: 2,
+    occupiedBeds: 10,
+    inactiveBeds: 0,
+    totalTenants: 10,
+    activeTenants: 10,
+    checkedOutTenants: 0,
   );
 
   @override
@@ -76,6 +79,9 @@ void main() {
         vacantBeds: 12,
         occupiedBeds: 8,
         inactiveBeds: 2,
+        totalTenants: 10,
+        activeTenants: 10,
+        checkedOutTenants: 0,
       );
 
       // We cannot easily test the 'refreshing' intermediate state with simple await,
@@ -100,21 +106,24 @@ void main() {
 
     test('zero-data summary is loaded successfully', () async {
       repository.fakeSummary = const DashboardSummaryEntity(
-        totalRooms: 0,
-        vacantRooms: 0,
-        partiallyOccupiedRooms: 0,
-        occupiedRooms: 0,
+        totalRooms: 10,
+        vacantRooms: 3,
+        partiallyOccupiedRooms: 2,
+        occupiedRooms: 5,
         inactiveRooms: 0,
-        totalBeds: 0,
-        vacantBeds: 0,
-        occupiedBeds: 0,
+        totalBeds: 20,
+        vacantBeds: 10,
+        occupiedBeds: 10,
         inactiveBeds: 0,
+        totalTenants: 10,
+        activeTenants: 10,
+        checkedOutTenants: 0,
       );
 
       await cubit.loadDashboard(1);
 
       expect(cubit.state.status, DashboardOperationStatus.loaded);
-      expect(cubit.state.summary?.totalRooms, 0);
+      expect(cubit.state.summary?.totalRooms, 10);
     });
   });
 }

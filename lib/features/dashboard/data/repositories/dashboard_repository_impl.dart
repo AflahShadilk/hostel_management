@@ -41,8 +41,24 @@ class DashboardRepositoryImpl implements DashboardRepository {
       [hostelId],
     );
 
+    // Aggregate Tenants by joining with beds and rooms
+    final tenantResult = await db.rawQuery(
+      '''
+      SELECT 
+        COUNT(*) as totalTenants,
+        SUM(CASE WHEN tenants.status = 'active' THEN 1 ELSE 0 END) as activeTenants,
+        SUM(CASE WHEN tenants.status = 'checked_out' THEN 1 ELSE 0 END) as checkedOutTenants
+      FROM tenants
+      INNER JOIN beds ON tenants.bed_id = beds.id
+      INNER JOIN rooms ON beds.room_id = rooms.id
+      WHERE rooms.hostel_id = ?
+      ''',
+      [hostelId],
+    );
+
     final roomRow = roomResult.isNotEmpty ? roomResult.first : {};
     final bedRow = bedResult.isNotEmpty ? bedResult.first : {};
+    final tenantRow = tenantResult.isNotEmpty ? tenantResult.first : {};
 
     return DashboardSummaryEntity(
       totalRooms: (roomRow['totalRooms'] as num?)?.toInt() ?? 0,
@@ -55,6 +71,9 @@ class DashboardRepositoryImpl implements DashboardRepository {
       vacantBeds: (bedRow['vacantBeds'] as num?)?.toInt() ?? 0,
       occupiedBeds: (bedRow['occupiedBeds'] as num?)?.toInt() ?? 0,
       inactiveBeds: (bedRow['inactiveBeds'] as num?)?.toInt() ?? 0,
+      totalTenants: (tenantRow['totalTenants'] as num?)?.toInt() ?? 0,
+      activeTenants: (tenantRow['activeTenants'] as num?)?.toInt() ?? 0,
+      checkedOutTenants: (tenantRow['checkedOutTenants'] as num?)?.toInt() ?? 0,
     );
   }
 }

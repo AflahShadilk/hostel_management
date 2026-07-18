@@ -11,6 +11,8 @@ import '../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_operation_status.dart';
 import '../cubit/dashboard_state.dart';
+import '../../../tenant/presentation/cubit/tenant_cubit.dart';
+import '../../../tenant/presentation/cubit/tenant_state.dart';
 import '../widgets/dashboard_metric_card.dart';
 import '../widgets/dashboard_quick_action_card.dart';
 
@@ -92,19 +94,32 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           }
 
-          return BlocConsumer<DashboardCubit, DashboardState>(
-            listenWhen: (previous, current) =>
-                previous.status != DashboardOperationStatus.failure &&
-                current.status == DashboardOperationStatus.failure &&
-                current.summary != null,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.errorMessage!)),
-                );
-              }
-            },
-            builder: (context, state) {
+          return MultiBlocListener(
+            listeners: [
+              BlocListener<DashboardCubit, DashboardState>(
+                listenWhen: (previous, current) =>
+                    previous.status != DashboardOperationStatus.failure &&
+                    current.status == DashboardOperationStatus.failure &&
+                    current.summary != null,
+                listener: (context, state) {
+                  if (state.errorMessage != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.errorMessage!)),
+                    );
+                  }
+                },
+              ),
+              BlocListener<TenantCubit, TenantState>(
+                listenWhen: (previous, current) =>
+                    previous.status != TenantOperationStatus.loaded &&
+                    current.status == TenantOperationStatus.loaded,
+                listener: (context, state) {
+                  _refresh();
+                },
+              ),
+            ],
+            child: BlocBuilder<DashboardCubit, DashboardState>(
+              builder: (context, state) {
               if (state.status == DashboardOperationStatus.initial ||
                   (state.status == DashboardOperationStatus.loading &&
                       state.summary == null)) {
@@ -212,6 +227,47 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
+                      'Tenants Overview',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _buildMetricsGrid(
+                      context,
+                      cards: [
+                        DashboardMetricCard(
+                          icon: Icons.people,
+                          label: 'Total Tenants',
+                          value: summary.totalTenants.toString(),
+                          iconColor: AppColors.primary,
+                        ),
+                        DashboardMetricCard(
+                          icon: Icons.person_add_alt_1,
+                          label: 'Active Tenants',
+                          value: summary.activeTenants.toString(),
+                          iconColor: AppColors.success,
+                        ),
+                        DashboardMetricCard(
+                          icon: Icons.person_off,
+                          label: 'Checked-Out',
+                          value: summary.checkedOutTenants.toString(),
+                          iconColor: AppColors.textSecondary,
+                        ),
+                        DashboardMetricCard(
+                          icon: Icons.percent,
+                          label: 'Occupancy %',
+                          value: '${summary.occupancyPercentage.toStringAsFixed(0)}%',
+                          iconColor: summary.occupancyPercentage > 90
+                              ? AppColors.error
+                              : (summary.occupancyPercentage > 70
+                                  ? AppColors.warning
+                                  : AppColors.success),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text(
                       'Quick Actions',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -238,6 +294,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               );
             },
+          ),
           );
         },
       ),

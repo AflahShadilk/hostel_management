@@ -74,7 +74,14 @@ abstract final class AppRouter {
       // -----------------------------------------------------------------------
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return MainShellPage(navigationShell: navigationShell);
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => getIt<DashboardCubit>()),
+              BlocProvider(create: (_) => getIt<RoomCubit>()),
+              BlocProvider(create: (_) => getIt<TenantCubit>()),
+            ],
+            child: MainShellPage(navigationShell: navigationShell),
+          );
         },
         branches: [
           // Branch 0: Dashboard
@@ -83,10 +90,7 @@ abstract final class AppRouter {
               GoRoute(
                 name: AppRoutes.homeName,
                 path: AppRoutes.homePath,
-                builder: (context, state) => BlocProvider(
-                  create: (_) => getIt<DashboardCubit>(),
-                  child: const DashboardPage(),
-                ),
+                builder: (context, state) => const DashboardPage(),
               ),
             ],
           ),
@@ -95,10 +99,7 @@ abstract final class AppRouter {
             routes: [
               ShellRoute(
                 builder: (context, state, child) {
-                  return BlocProvider<RoomCubit>(
-                    create: (_) => getIt<RoomCubit>(),
-                    child: child,
-                  );
+                  return child;
                 },
                 routes: [
                   GoRoute(
@@ -142,10 +143,7 @@ abstract final class AppRouter {
             routes: [
               ShellRoute(
                 builder: (context, state, child) {
-                  return BlocProvider<TenantCubit>(
-                    create: (_) => getIt<TenantCubit>(),
-                    child: child,
-                  );
+                  return child;
                 },
                 routes: [
                   GoRoute(

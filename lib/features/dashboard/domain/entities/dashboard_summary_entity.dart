@@ -12,6 +12,15 @@ class DashboardSummaryEntity extends Equatable {
   final int occupiedBeds;
   final int inactiveBeds;
 
+  final int totalTenants;
+  final int activeTenants;
+  final int checkedOutTenants;
+
+  double get occupancyPercentage {
+    if (totalBeds == 0) return 0.0;
+    return (occupiedBeds / totalBeds) * 100;
+  }
+
   const DashboardSummaryEntity({
     required this.totalRooms,
     required this.vacantRooms,
@@ -22,6 +31,9 @@ class DashboardSummaryEntity extends Equatable {
     required this.vacantBeds,
     required this.occupiedBeds,
     required this.inactiveBeds,
+    required this.totalTenants,
+    required this.activeTenants,
+    required this.checkedOutTenants,
   });
 
   @override
@@ -35,5 +47,8 @@ class DashboardSummaryEntity extends Equatable {
         vacantBeds,
         occupiedBeds,
         inactiveBeds,
+        totalTenants,
+        activeTenants,
+        checkedOutTenants,
       ];
 }
