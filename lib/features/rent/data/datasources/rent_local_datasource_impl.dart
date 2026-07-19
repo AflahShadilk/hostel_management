@@ -1,0 +1,426 @@
+import 'package:sqflite/sqflite.dart';
+
+import '../../../../core/database/app_database.dart';
+import '../../domain/constants/rent_status_constants.dart';
+import '../models/checkout_settlement_model.dart';
+import '../models/damage_charge_model.dart';
+import '../models/deposit_model.dart';
+import '../models/payment_model.dart';
+import '../models/receipt_model.dart';
+import '../models/rent_record_model.dart';
+import '../models/stay_model.dart';
+import 'rent_local_datasource.dart';
+import 'rent_local_schema.dart';
+
+class RentLocalDataSourceImpl implements RentLocalDataSource {
+  final AppDatabase _appDatabase;
+
+  const RentLocalDataSourceImpl(this._appDatabase);
+
+  Future<T> _perform<T>(String operation, Future<T> Function() action) async {
+    try {
+      return await action();
+    } on DatabaseException catch (error) {
+      throw Exception('Database $operation failed: $error');
+    }
+  }
+
+  Future<void> _update(
+    String table,
+    int? id,
+    Map<String, dynamic> values,
+    String operation,
+  ) async {
+    final database = await _appDatabase.database;
+    await _perform(operation, () async {
+      final rowsAffected = await database.update(
+        table,
+        values,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (rowsAffected == 0) {
+        throw StateError('Database $operation failed: record not found.');
+      }
+    });
+  }
+
+  Future<void> _delete(String table, int id, String operation) async {
+    final database = await _appDatabase.database;
+    await _perform(
+      operation,
+      () => database.delete(table, where: 'id = ?', whereArgs: [id]),
+    );
+  }
+
+  @override
+  Future<StayModel> createStay(StayModel stay) async {
+    final database = await _appDatabase.database;
+    return _perform('create stay', () async {
+      final map = stay.toMap();
+      final id = await database.insert(RentLocalSchema.tableStays, map);
+      return StayModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<StayModel?> getStayById(int id) async {
+    final database = await _appDatabase.database;
+    return _perform('get stay', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableStays,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : StayModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<StayModel?> getActiveStayByTenantId(int tenantId) async {
+    final database = await _appDatabase.database;
+    return _perform('get active stay', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableStays,
+        where: 'tenant_id = ? AND status = ?',
+        whereArgs: [tenantId, StayStatus.active],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : StayModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<StayModel>> getAllStays() async {
+    final database = await _appDatabase.database;
+    return _perform('get all stays', () async {
+      final rows = await database.query(RentLocalSchema.tableStays);
+      return rows.map(StayModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<StayModel> updateStay(StayModel stay) async {
+    await _update(RentLocalSchema.tableStays, stay.id, stay.toMap(), 'update stay');
+    return stay;
+  }
+
+  @override
+  Future<void> deleteStay(int id) =>
+      _delete(RentLocalSchema.tableStays, id, 'delete stay');
+
+  @override
+  Future<RentRecordModel> createRentRecord(RentRecordModel rentRecord) async {
+    final database = await _appDatabase.database;
+    return _perform('create rent record', () async {
+      final map = rentRecord.toMap();
+      final id = await database.insert(RentLocalSchema.tableRentRecords, map);
+      return RentRecordModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<RentRecordModel?> getRentRecordById(int id) async {
+    final database = await _appDatabase.database;
+    return _perform('get rent record', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableRentRecords,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : RentRecordModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<RentRecordModel>> getRentRecordsByStayId(int stayId) async {
+    final database = await _appDatabase.database;
+    return _perform('get stay rent records', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableRentRecords,
+        where: 'stay_id = ?',
+        whereArgs: [stayId],
+      );
+      return rows.map(RentRecordModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<List<RentRecordModel>> getAllRentRecords() async {
+    final database = await _appDatabase.database;
+    return _perform('get all rent records', () async {
+      final rows = await database.query(RentLocalSchema.tableRentRecords);
+      return rows.map(RentRecordModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<RentRecordModel> updateRentRecord(RentRecordModel rentRecord) async {
+    await _update(
+      RentLocalSchema.tableRentRecords,
+      rentRecord.id,
+      rentRecord.toMap(),
+      'update rent record',
+    );
+    return rentRecord;
+  }
+
+  @override
+  Future<void> deleteRentRecord(int id) =>
+      _delete(RentLocalSchema.tableRentRecords, id, 'delete rent record');
+
+  @override
+  Future<PaymentModel> createPayment(PaymentModel payment) async {
+    final database = await _appDatabase.database;
+    return _perform('create payment', () async {
+      final map = payment.toMap();
+      final id = await database.insert(RentLocalSchema.tablePayments, map);
+      return PaymentModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<PaymentModel?> getPaymentById(int id) async {
+    final database = await _appDatabase.database;
+    return _perform('get payment', () async {
+      final rows = await database.query(
+        RentLocalSchema.tablePayments,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : PaymentModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<PaymentModel>> getPaymentsByRentRecordId(int rentRecordId) async {
+    final database = await _appDatabase.database;
+    return _perform('get rent record payments', () async {
+      final rows = await database.query(
+        RentLocalSchema.tablePayments,
+        where: 'rent_record_id = ?',
+        whereArgs: [rentRecordId],
+      );
+      return rows.map(PaymentModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<List<PaymentModel>> getAllPayments() async {
+    final database = await _appDatabase.database;
+    return _perform('get all payments', () async {
+      final rows = await database.query(RentLocalSchema.tablePayments);
+      return rows.map(PaymentModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<PaymentModel> updatePayment(PaymentModel payment) async {
+    await _update(RentLocalSchema.tablePayments, payment.id, payment.toMap(), 'update payment');
+    return payment;
+  }
+
+  @override
+  Future<void> deletePayment(int id) =>
+      _delete(RentLocalSchema.tablePayments, id, 'delete payment');
+
+  @override
+  Future<ReceiptModel> createReceipt(ReceiptModel receipt) async {
+    final database = await _appDatabase.database;
+    return _perform('create receipt', () async {
+      final map = receipt.toMap();
+      final id = await database.insert(RentLocalSchema.tableReceipts, map);
+      return ReceiptModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<ReceiptModel?> getReceiptByPaymentId(int paymentId) async {
+    final database = await _appDatabase.database;
+    return _perform('get receipt', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableReceipts,
+        where: 'payment_id = ?',
+        whereArgs: [paymentId],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : ReceiptModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<ReceiptModel>> getAllReceipts() async {
+    final database = await _appDatabase.database;
+    return _perform('get all receipts', () async {
+      final rows = await database.query(RentLocalSchema.tableReceipts);
+      return rows.map(ReceiptModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<ReceiptModel> updateReceipt(ReceiptModel receipt) async {
+    await _update(RentLocalSchema.tableReceipts, receipt.id, receipt.toMap(), 'update receipt');
+    return receipt;
+  }
+
+  @override
+  Future<void> deleteReceipt(int id) =>
+      _delete(RentLocalSchema.tableReceipts, id, 'delete receipt');
+
+  @override
+  Future<DepositModel> createDeposit(DepositModel deposit) async {
+    final database = await _appDatabase.database;
+    return _perform('create deposit', () async {
+      final map = deposit.toMap();
+      final id = await database.insert(RentLocalSchema.tableDeposits, map);
+      return DepositModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<DepositModel?> getDepositByStayId(int stayId) async {
+    final database = await _appDatabase.database;
+    return _perform('get deposit', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableDeposits,
+        where: 'stay_id = ?',
+        whereArgs: [stayId],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : DepositModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<DepositModel>> getAllDeposits() async {
+    final database = await _appDatabase.database;
+    return _perform('get all deposits', () async {
+      final rows = await database.query(RentLocalSchema.tableDeposits);
+      return rows.map(DepositModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<DepositModel> updateDeposit(DepositModel deposit) async {
+    await _update(RentLocalSchema.tableDeposits, deposit.id, deposit.toMap(), 'update deposit');
+    return deposit;
+  }
+
+  @override
+  Future<void> deleteDeposit(int id) =>
+      _delete(RentLocalSchema.tableDeposits, id, 'delete deposit');
+
+  @override
+  Future<DamageChargeModel> createDamageCharge(
+    DamageChargeModel damageCharge,
+  ) async {
+    final database = await _appDatabase.database;
+    return _perform('create damage charge', () async {
+      final map = damageCharge.toMap();
+      final id = await database.insert(RentLocalSchema.tableDamageCharges, map);
+      return DamageChargeModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<List<DamageChargeModel>> getDamageChargesByStayId(int stayId) async {
+    final database = await _appDatabase.database;
+    return _perform('get stay damage charges', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableDamageCharges,
+        where: 'stay_id = ?',
+        whereArgs: [stayId],
+      );
+      return rows.map(DamageChargeModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<List<DamageChargeModel>> getAllDamageCharges() async {
+    final database = await _appDatabase.database;
+    return _perform('get all damage charges', () async {
+      final rows = await database.query(RentLocalSchema.tableDamageCharges);
+      return rows.map(DamageChargeModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<DamageChargeModel> updateDamageCharge(
+    DamageChargeModel damageCharge,
+  ) async {
+    await _update(
+      RentLocalSchema.tableDamageCharges,
+      damageCharge.id,
+      damageCharge.toMap(),
+      'update damage charge',
+    );
+    return damageCharge;
+  }
+
+  @override
+  Future<void> deleteDamageCharge(int id) =>
+      _delete(RentLocalSchema.tableDamageCharges, id, 'delete damage charge');
+
+  @override
+  Future<CheckoutSettlementModel> createCheckoutSettlement(
+    CheckoutSettlementModel checkoutSettlement,
+  ) async {
+    final database = await _appDatabase.database;
+    return _perform('create checkout settlement', () async {
+      final map = checkoutSettlement.toMap();
+      final id = await database.insert(
+        RentLocalSchema.tableCheckoutSettlements,
+        map,
+      );
+      return CheckoutSettlementModel.fromMap(<String, dynamic>{...map, 'id': id});
+    });
+  }
+
+  @override
+  Future<CheckoutSettlementModel?> getCheckoutSettlementByStayId(
+    int stayId,
+  ) async {
+    final database = await _appDatabase.database;
+    return _perform('get checkout settlement', () async {
+      final rows = await database.query(
+        RentLocalSchema.tableCheckoutSettlements,
+        where: 'stay_id = ?',
+        whereArgs: [stayId],
+        limit: 1,
+      );
+      return rows.isEmpty ? null : CheckoutSettlementModel.fromMap(rows.first);
+    });
+  }
+
+  @override
+  Future<List<CheckoutSettlementModel>> getAllCheckoutSettlements() async {
+    final database = await _appDatabase.database;
+    return _perform('get all checkout settlements', () async {
+      final rows = await database.query(RentLocalSchema.tableCheckoutSettlements);
+      return rows.map(CheckoutSettlementModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<CheckoutSettlementModel> updateCheckoutSettlement(
+    CheckoutSettlementModel checkoutSettlement,
+  ) async {
+    await _update(
+      RentLocalSchema.tableCheckoutSettlements,
+      checkoutSettlement.id,
+      checkoutSettlement.toMap(),
+      'update checkout settlement',
+    );
+    return checkoutSettlement;
+  }
+
+  @override
+  Future<void> deleteCheckoutSettlement(int id) => _delete(
+        RentLocalSchema.tableCheckoutSettlements,
+        id,
+        'delete checkout settlement',
+      );
+}
