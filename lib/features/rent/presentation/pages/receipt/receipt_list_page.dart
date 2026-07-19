@@ -41,25 +41,13 @@ class _ReceiptListPageState extends State<ReceiptListPage> {
       appBar: AppBar(title: const Text('Receipts')),
       floatingActionButton: FloatingActionButton.extended(onPressed: () => context.pushNamed(AppRoutes.addReceiptName), icon: const Icon(Icons.add), label: const Text('Add Receipt')),
       body: BlocBuilder<ReceiptCubit, ReceiptState>(builder: (context, state) {
-        if (state is ReceiptInitial || state is ReceiptLoading) return const Center(child: AppLoadingIndicator());
-        if (state is ReceiptEmpty) return const AppEmptyState(icon: Icons.receipt_outlined, title: 'No receipts found');
-        if (state is ReceiptLoaded) return RefreshIndicator(
-          onRefresh: () => context.read<ReceiptCubit>().loadAllReceipts(),
-          child: LayoutBuilder(builder: (context, constraints) {
-            final receipts = state.receipts;
-            if (constraints.maxWidth < 800) return ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.md), itemCount: receipts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) => _ReceiptCard(receipt: receipts[index], date: _date),
-            );
-            return GridView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: AppSpacing.md, mainAxisSpacing: AppSpacing.md, childAspectRatio: 2.5),
-              itemCount: receipts.length,
-              itemBuilder: (context, index) => _ReceiptCard(receipt: receipts[index], date: _date),
-            );
-          }),
-        );
+        if (state is ReceiptInitial || state is ReceiptLoading) { return const Center(child: AppLoadingIndicator()); }
+        if (state is ReceiptEmpty) { return const AppEmptyState(icon: Icons.receipt_long_outlined, title: 'No receipts found'); }
+        if (state is ReceiptLoaded) { return RefreshIndicator(onRefresh: () => context.read<ReceiptCubit>().loadAllReceipts(), child: LayoutBuilder(builder: (context, constraints) {
+          final receipts = state.receipts;
+          if (constraints.maxWidth < 800) { return ListView.separated(padding: const EdgeInsets.all(AppSpacing.md), itemCount: receipts.length, separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm), itemBuilder: (context, index) => _ReceiptCard(receipt: receipts[index], date: _date)); }
+          return GridView.builder(padding: const EdgeInsets.all(AppSpacing.md), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: AppSpacing.md, mainAxisSpacing: AppSpacing.md, childAspectRatio: 3.5), itemCount: receipts.length, itemBuilder: (context, index) => _ReceiptCard(receipt: receipts[index], date: _date));
+        })); }
         return const SizedBox.shrink();
       }),
     ),

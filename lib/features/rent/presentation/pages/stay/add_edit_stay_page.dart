@@ -10,6 +10,9 @@ import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../cubit/stay/stay_cubit.dart';
 import '../../cubit/stay/stay_state.dart';
+import '../../cubit/ui/selected_date_cubit.dart';
+import '../../cubit/ui/selected_status_cubit.dart';
+import '../../cubit/ui/submitting_cubit.dart';
 
 class AddEditStayPage extends StatefulWidget {
   final StayEntity? stay;
@@ -27,10 +30,6 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
   late final TextEditingController _bedId;
   late final TextEditingController _monthlyRent;
   late final TextEditingController _dailyRate;
-  late DateTime _checkInDate;
-  DateTime? _expectedCheckoutDate;
-  late String _status;
-  bool _submitting = false;
 
   bool get _isEditing => widget.stay != null;
 
@@ -45,9 +44,6 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
       text: stay?.monthlyRentSnapshot.toString() ?? '',
     );
     _dailyRate = TextEditingController(text: stay?.dailyRate.toString() ?? '');
-    _checkInDate = stay?.checkInDate ?? DateTime.now();
-    _expectedCheckoutDate = stay?.expectedCheckoutDate;
-    _status = stay?.status ?? StayStatus.active;
   }
 
   @override
@@ -66,41 +62,49 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
         '${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 
-  Future<void> _pickDate({required bool expected}) async {
+  Future<void> _pickDate(BuildContext context,
+      {required bool expected}) async {
+    final checkInCubit = context.read<_CheckInDateCubit>();
+    final expectedCubit = context.read<_ExpectedCheckoutDateCubit>();
+    final initialDate = expected
+        ? (expectedCubit.state ?? checkInCubit.state)
+        : checkInCubit.state;
     final picked = await showDatePicker(
       context: context,
-      initialDate: expected ? (_expectedCheckoutDate ?? _checkInDate) : _checkInDate,
+      initialDate: initialDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked == null || !mounted) return;
-    setState(() {
-      if (expected) {
-        _expectedCheckoutDate = picked;
-      } else {
-        _checkInDate = picked;
-      }
-    });
+    if (expected) {
+      expectedCubit.pick(picked);
+    } else {
+      checkInCubit.pick(picked);
+    }
   }
 
-  void _submit() {
+  void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final now = DateTime.now();
+    final checkInDate = context.read<_CheckInDateCubit>().state;
+    final expectedCheckoutDate =
+        context.read<_ExpectedCheckoutDateCubit>().state;
+    final status = context.read<SelectedStatusCubit>().state;
     final stay = StayEntity(
       id: widget.stay?.id,
       tenantId: int.parse(_tenantId.text.trim()),
       roomId: int.parse(_roomId.text.trim()),
       bedId: int.parse(_bedId.text.trim()),
-      checkInDate: _checkInDate,
+      checkInDate: checkInDate,
       checkOutDate: widget.stay?.checkOutDate,
-      expectedCheckoutDate: _expectedCheckoutDate,
+      expectedCheckoutDate: expectedCheckoutDate,
       monthlyRentSnapshot: double.parse(_monthlyRent.text.trim()),
       dailyRate: double.parse(_dailyRate.text.trim()),
-      status: _status,
+      status: status,
       createdAt: widget.stay?.createdAt ?? now,
       updatedAt: now,
     );
-    setState(() => _submitting = true);
+    context.read<SubmittingCubit>().start();
     final cubit = context.read<StayCubit>();
     if (_isEditing) {
       cubit.updateStay(stay);
@@ -123,68 +127,177 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<StayCubit, StayState>(
-      listener: (context, state) {
-        if (!_submitting) return;
-        if (state is StayLoaded || state is StayEmpty) {
-          context.pop(true);
-        } else if (state is StayError) {
-          setState(() => _submitting = false);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? 'Edit Stay' : 'Add Stay')),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppTextField(controller: _tenantId, label: 'Tenant ID', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) => _requiredInteger(v, 'Tenant ID')),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(controller: _roomId, label: 'Room ID', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) => _requiredInteger(v, 'Room ID')),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(controller: _bedId, label: 'Bed ID', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) => _requiredInteger(v, 'Bed ID')),
-                      const SizedBox(height: AppSpacing.md),
-                      _DateInput(label: 'Check-in Date', value: _date(_checkInDate), onTap: () => _pickDate(expected: false)),
-                      const SizedBox(height: AppSpacing.md),
-                      _DateInput(label: 'Expected Checkout Date', value: _date(_expectedCheckoutDate), onTap: () => _pickDate(expected: true), onClear: _expectedCheckoutDate == null ? null : () => setState(() => _expectedCheckoutDate = null)),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(controller: _monthlyRent, label: 'Monthly Rent', keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (v) => _requiredNumber(v, 'Monthly rent')),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(controller: _dailyRate, label: 'Daily Rate', keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (v) => _requiredNumber(v, 'Daily rate')),
-                      const SizedBox(height: AppSpacing.md),
-                      DropdownButtonFormField<String>(
-                        value: _status,
-                        decoration: const InputDecoration(labelText: 'Status'),
-                        items: StayStatus.values.map((status) => DropdownMenuItem(value: status, child: Text(status))).toList(),
-                        onChanged: (value) { if (value != null) setState(() => _status = value); },
+    final stay = widget.stay;
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
+        BlocProvider<_CheckInDateCubit>(
+            create: (_) => _CheckInDateCubit(stay?.checkInDate ?? DateTime.now())),
+        BlocProvider<_ExpectedCheckoutDateCubit>(
+            create: (_) => _ExpectedCheckoutDateCubit(stay?.expectedCheckoutDate)),
+        BlocProvider<SelectedStatusCubit>(
+            create: (_) => SelectedStatusCubit(stay?.status ?? StayStatus.active)),
+      ],
+      child: Builder(builder: (context) {
+        return BlocListener<StayCubit, StayState>(
+          listener: (context, state) {
+            if (!context.read<SubmittingCubit>().state) return;
+            if (state is StayLoaded || state is StayEmpty) {
+              context.pop(true);
+            } else if (state is StayError) {
+              context.read<SubmittingCubit>().stop();
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(state.message)));
+            }
+          },
+          child: Scaffold(
+            appBar:
+                AppBar(title: Text(_isEditing ? 'Edit Stay' : 'Add Stay')),
+            body: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppTextField(
+                              controller: _tenantId,
+                              label: 'Tenant ID',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ],
+                              validator: (v) =>
+                                  _requiredInteger(v, 'Tenant ID')),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                              controller: _roomId,
+                              label: 'Room ID',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ],
+                              validator: (v) =>
+                                  _requiredInteger(v, 'Room ID')),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                              controller: _bedId,
+                              label: 'Bed ID',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ],
+                              validator: (v) =>
+                                  _requiredInteger(v, 'Bed ID')),
+                          const SizedBox(height: AppSpacing.md),
+                          // Check-in Date
+                          BlocBuilder<_CheckInDateCubit, DateTime?>(
+                            builder: (context, checkInDate) => _DateInput(
+                              label: 'Check-in Date',
+                              value: _date(checkInDate),
+                              onTap: () =>
+                                  _pickDate(context, expected: false),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          // Expected Checkout Date
+                          BlocBuilder<_ExpectedCheckoutDateCubit, DateTime?>(
+                            builder: (context, expectedDate) => _DateInput(
+                              label: 'Expected Checkout Date',
+                              value: _date(expectedDate),
+                              onTap: () =>
+                                  _pickDate(context, expected: true),
+                              onClear: expectedDate == null
+                                  ? null
+                                  : () => context
+                                      .read<_ExpectedCheckoutDateCubit>()
+                                      .clear(),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                              controller: _monthlyRent,
+                              label: 'Monthly Rent',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              validator: (v) =>
+                                  _requiredNumber(v, 'Monthly rent')),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                              controller: _dailyRate,
+                              label: 'Daily Rate',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              validator: (v) =>
+                                  _requiredNumber(v, 'Daily rate')),
+                          const SizedBox(height: AppSpacing.md),
+                          BlocBuilder<SelectedStatusCubit, String>(
+                            builder: (context, status) =>
+                                DropdownButtonFormField<String>(
+                              value: status,
+                              decoration: const InputDecoration(
+                                  labelText: 'Status'),
+                              items: StayStatus.values
+                                  .map((s) => DropdownMenuItem(
+                                      value: s, child: Text(s)))
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  context
+                                      .read<SelectedStatusCubit>()
+                                      .select(value);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          BlocBuilder<SubmittingCubit, bool>(
+                            builder: (context, submitting) =>
+                                BlocBuilder<StayCubit, StayState>(
+                              builder: (context, state) => AppButton(
+                                label: _isEditing
+                                    ? 'Save Changes'
+                                    : 'Add Stay',
+                                isLoading:
+                                    submitting || state is StayLoading,
+                                isFullWidth: true,
+                                onPressed: submitting
+                                    ? null
+                                    : () => _submit(context),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppSpacing.xl),
-                      BlocBuilder<StayCubit, StayState>(
-                        builder: (context, state) => AppButton(
-                          label: _isEditing ? 'Save Changes' : 'Add Stay',
-                          isLoading: _submitting || state is StayLoading,
-                          isFullWidth: true,
-                          onPressed: _submitting ? null : _submit,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
+}
+
+// Private typed wrappers so two SelectedDateCubit instances can coexist
+// in the same widget tree without type-key collisions.
+class _CheckInDateCubit extends SelectedDateCubit {
+  _CheckInDateCubit(super.initial);
+
+  @override
+  DateTime get state => super.state ?? DateTime.now();
+}
+
+class _ExpectedCheckoutDateCubit extends SelectedDateCubit {
+  _ExpectedCheckoutDateCubit(super.initial);
 }
 
 class _DateInput extends StatelessWidget {
@@ -192,14 +305,23 @@ class _DateInput extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
   final VoidCallback? onClear;
-  const _DateInput({required this.label, required this.value, required this.onTap, this.onClear});
+  const _DateInput(
+      {required this.label,
+      required this.value,
+      required this.onTap,
+      this.onClear});
 
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    child: InputDecorator(
-      decoration: InputDecoration(labelText: label, suffixIcon: onClear == null ? const Icon(Icons.calendar_today_outlined) : IconButton(icon: const Icon(Icons.clear), onPressed: onClear)),
-      child: Text(value),
-    ),
-  );
+        onTap: onTap,
+        child: InputDecorator(
+          decoration: InputDecoration(
+              labelText: label,
+              suffixIcon: onClear == null
+                  ? const Icon(Icons.calendar_today_outlined)
+                  : IconButton(
+                      icon: const Icon(Icons.clear), onPressed: onClear)),
+          child: Text(value),
+        ),
+      );
 }

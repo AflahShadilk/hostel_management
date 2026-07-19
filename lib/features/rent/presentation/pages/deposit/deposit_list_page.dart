@@ -19,16 +19,16 @@ class _DepositListPageState extends State<DepositListPage> {
   @override void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) context.read<DepositCubit>().loadAllDeposits(); }); }
   String _date(DateTime? value) => value == null ? 'Not set' : '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
   @override Widget build(BuildContext context) => BlocListener<DepositCubit, DepositState>(
-    listener: (context, state) { if (state is DepositError) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error)); },
+    listener: (context, state) { if (state is DepositError) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error)); } },
     child: Scaffold(backgroundColor: AppColors.background, appBar: AppBar(title: const Text('Deposits')), floatingActionButton: FloatingActionButton.extended(onPressed: () => context.pushNamed(AppRoutes.addDepositName), icon: const Icon(Icons.add), label: const Text('Add Deposit')),
       body: BlocBuilder<DepositCubit, DepositState>(builder: (context, state) {
-        if (state is DepositInitial || state is DepositLoading) return const Center(child: AppLoadingIndicator());
-        if (state is DepositEmpty) return const AppEmptyState(icon: Icons.account_balance_wallet_outlined, title: 'No deposits found');
-        if (state is DepositLoaded) return RefreshIndicator(onRefresh: () => context.read<DepositCubit>().loadAllDeposits(), child: LayoutBuilder(builder: (context, constraints) {
+        if (state is DepositInitial || state is DepositLoading) { return const Center(child: AppLoadingIndicator()); }
+        if (state is DepositEmpty) { return const AppEmptyState(icon: Icons.account_balance_wallet_outlined, title: 'No deposits found'); }
+        if (state is DepositLoaded) { return RefreshIndicator(onRefresh: () => context.read<DepositCubit>().loadAllDeposits(), child: LayoutBuilder(builder: (context, constraints) {
           final deposits = state.deposits;
-          if (constraints.maxWidth < 800) return ListView.separated(padding: const EdgeInsets.all(AppSpacing.md), itemCount: deposits.length, separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm), itemBuilder: (context, index) => _DepositCard(deposit: deposits[index], date: _date));
+          if (constraints.maxWidth < 800) { return ListView.separated(padding: const EdgeInsets.all(AppSpacing.md), itemCount: deposits.length, separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm), itemBuilder: (context, index) => _DepositCard(deposit: deposits[index], date: _date)); }
           return GridView.builder(padding: const EdgeInsets.all(AppSpacing.md), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: AppSpacing.md, mainAxisSpacing: AppSpacing.md, childAspectRatio: 2.5), itemCount: deposits.length, itemBuilder: (context, index) => _DepositCard(deposit: deposits[index], date: _date));
-        }));
+        })); }
         return const SizedBox.shrink();
       }),
     ),

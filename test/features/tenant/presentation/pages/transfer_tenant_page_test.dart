@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hostel_management/core/di/injection.dart';
 import 'package:hostel_management/core/widgets/app_button.dart';
+import 'package:hostel_management/features/tenant/presentation/cubit/bed_selection_cubit.dart';
 import 'package:hostel_management/features/hostel/domain/entities/hostel_entity.dart';
 import 'package:hostel_management/features/hostel/presentation/cubit/hostel_cubit.dart';
 import 'package:hostel_management/features/hostel/presentation/cubit/hostel_state.dart';
@@ -105,6 +106,9 @@ void main() {
     await getIt.reset();
     getIt.registerLazySingleton<RoomRepository>(() => FakeRoomRepository());
     getIt.registerLazySingleton<BedRepository>(() => FakeBedRepository());
+    getIt.registerFactory<BedSelectionCubit>(
+      () => BedSelectionCubit(getIt<RoomRepository>(), getIt<BedRepository>()),
+    );
 
     tenantCubit = FakeTenantCubit(TenantState(
       status: TenantOperationStatus.loaded,

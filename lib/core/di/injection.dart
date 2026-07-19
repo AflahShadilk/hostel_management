@@ -43,6 +43,11 @@ import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
 import '../../features/rent/presentation/cubit/deposit/deposit_cubit.dart';
 import '../../features/rent/presentation/cubit/damage_charge/damage_charge_cubit.dart';
 import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
+import '../../features/rent/presentation/cubit/ui/submitting_cubit.dart';
+import '../../features/rent/presentation/cubit/ui/deleting_cubit.dart';
+import '../../features/rent/presentation/cubit/ui/selected_date_cubit.dart';
+import '../../features/rent/presentation/cubit/ui/selected_status_cubit.dart';
+import '../../features/rent/presentation/cubit/ui/balance_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -104,6 +109,7 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<HostelCubit>(
     () => HostelCubit(getIt<HostelRepository>()),
   );
+
   getIt.registerLazySingleton<RoomManagementRepository>(
     () => RoomManagementRepositoryImpl(getIt<AppDatabase>()),
   );
@@ -170,4 +176,11 @@ Future<void> configureDependencies() async {
     () => DamageChargeCubit(getIt<RentRepository>()),
   );
   getIt.registerFactory<CheckoutCubit>(() => CheckoutCubit(getIt<RentRepository>()));
+
+  // Lightweight UI Cubits — no repository dependencies
+  getIt.registerFactory<SubmittingCubit>(() => SubmittingCubit());
+  getIt.registerFactory<DeletingCubit>(() => DeletingCubit());
+  getIt.registerFactory<SelectedDateCubit>(() => SelectedDateCubit(null));
+  getIt.registerFactory<SelectedStatusCubit>(() => SelectedStatusCubit(''));
+  getIt.registerFactory<BalanceCubit>(() => BalanceCubit(0.0));
 }

@@ -49,25 +49,25 @@ class _PaymentListPageState extends State<PaymentListPage> {
       ),
       body: BlocBuilder<PaymentCubit, PaymentState>(
         builder: (context, state) {
-          if (state is PaymentInitial || state is PaymentLoading) return const Center(child: AppLoadingIndicator());
-          if (state is PaymentEmpty) return const AppEmptyState(icon: Icons.payments_outlined, title: 'No payments found');
-          if (state is PaymentLoaded) return RefreshIndicator(
+          if (state is PaymentInitial || state is PaymentLoading) { return const Center(child: AppLoadingIndicator()); }
+          if (state is PaymentEmpty) { return const AppEmptyState(icon: Icons.payments_outlined, title: 'No payments found'); }
+          if (state is PaymentLoaded) { return RefreshIndicator(
             onRefresh: () => context.read<PaymentCubit>().loadAllPayments(),
             child: LayoutBuilder(builder: (context, constraints) {
               final payments = state.payments;
-              if (constraints.maxWidth < 800) return ListView.separated(
+              if (constraints.maxWidth < 800) { return ListView.separated(
                 padding: const EdgeInsets.all(AppSpacing.md), itemCount: payments.length,
                 separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) => _PaymentCard(payment: payments[index], date: _date),
-              );
+              ); }
               return GridView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: AppSpacing.md, mainAxisSpacing: AppSpacing.md, childAspectRatio: 2.5),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: AppSpacing.md, mainAxisSpacing: AppSpacing.md, childAspectRatio: 3.5),
                 itemCount: payments.length,
                 itemBuilder: (context, index) => _PaymentCard(payment: payments[index], date: _date),
               );
             }),
-          );
+          ); }
           return const SizedBox.shrink();
         },
       ),

@@ -26,8 +26,12 @@ class MainShellPage extends StatelessWidget {
           return Scaffold(
             body: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: navigationShell.currentIndex,
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: NavigationRail(
+                        selectedIndex: navigationShell.currentIndex,
                   onDestinationSelected: (index) => _onTap(context, index),
                   labelType: NavigationRailLabelType.all,
                   selectedIconTheme: const IconThemeData(color: AppColors.primary),
@@ -87,6 +91,9 @@ class MainShellPage extends StatelessWidget {
                       label: Text('Checkout'),
                     ),
                   ],
+                ),
+                    ),
+                  ),
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
                 Expanded(child: navigationShell),
