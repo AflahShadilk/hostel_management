@@ -19,6 +19,24 @@ class RentRecordCubit extends Cubit<RentRecordState> {
     }
   }
 
+  Future<void> generateMonthlyRent({
+    required int billingMonth,
+    required int billingYear,
+    required DateTime dueDate,
+  }) async {
+    emit(const RentRecordLoading());
+    try {
+      await _rentRepository.generateMonthlyRent(
+        billingMonth: billingMonth,
+        billingYear: billingYear,
+        dueDate: dueDate,
+      );
+      await _reloadAllRentRecords();
+    } catch (error) {
+      emit(RentRecordError(error.toString()));
+    }
+  }
+
   Future<void> loadRentRecordById(int id) async {
     emit(const RentRecordLoading());
     try {

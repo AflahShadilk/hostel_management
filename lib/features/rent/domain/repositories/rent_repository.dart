@@ -25,6 +25,12 @@ abstract interface class RentRepository {
     required double depositAmount,
   });
 
+  Future<int> generateMonthlyRent({
+    required int billingMonth,
+    required int billingYear,
+    required DateTime dueDate,
+  });
+
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord);
   Future<RentRecordEntity?> getRentRecordById(int id);
   Future<List<RentRecordEntity>> getRentRecordsByStayId(int stayId);

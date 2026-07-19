@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../features/tenant/domain/entities/tenant_status.dart';
 import '../../domain/constants/rent_status_constants.dart';
 import '../models/checkout_settlement_model.dart';
 import '../models/damage_charge_model.dart';
@@ -183,6 +184,80 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         }
 
         return createdStay;
+      });
+    });
+  }
+
+  @override
+  Future<int> generateMonthlyRent({
+    required int billingMonth,
+    required int billingYear,
+    required DateTime dueDate,
+  }) async {
+    final database = await _appDatabase.database;
+    return _perform('generate monthly rent', () async {
+      return await database.transaction((txn) async {
+        // 1. Load all active stays.
+        final stayRows = await txn.query(
+          RentLocalSchema.tableStays,
+          where: 'status = ?',
+          whereArgs: [StayStatus.active],
+        );
+
+        final rentPeriod =
+            '$billingYear-${billingMonth.toString().padLeft(2, '0')}';
+        final now = DateTime.now().toIso8601String();
+        int created = 0;
+
+        for (final stay in stayRows) {
+          final tenantId = stay['tenant_id'] as int;
+          final monthlyRent = (stay['monthly_rent_snapshot'] as num?)?.toDouble() ?? 0.0;
+
+          // 2. Verify the tenant is active.
+          final tenantRows = await txn.query(
+            'tenants',
+            columns: ['status'],
+            where: 'id = ?',
+            whereArgs: [tenantId],
+            limit: 1,
+          );
+          if (tenantRows.isEmpty) continue;
+          final tenantStatus = tenantRows.first['status'] as String?;
+          if (tenantStatus != TenantStatus.active.databaseValue) continue;
+
+          // 3. Verify monthly rent snapshot > 0.
+          if (monthlyRent <= 0) continue;
+
+          final stayId = stay['id'] as int;
+
+          // 4. Duplicate prevention: one record per stay per billing cycle.
+          final existingRows = await txn.query(
+            RentLocalSchema.tableRentRecords,
+            columns: ['id'],
+            where: 'stay_id = ? AND billing_month = ? AND billing_year = ?',
+            whereArgs: [stayId, billingMonth, billingYear],
+            limit: 1,
+          );
+          if (existingRows.isNotEmpty) continue;
+
+          // 5. Insert the rent record.
+          await txn.insert(RentLocalSchema.tableRentRecords, {
+            'stay_id': stayId,
+            'billing_month': billingMonth,
+            'billing_year': billingYear,
+            'rent_period': rentPeriod,
+            'due_date': dueDate.toIso8601String(),
+            'generated_at': now,
+            'amount_due': monthlyRent,
+            'amount_paid': 0.0,
+            'status': RentStatus.pending,
+            'created_at': now,
+            'updated_at': now,
+          });
+          created++;
+        }
+
+        return created;
       });
     });
   }
