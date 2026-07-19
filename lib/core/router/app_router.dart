@@ -28,6 +28,26 @@ import '../../features/tenant/presentation/pages/add_tenant_page.dart';
 import '../../features/tenant/presentation/pages/edit_tenant_page.dart';
 import '../../features/tenant/presentation/pages/tenant_management_page.dart';
 import '../../features/tenant/presentation/pages/transfer_tenant_page.dart';
+import '../../features/rent/domain/entities/stay_entity.dart';
+import '../../features/rent/presentation/cubit/stay/stay_cubit.dart';
+import '../../features/rent/presentation/pages/stay/add_edit_stay_page.dart';
+import '../../features/rent/presentation/pages/stay/stay_details_page.dart';
+import '../../features/rent/presentation/pages/stay/stay_list_page.dart';
+import '../../features/rent/domain/entities/rent_record_entity.dart';
+import '../../features/rent/presentation/cubit/rent_record/rent_record_cubit.dart';
+import '../../features/rent/presentation/pages/rent_record/add_edit_rent_record_page.dart';
+import '../../features/rent/presentation/pages/rent_record/rent_record_details_page.dart';
+import '../../features/rent/presentation/pages/rent_record/rent_record_list_page.dart';
+import '../../features/rent/domain/entities/payment_entity.dart';
+import '../../features/rent/presentation/cubit/payment/payment_cubit.dart';
+import '../../features/rent/presentation/pages/payment/add_edit_payment_page.dart';
+import '../../features/rent/presentation/pages/payment/payment_details_page.dart';
+import '../../features/rent/presentation/pages/payment/payment_list_page.dart';
+import '../../features/rent/domain/entities/receipt_entity.dart';
+import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
+import '../../features/rent/presentation/pages/receipt/add_edit_receipt_page.dart';
+import '../../features/rent/presentation/pages/receipt/receipt_details_page.dart';
+import '../../features/rent/presentation/pages/receipt/receipt_list_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -79,6 +99,10 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<DashboardCubit>()),
               BlocProvider(create: (_) => getIt<RoomCubit>()),
               BlocProvider(create: (_) => getIt<TenantCubit>()),
+              BlocProvider(create: (_) => getIt<StayCubit>()),
+              BlocProvider(create: (_) => getIt<RentRecordCubit>()),
+              BlocProvider(create: (_) => getIt<PaymentCubit>()),
+              BlocProvider(create: (_) => getIt<ReceiptCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
           );
@@ -173,6 +197,114 @@ abstract final class AppRouter {
                         },
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 3: Stay Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.stayManagementName,
+                path: AppRoutes.stayManagementPath,
+                builder: (context, state) => const StayListPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.addStayName,
+                    path: AppRoutes.addStayPath,
+                    builder: (context, state) => const AddEditStayPage(),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.stayDetailsName,
+                    path: AppRoutes.stayDetailsPath,
+                    builder: (context, state) => StayDetailsPage(
+                      stay: state.extra as StayEntity?,
+                    ),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.editStayName,
+                    path: AppRoutes.editStayPath,
+                    builder: (context, state) => AddEditStayPage(
+                      stay: state.extra as StayEntity?,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 6: Receipt Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.receiptManagementName,
+                path: AppRoutes.receiptManagementPath,
+                builder: (context, state) => const ReceiptListPage(),
+                routes: [
+                  GoRoute(name: AppRoutes.addReceiptName, path: AppRoutes.addReceiptPath, builder: (context, state) => const AddEditReceiptPage()),
+                  GoRoute(name: AppRoutes.receiptDetailsName, path: AppRoutes.receiptDetailsPath, builder: (context, state) => ReceiptDetailsPage(receipt: state.extra as ReceiptEntity?)),
+                  GoRoute(name: AppRoutes.editReceiptName, path: AppRoutes.editReceiptPath, builder: (context, state) => AddEditReceiptPage(receipt: state.extra as ReceiptEntity?)),
+                ],
+              ),
+            ],
+          ),
+          // Branch 5: Payment Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.paymentManagementName,
+                path: AppRoutes.paymentManagementPath,
+                builder: (context, state) => const PaymentListPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.addPaymentName,
+                    path: AppRoutes.addPaymentPath,
+                    builder: (context, state) => const AddEditPaymentPage(),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.paymentDetailsName,
+                    path: AppRoutes.paymentDetailsPath,
+                    builder: (context, state) => PaymentDetailsPage(
+                      payment: state.extra as PaymentEntity?,
+                    ),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.editPaymentName,
+                    path: AppRoutes.editPaymentPath,
+                    builder: (context, state) => AddEditPaymentPage(
+                      payment: state.extra as PaymentEntity?,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 4: Rent Record Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.rentRecordManagementName,
+                path: AppRoutes.rentRecordManagementPath,
+                builder: (context, state) => const RentRecordListPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.addRentRecordName,
+                    path: AppRoutes.addRentRecordPath,
+                    builder: (context, state) => const AddEditRentRecordPage(),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.rentRecordDetailsName,
+                    path: AppRoutes.rentRecordDetailsPath,
+                    builder: (context, state) => RentRecordDetailsPage(
+                      record: state.extra as RentRecordEntity?,
+                    ),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.editRentRecordName,
+                    path: AppRoutes.editRentRecordPath,
+                    builder: (context, state) => AddEditRentRecordPage(
+                      record: state.extra as RentRecordEntity?,
+                    ),
                   ),
                 ],
               ),

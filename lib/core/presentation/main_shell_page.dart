@@ -51,6 +51,26 @@ class MainShellPage extends StatelessWidget {
                       selectedIcon: Icon(Icons.people),
                       label: Text('Tenants'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.hotel_outlined),
+                      selectedIcon: Icon(Icons.hotel),
+                      label: Text('Stays'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.receipt_long_outlined),
+                      selectedIcon: Icon(Icons.receipt_long),
+                      label: Text('Rent'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.payments_outlined),
+                      selectedIcon: Icon(Icons.payments),
+                      label: Text('Payments'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.receipt_outlined),
+                      selectedIcon: Icon(Icons.receipt),
+                      label: Text('Receipts'),
+                    ),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
@@ -80,6 +100,26 @@ class MainShellPage extends StatelessWidget {
                 icon: Icon(Icons.people_outline),
                 selectedIcon: Icon(Icons.people),
                 label: 'Tenants',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.hotel_outlined),
+                selectedIcon: Icon(Icons.hotel),
+                label: 'Stays',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.receipt_long_outlined),
+                selectedIcon: Icon(Icons.receipt_long),
+                label: 'Rent',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.payments_outlined),
+                selectedIcon: Icon(Icons.payments),
+                label: 'Payments',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.receipt_outlined),
+                selectedIcon: Icon(Icons.receipt),
+                label: 'Receipts',
               ),
             ],
           ),

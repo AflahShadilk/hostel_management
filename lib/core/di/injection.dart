@@ -32,6 +32,14 @@ import '../../features/tenant/domain/repositories/tenant_management_repository.d
 import '../../features/tenant/data/repositories/tenant_management_repository_impl.dart';
 import '../../features/tenant/presentation/cubit/tenant_cubit.dart';
 import '../../features/tenant/presentation/cubit/bed_selection_cubit.dart';
+import '../../features/rent/data/datasources/rent_local_datasource.dart';
+import '../../features/rent/data/datasources/rent_local_datasource_impl.dart';
+import '../../features/rent/data/repositories/rent_repository_impl.dart';
+import '../../features/rent/domain/repositories/rent_repository.dart';
+import '../../features/rent/presentation/cubit/stay/stay_cubit.dart';
+import '../../features/rent/presentation/cubit/rent_record/rent_record_cubit.dart';
+import '../../features/rent/presentation/cubit/payment/payment_cubit.dart';
+import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -141,4 +149,17 @@ Future<void> configureDependencies() async {
       getIt<BedRepository>(),
     ),
   );
+
+  getIt.registerLazySingleton<RentLocalDataSource>(
+    () => RentLocalDataSourceImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerLazySingleton<RentRepository>(
+    () => RentRepositoryImpl(getIt<RentLocalDataSource>()),
+  );
+  getIt.registerFactory<StayCubit>(() => StayCubit(getIt<RentRepository>()));
+  getIt.registerFactory<RentRecordCubit>(
+    () => RentRecordCubit(getIt<RentRepository>()),
+  );
+  getIt.registerFactory<PaymentCubit>(() => PaymentCubit(getIt<RentRepository>()));
+  getIt.registerFactory<ReceiptCubit>(() => ReceiptCubit(getIt<RentRepository>()));
 }

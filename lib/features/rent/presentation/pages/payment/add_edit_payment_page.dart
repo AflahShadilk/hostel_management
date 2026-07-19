@@ -1,0 +1,115 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_text_field.dart';
+import '../../../domain/constants/rent_status_constants.dart';
+import '../../../domain/entities/payment_entity.dart';
+import '../../cubit/payment/payment_cubit.dart';
+import '../../cubit/payment/payment_state.dart';
+
+class AddEditPaymentPage extends StatefulWidget {
+  final PaymentEntity? payment;
+  const AddEditPaymentPage({super.key, this.payment});
+
+  @override
+  State<AddEditPaymentPage> createState() => _AddEditPaymentPageState();
+}
+
+class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _rentRecordId;
+  late final TextEditingController _amount;
+  late final TextEditingController _paymentMethod;
+  late DateTime _paymentDate;
+  late String _status;
+  bool _submitting = false;
+  bool get _editing => widget.payment != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final payment = widget.payment;
+    _rentRecordId = TextEditingController(text: payment?.rentRecordId.toString() ?? '');
+    _amount = TextEditingController(text: payment?.amount.toString() ?? '');
+    _paymentMethod = TextEditingController(text: payment?.paymentMethod ?? '');
+    _paymentDate = payment?.paymentDate ?? DateTime.now();
+    _status = payment?.status ?? PaymentStatus.completed;
+  }
+
+  @override
+  void dispose() { _rentRecordId.dispose(); _amount.dispose(); _paymentMethod.dispose(); super.dispose(); }
+
+  String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/'
+      '${value.month.toString().padLeft(2, '0')}/${value.year}';
+
+  Future<void> _pickDate() async {
+    final value = await showDatePicker(context: context, initialDate: _paymentDate, firstDate: DateTime(2000), lastDate: DateTime(2100));
+    if (value != null && mounted) setState(() => _paymentDate = value);
+  }
+
+  String? _idValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Rent record ID is required.';
+    return int.tryParse(value.trim()) == null ? 'Enter a valid rent record ID.' : null;
+  }
+
+  String? _amountValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Amount is required.';
+    final amount = double.tryParse(value.trim());
+    return amount == null || amount <= 0 ? 'Enter a positive amount.' : null;
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final now = DateTime.now();
+    final payment = PaymentEntity(
+      id: widget.payment?.id,
+      rentRecordId: int.parse(_rentRecordId.text.trim()),
+      amount: double.parse(_amount.text.trim()),
+      paymentDate: _paymentDate,
+      paymentMethod: _paymentMethod.text.trim(),
+      status: _status,
+      createdAt: widget.payment?.createdAt ?? now,
+      updatedAt: now,
+    );
+    setState(() => _submitting = true);
+    if (_editing) context.read<PaymentCubit>().updatePayment(payment); else context.read<PaymentCubit>().createPayment(payment);
+  }
+
+  @override
+  Widget build(BuildContext context) => BlocListener<PaymentCubit, PaymentState>(
+    listener: (context, state) {
+      if (!_submitting) return;
+      if (state is PaymentLoaded || state is PaymentEmpty) context.pop(true);
+      if (state is PaymentError) {
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+      }
+    },
+    child: Scaffold(
+      appBar: AppBar(title: Text(_editing ? 'Edit Payment' : 'Add Payment')),
+      body: SafeArea(child: Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: SingleChildScrollView(padding: const EdgeInsets.all(AppSpacing.md), child: Form(
+          key: _formKey,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            AppTextField(controller: _rentRecordId, label: 'Rent Record ID', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: _idValidator),
+            const SizedBox(height: AppSpacing.md),
+            InkWell(onTap: _pickDate, child: InputDecorator(decoration: const InputDecoration(labelText: 'Payment Date', suffixIcon: Icon(Icons.calendar_today_outlined)), child: Text(_date(_paymentDate)))),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(controller: _amount, label: 'Amount', keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _amountValidator),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(controller: _paymentMethod, label: 'Payment Method', validator: (value) => value == null || value.trim().isEmpty ? 'Payment method is required.' : null),
+            const SizedBox(height: AppSpacing.md),
+            DropdownButtonFormField<String>(value: _status, decoration: const InputDecoration(labelText: 'Status'), items: PaymentStatus.values.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(), onChanged: (value) { if (value != null) setState(() => _status = value); }),
+            const SizedBox(height: AppSpacing.xl),
+            BlocBuilder<PaymentCubit, PaymentState>(builder: (context, state) => AppButton(label: _editing ? 'Save Changes' : 'Add Payment', isLoading: _submitting || state is PaymentLoading, isFullWidth: true, onPressed: _submitting ? null : _submit)),
+          ]),
+        )),
+      ))),
+    ),
+  );
+}
