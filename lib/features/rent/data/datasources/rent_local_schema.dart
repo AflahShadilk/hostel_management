@@ -204,6 +204,8 @@ class RentLocalSchema {
         await txn.execute('ALTER TABLE $table RENAME TO ${table}_legacy');
       }
 
+      await txn.execute('DROP INDEX IF EXISTS stay_current_tenant_unique');
+
       await createTables(txn);
 
       await txn.execute('''

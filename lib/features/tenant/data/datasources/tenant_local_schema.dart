@@ -92,12 +92,12 @@ class TenantLocalSchema {
           $colCreatedAt, $colUpdatedAt
         )
         SELECT
-          $colId,
-          CASE WHEN $colStatus = 'active' THEN $colBedId ELSE NULL END,
+          tenants_legacy.$colId,
+          CASE WHEN tenants_legacy.$colStatus = 'active' THEN tenants_legacy.$colBedId ELSE NULL END,
           rooms.hostel_id,
-          $colFullName, $colPhoneNumber, $colEmail, $colAddress,
-          $colCheckInDate, $colCheckOutDate, $colEmergencyContactName,
-          $colEmergencyContactPhone, $colStatus, $colCreatedAt, $colUpdatedAt
+          tenants_legacy.$colFullName, tenants_legacy.$colPhoneNumber, tenants_legacy.$colEmail, tenants_legacy.$colAddress,
+          tenants_legacy.$colCheckInDate, tenants_legacy.$colCheckOutDate, tenants_legacy.$colEmergencyContactName,
+          tenants_legacy.$colEmergencyContactPhone, tenants_legacy.$colStatus, tenants_legacy.$colCreatedAt, tenants_legacy.$colUpdatedAt
         FROM tenants_legacy
         LEFT JOIN beds ON beds.id = tenants_legacy.$colBedId
         LEFT JOIN rooms ON rooms.id = beds.room_id
