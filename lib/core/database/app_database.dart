@@ -5,6 +5,7 @@ import 'database_constants.dart';
 import '../../features/auth/data/datasources/auth_local_schema.dart';
 import '../../features/hostel/data/datasources/hostel_local_schema.dart';
 import '../../features/room/data/datasources/room_local_schema.dart';
+import '../../features/rent/data/datasources/rent_local_schema.dart';
 import '../../features/tenant/data/datasources/tenant_local_schema.dart';
 
 class AppDatabase {
@@ -56,6 +57,9 @@ class AppDatabase {
 
     // tenants references beds.
     await TenantLocalSchema.createTable(db);
+
+    // Rent management tables reference tenants, then each other.
+    await RentLocalSchema.createTables(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -68,6 +72,14 @@ class AppDatabase {
 
     if (oldVersion < 3) {
       await TenantLocalSchema.migrateFromVersion2(db);
+    }
+
+    if (oldVersion < 4) {
+      await RentLocalSchema.createTables(db);
+    }
+
+    if (oldVersion < 5) {
+      await RentLocalSchema.migrateFromVersion4(db);
     }
   }
 

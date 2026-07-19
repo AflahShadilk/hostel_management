@@ -20,7 +20,6 @@ import 'package:hostel_management/features/dashboard/presentation/cubit/dashboar
 import 'package:hostel_management/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:hostel_management/features/room/domain/entities/room_entity.dart';
 import 'package:hostel_management/features/room/domain/entities/room_type.dart';
-import 'package:hostel_management/features/room/data/models/room_model.dart';
 import 'package:hostel_management/features/room/presentation/cubit/room_cubit.dart';
 import 'package:hostel_management/features/room/presentation/cubit/room_state.dart';
 import 'package:hostel_management/features/tenant/domain/entities/tenant_entity.dart';
