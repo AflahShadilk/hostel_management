@@ -82,4 +82,31 @@ abstract final class AppRoutes {
   static const String receiptDetailsPath = ':receiptId';
   static const String editReceiptName = 'editReceipt';
   static const String editReceiptPath = ':receiptId/edit';
+
+  static const String depositManagementName = 'depositManagement';
+  static const String depositManagementPath = '/deposits';
+  static const String addDepositName = 'addDeposit';
+  static const String addDepositPath = 'add';
+  static const String depositDetailsName = 'depositDetails';
+  static const String depositDetailsPath = ':depositId';
+  static const String editDepositName = 'editDeposit';
+  static const String editDepositPath = ':depositId/edit';
+
+  static const String damageChargeManagementName = 'damageChargeManagement';
+  static const String damageChargeManagementPath = '/damage-charges';
+  static const String addDamageChargeName = 'addDamageCharge';
+  static const String addDamageChargePath = 'add';
+  static const String damageChargeDetailsName = 'damageChargeDetails';
+  static const String damageChargeDetailsPath = ':damageChargeId';
+  static const String editDamageChargeName = 'editDamageCharge';
+  static const String editDamageChargePath = ':damageChargeId/edit';
+
+  static const String checkoutManagementName = 'checkoutManagement';
+  static const String checkoutManagementPath = '/checkout-settlements';
+  static const String addCheckoutName = 'addCheckout';
+  static const String addCheckoutPath = 'add';
+  static const String checkoutDetailsName = 'checkoutDetails';
+  static const String checkoutDetailsPath = ':checkoutId';
+  static const String editCheckoutName = 'editCheckout';
+  static const String editCheckoutPath = ':checkoutId/edit';
 }

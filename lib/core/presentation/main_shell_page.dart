@@ -71,6 +71,21 @@ class MainShellPage extends StatelessWidget {
                       selectedIcon: Icon(Icons.receipt),
                       label: Text('Receipts'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.account_balance_wallet_outlined),
+                      selectedIcon: Icon(Icons.account_balance_wallet),
+                      label: Text('Deposits'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.warning_amber_outlined),
+                      selectedIcon: Icon(Icons.warning_amber),
+                      label: Text('Damage'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.exit_to_app_outlined),
+                      selectedIcon: Icon(Icons.exit_to_app),
+                      label: Text('Checkout'),
+                    ),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
@@ -120,6 +135,21 @@ class MainShellPage extends StatelessWidget {
                 icon: Icon(Icons.receipt_outlined),
                 selectedIcon: Icon(Icons.receipt),
                 label: 'Receipts',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.account_balance_wallet_outlined),
+                selectedIcon: Icon(Icons.account_balance_wallet),
+                label: 'Deposits',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.warning_amber_outlined),
+                selectedIcon: Icon(Icons.warning_amber),
+                label: 'Damage',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.exit_to_app_outlined),
+                selectedIcon: Icon(Icons.exit_to_app),
+                label: 'Checkout',
               ),
             ],
           ),

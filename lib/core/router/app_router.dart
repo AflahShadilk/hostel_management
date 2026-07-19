@@ -48,6 +48,21 @@ import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
 import '../../features/rent/presentation/pages/receipt/add_edit_receipt_page.dart';
 import '../../features/rent/presentation/pages/receipt/receipt_details_page.dart';
 import '../../features/rent/presentation/pages/receipt/receipt_list_page.dart';
+import '../../features/rent/domain/entities/deposit_entity.dart';
+import '../../features/rent/presentation/cubit/deposit/deposit_cubit.dart';
+import '../../features/rent/presentation/pages/deposit/add_edit_deposit_page.dart';
+import '../../features/rent/presentation/pages/deposit/deposit_details_page.dart';
+import '../../features/rent/presentation/pages/deposit/deposit_list_page.dart';
+import '../../features/rent/domain/entities/damage_charge_entity.dart';
+import '../../features/rent/presentation/cubit/damage_charge/damage_charge_cubit.dart';
+import '../../features/rent/presentation/pages/damage_charge/add_edit_damage_charge_page.dart';
+import '../../features/rent/presentation/pages/damage_charge/damage_charge_details_page.dart';
+import '../../features/rent/presentation/pages/damage_charge/damage_charge_list_page.dart';
+import '../../features/rent/domain/entities/checkout_settlement_entity.dart';
+import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
+import '../../features/rent/presentation/pages/checkout/add_edit_checkout_page.dart';
+import '../../features/rent/presentation/pages/checkout/checkout_details_page.dart';
+import '../../features/rent/presentation/pages/checkout/checkout_list_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -103,6 +118,9 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<RentRecordCubit>()),
               BlocProvider(create: (_) => getIt<PaymentCubit>()),
               BlocProvider(create: (_) => getIt<ReceiptCubit>()),
+              BlocProvider(create: (_) => getIt<DepositCubit>()),
+              BlocProvider(create: (_) => getIt<DamageChargeCubit>()),
+              BlocProvider(create: (_) => getIt<CheckoutCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
           );
@@ -229,6 +247,51 @@ abstract final class AppRouter {
                       stay: state.extra as StayEntity?,
                     ),
                   ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 9: Checkout Settlement Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.checkoutManagementName,
+                path: AppRoutes.checkoutManagementPath,
+                builder: (context, state) => const CheckoutListPage(),
+                routes: [
+                  GoRoute(name: AppRoutes.addCheckoutName, path: AppRoutes.addCheckoutPath, builder: (context, state) => const AddEditCheckoutPage()),
+                  GoRoute(name: AppRoutes.checkoutDetailsName, path: AppRoutes.checkoutDetailsPath, builder: (context, state) => CheckoutDetailsPage(settlement: state.extra as CheckoutSettlementEntity?)),
+                  GoRoute(name: AppRoutes.editCheckoutName, path: AppRoutes.editCheckoutPath, builder: (context, state) => AddEditCheckoutPage(settlement: state.extra as CheckoutSettlementEntity?)),
+                ],
+              ),
+            ],
+          ),
+          // Branch 8: Damage Charge Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.damageChargeManagementName,
+                path: AppRoutes.damageChargeManagementPath,
+                builder: (context, state) => const DamageChargeListPage(),
+                routes: [
+                  GoRoute(name: AppRoutes.addDamageChargeName, path: AppRoutes.addDamageChargePath, builder: (context, state) => const AddEditDamageChargePage()),
+                  GoRoute(name: AppRoutes.damageChargeDetailsName, path: AppRoutes.damageChargeDetailsPath, builder: (context, state) => DamageChargeDetailsPage(damageCharge: state.extra as DamageChargeEntity?)),
+                  GoRoute(name: AppRoutes.editDamageChargeName, path: AppRoutes.editDamageChargePath, builder: (context, state) => AddEditDamageChargePage(damageCharge: state.extra as DamageChargeEntity?)),
+                ],
+              ),
+            ],
+          ),
+          // Branch 7: Deposit Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.depositManagementName,
+                path: AppRoutes.depositManagementPath,
+                builder: (context, state) => const DepositListPage(),
+                routes: [
+                  GoRoute(name: AppRoutes.addDepositName, path: AppRoutes.addDepositPath, builder: (context, state) => const AddEditDepositPage()),
+                  GoRoute(name: AppRoutes.depositDetailsName, path: AppRoutes.depositDetailsPath, builder: (context, state) => DepositDetailsPage(deposit: state.extra as DepositEntity?)),
+                  GoRoute(name: AppRoutes.editDepositName, path: AppRoutes.editDepositPath, builder: (context, state) => AddEditDepositPage(deposit: state.extra as DepositEntity?)),
                 ],
               ),
             ],
