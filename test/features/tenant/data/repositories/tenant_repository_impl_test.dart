@@ -268,7 +268,7 @@ void main() {
         checkOutDate: original.checkOutDate,
         emergencyContactName: original.emergencyContactName,
         emergencyContactPhone: original.emergencyContactPhone,
-        status: TenantStatus.checkedOut,
+        status: TenantStatus.active,
         createdAt: original.createdAt,
         updatedAt: DateTime.now(),
       );
@@ -278,7 +278,7 @@ void main() {
 
       expect(fetched!.fullName, 'Updated Name');
       expect(fetched.address, 'New Address');
-      expect(fetched.status, TenantStatus.checkedOut);
+      expect(fetched.status, TenantStatus.active);
     });
 
     test('throws StateError when id is null', () async {
@@ -322,7 +322,7 @@ void main() {
       final tenant2 = (await repo.getTenantById(id2))!;
       final conflicting = TenantEntity(
         id: tenant2.id,
-        bedId: tenant2.bedId,
+        bedId: tenant2.bedId!,
         fullName: tenant2.fullName,
         phoneNumber: '1234512345', // stolen from tenant 1
         checkInDate: tenant2.checkInDate,
@@ -483,11 +483,11 @@ void main() {
     test('returns false for checked-out tenant status', () async {
       final id =
           await repo.createTenant(buildTenant(phoneNumber: '9990009999'));
-      // Update to checked-out.
+      // Checked-out tenants must no longer hold a bed reference.
       final tenant = (await repo.getTenantById(id))!;
       final updated = TenantEntity(
         id: tenant.id,
-        bedId: tenant.bedId,
+        bedId: null,
         fullName: tenant.fullName,
         phoneNumber: tenant.phoneNumber,
         checkInDate: tenant.checkInDate,
@@ -497,8 +497,6 @@ void main() {
         updatedAt: DateTime.now(),
       );
       await repo.updateTenant(updated);
-      // The UNIQUE(bed_id) means check-out + same bedId is fine; isBedOccupied
-      // only counts 'active' records.
       expect(await repo.isBedOccupied(1), isFalse);
     });
   });

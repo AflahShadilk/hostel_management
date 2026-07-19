@@ -46,7 +46,16 @@ class TenantCubit extends Cubit<TenantState> {
   Future<List<TenantViewModel>> _resolveViewModels(List<TenantEntity> tenants) async {
     final result = <TenantViewModel>[];
     for (final tenant in tenants) {
-      final bed = await _bedRepository.getBedById(tenant.bedId);
+      if (tenant.bedId == null) {
+        result.add(TenantViewModel(
+          tenant: tenant,
+          roomName: 'â€”',
+          bedName: 'â€”',
+        ));
+        continue;
+      }
+
+      final bed = await _bedRepository.getBedById(tenant.bedId!);
       String bedName = '—';
       String roomName = '—';
       if (bed != null) {
@@ -140,7 +149,7 @@ class TenantCubit extends Cubit<TenantState> {
     }
   }
 
-  Future<void> deleteTenant(int tenantId, {required int bedId}) async {
+  Future<void> deleteTenant(int tenantId, {int? bedId}) async {
     emit(state.copyWith(status: TenantOperationStatus.deleting));
     try {
       await _tenantManagementRepository.deleteTenant(tenantId, bedId: bedId);

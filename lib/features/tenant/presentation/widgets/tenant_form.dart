@@ -369,11 +369,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                           return 'Inactive';
                       }
                     },
-                    onChanged: (s) {
-                      if (s != null) {
-                        context.read<TenantFormCubit>().updateStatus(s);
-                      }
-                    },
+                    onChanged: null,
                   ),
 
                   // ── Bed Selection (Add only) ───────────────────────────────
@@ -452,7 +448,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
 /// Shows the resolved room and bed name for the edit form.
 /// Uses BedSelectionCubit to query names — no direct repository access in widget.
 class _CurrentBedInfo extends StatelessWidget {
-  final int bedId;
+  final int? bedId;
   const _CurrentBedInfo({required this.bedId});
 
   @override

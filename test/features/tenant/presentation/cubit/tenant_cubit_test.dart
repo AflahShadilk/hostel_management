@@ -44,7 +44,7 @@ class FakeTenantManagementRepository implements TenantManagementRepository {
   }
 
   @override
-  Future<void> deleteTenant(int tenantId, {required int bedId}) async {
+  Future<void> deleteTenant(int tenantId, {int? bedId}) async {
     callCount++;
     if (shouldFail) throw Exception('Delete failed');
   }
@@ -57,7 +57,7 @@ class FakeTenantManagementRepository implements TenantManagementRepository {
     final now = DateTime.now();
     return TenantEntity(
       id: tenantId,
-      bedId: bedId,
+      bedId: null,
       fullName: 'Mock',
       phoneNumber: '000',
       checkInDate: now,

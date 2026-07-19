@@ -49,9 +49,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
         SUM(CASE WHEN tenants.status = 'active' THEN 1 ELSE 0 END) as activeTenants,
         SUM(CASE WHEN tenants.status = 'checked_out' THEN 1 ELSE 0 END) as checkedOutTenants
       FROM tenants
-      INNER JOIN beds ON tenants.bed_id = beds.id
-      INNER JOIN rooms ON beds.room_id = rooms.id
-      WHERE rooms.hostel_id = ?
+      WHERE tenants.hostel_id = ?
       ''',
       [hostelId],
     );

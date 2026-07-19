@@ -9,7 +9,7 @@ import '../datasources/tenant_local_schema.dart';
 class TenantModel extends TenantEntity {
   const TenantModel({
     super.id,
-    required super.bedId,
+    super.bedId,
     required super.fullName,
     required super.phoneNumber,
     super.email,
@@ -50,7 +50,7 @@ class TenantModel extends TenantEntity {
   factory TenantModel.fromMap(Map<String, dynamic> map) {
     return TenantModel(
       id: map[TenantLocalSchema.colId] as int?,
-      bedId: map[TenantLocalSchema.colBedId] as int,
+      bedId: map[TenantLocalSchema.colBedId] as int?,
       fullName: map[TenantLocalSchema.colFullName] as String,
       phoneNumber: map[TenantLocalSchema.colPhoneNumber] as String,
       email: map[TenantLocalSchema.colEmail] as String?,
@@ -108,7 +108,7 @@ class TenantModel extends TenantEntity {
 
   TenantModel copyWith({
     int? id,
-    int? bedId,
+    Object? bedId = _sentinel,
     String? fullName,
     String? phoneNumber,
     Object? email = _sentinel,
@@ -123,7 +123,7 @@ class TenantModel extends TenantEntity {
   }) {
     return TenantModel(
       id: id ?? this.id,
-      bedId: bedId ?? this.bedId,
+      bedId: identical(bedId, _sentinel) ? this.bedId : bedId as int?,
       fullName: fullName ?? this.fullName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: identical(email, _sentinel) ? this.email : email as String?,

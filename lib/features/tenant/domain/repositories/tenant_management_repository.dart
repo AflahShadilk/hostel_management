@@ -26,7 +26,7 @@ abstract interface class TenantManagementRepository {
   /// 1. Deletes the tenant record.
   /// 2. Updates BedStatus -> vacant.
   /// 3. Recalculates RoomStatus.
-  Future<void> deleteTenant(int tenantId, {required int bedId});
+  Future<void> deleteTenant(int tenantId, {int? bedId});
 
   /// Checks out an active tenant.
   ///

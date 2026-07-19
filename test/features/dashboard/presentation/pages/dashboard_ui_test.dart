@@ -120,7 +120,7 @@ class FakeTenantCubit extends Cubit<TenantState> implements TenantCubit {
   @override
   Future<void> updateTenant(tenant) async {}
   @override
-  Future<void> deleteTenant(int id, {required int bedId}) async {}
+  Future<void> deleteTenant(int id, {int? bedId}) async {}
   @override
   Future<void> checkOutTenant(int id, {required int bedId}) async {}
   @override

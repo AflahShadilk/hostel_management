@@ -29,8 +29,12 @@ class TenantRepositoryImpl implements TenantRepository {
     if (tenant.phoneNumber.trim().isEmpty) {
       throw ArgumentError('Tenant phone number must not be blank.');
     }
-    if (tenant.bedId <= 0) {
-      throw ArgumentError('Invalid bed ID: ${tenant.bedId}.');
+    if (tenant.status == TenantStatus.active &&
+        (tenant.bedId == null || tenant.bedId! <= 0)) {
+      throw ArgumentError('An active tenant must have a valid bed ID.');
+    }
+    if (tenant.status != TenantStatus.active && tenant.bedId != null) {
+      throw ArgumentError('Only active tenants may have an assigned bed.');
     }
     if (tenant.checkOutDate != null &&
         tenant.checkOutDate!.isBefore(tenant.checkInDate)) {

@@ -14,6 +14,7 @@ class TenantCard extends StatelessWidget {
   final String? roomLabel;
   final String? bedLabel;
   final bool actionsEnabled;
+  final VoidCallback? onCheckOut;
   final VoidCallback? onTransfer;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -24,6 +25,7 @@ class TenantCard extends StatelessWidget {
     this.roomLabel,
     this.bedLabel,
     this.actionsEnabled = true,
+    this.onCheckOut,
     this.onTransfer,
     this.onEdit,
     this.onDelete,
@@ -119,6 +121,13 @@ class TenantCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (tenant.status == TenantStatus.active)
+                  IconButton(
+                    icon: const Icon(Icons.exit_to_app_outlined, size: 20),
+                    tooltip: 'Check Out Tenant',
+                    color: AppColors.warning,
+                    onPressed: actionsEnabled ? onCheckOut : null,
+                  ),
                 if (tenant.status == TenantStatus.active)
                   IconButton(
                     icon: const Icon(Icons.swap_horiz_outlined, size: 20),

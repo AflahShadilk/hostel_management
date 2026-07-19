@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:hostel_management/core/database/app_database.dart';
+import 'package:hostel_management/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:hostel_management/features/room/data/repositories/bed_repository_impl.dart';
 import 'package:hostel_management/features/room/data/repositories/room_management_repository_impl.dart';
 import 'package:hostel_management/features/room/domain/entities/bed_status.dart';
@@ -47,6 +48,7 @@ void main() {
   late TenantRepositoryImpl tenantRepo;
   late BedRepositoryImpl bedRepo;
   late RoomManagementRepositoryImpl roomManagementRepo;
+  late DashboardRepositoryImpl dashboardRepo;
 
   Future<void> seedDatabase() async {
     final db = await appDatabase.database;
@@ -85,6 +87,7 @@ void main() {
     tenantRepo = TenantRepositoryImpl(appDatabase);
     bedRepo = BedRepositoryImpl(appDatabase);
     roomManagementRepo = RoomManagementRepositoryImpl(appDatabase);
+    dashboardRepo = DashboardRepositoryImpl(appDatabase);
 
     managementRepo = TenantManagementRepositoryImpl(
       appDatabase,
@@ -179,13 +182,65 @@ void main() {
       final out = await managementRepo.checkOutTenant(t1.id!, bedId: 1);
 
       expect(out.status, TenantStatus.checkedOut);
+      expect(out.bedId, isNull);
       expect(out.checkOutDate, isNotNull);
+
+      final stored = await tenantRepo.getTenantById(t1.id!);
+      expect(stored!.bedId, isNull);
 
       // Bed is vacant
       final bed = await bedRepo.getBedById(1);
       expect(bed!.status, BedStatus.vacant);
 
       // Room is now partially occupied
+      expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
+
+      final summary = await dashboardRepo.getSummary(1);
+      expect(summary.activeTenants, 1);
+      expect(summary.checkedOutTenants, 1);
+    });
+
+    test('releases a checked-out bed for a new tenant', () async {
+      final first = await managementRepo.assignTenant(
+        buildTenant(bedId: 1, phoneNumber: '111', email: '1@a.com'),
+      );
+
+      await managementRepo.checkOutTenant(first.id!, bedId: 1);
+
+      final second = await managementRepo.assignTenant(
+        buildTenant(bedId: 1, phoneNumber: '222', email: '2@a.com'),
+      );
+
+      expect(second.bedId, 1);
+      expect((await tenantRepo.getTenantById(first.id!))!.bedId, isNull);
+      expect((await bedRepo.getBedById(1))!.status, BedStatus.occupied);
+      expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
+    });
+
+    test('preserves checkout history while the replacement tenant can transfer',
+        () async {
+      final first = await managementRepo.assignTenant(
+        buildTenant(bedId: 1, phoneNumber: '111', email: '1@a.com'),
+      );
+
+      await managementRepo.checkOutTenant(first.id!, bedId: 1);
+      final replacement = await managementRepo.assignTenant(
+        buildTenant(bedId: 1, phoneNumber: '222', email: '2@a.com'),
+      );
+
+      final transferred = await managementRepo.transferTenant(
+        replacement.id!,
+        oldBedId: 1,
+        newBedId: 2,
+      );
+
+      final historical = await tenantRepo.getTenantById(first.id!);
+      expect(historical!.status, TenantStatus.checkedOut);
+      expect(historical.bedId, isNull);
+      expect(historical.checkOutDate, isNotNull);
+      expect(transferred.bedId, 2);
+      expect((await bedRepo.getBedById(1))!.status, BedStatus.vacant);
+      expect((await bedRepo.getBedById(2))!.status, BedStatus.occupied);
       expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
     });
   });

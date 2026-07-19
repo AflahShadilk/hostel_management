@@ -106,6 +106,34 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
     }
   }
 
+  Future<void> _confirmCheckOut(
+      BuildContext context, TenantEntity tenant) async {
+    final tenantCubit = context.read<TenantCubit>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Check Out Tenant?'),
+        content: Text(
+          'Checking out ${tenant.fullName} will release their bed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppColors.warning),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Check Out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && tenant.id != null && tenant.bedId != null) {
+      tenantCubit.checkOutTenant(tenant.id!, bedId: tenant.bedId!);
+    }
+  }
+
   int _columnCount(double width) {
     if (width >= 900) return 3;
     if (width >= 600) return 2;
@@ -230,7 +258,8 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
     final isMutating = state.status == TenantOperationStatus.creating ||
         state.status == TenantOperationStatus.updating ||
         state.status == TenantOperationStatus.deleting ||
-        state.status == TenantOperationStatus.checkingOut;
+        state.status == TenantOperationStatus.checkingOut ||
+        state.status == TenantOperationStatus.transferring;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -260,6 +289,7 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
           roomLabel: vm.roomName,
           bedLabel: vm.bedName,
           actionsEnabled: !isMutating,
+          onCheckOut: () => _confirmCheckOut(context, vm.tenant),
           onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
           onEdit: () => _navigateToEditTenant(context, vm.tenant),
           onDelete: () => _confirmDelete(context, vm.tenant),
@@ -286,6 +316,7 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
           roomLabel: vm.roomName,
           bedLabel: vm.bedName,
           actionsEnabled: !isMutating,
+          onCheckOut: () => _confirmCheckOut(context, vm.tenant),
           onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
           onEdit: () => _navigateToEditTenant(context, vm.tenant),
           onDelete: () => _confirmDelete(context, vm.tenant),

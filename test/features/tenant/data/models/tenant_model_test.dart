@@ -240,6 +240,12 @@ void main() {
       expect(updated.checkOutDate, isNull);
     });
 
+    test('copyWith can clear the bed after checkout', () {
+      final updated = buildModel().copyWith(bedId: null);
+
+      expect(updated.bedId, isNull);
+    });
+
     test('copyWith without arguments returns an equal copy', () {
       final original = buildModel();
       final copy = original.copyWith();

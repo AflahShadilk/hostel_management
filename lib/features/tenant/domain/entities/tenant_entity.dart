@@ -8,7 +8,7 @@ import 'tenant_status.dart';
 /// redundant hostel or room IDs on the tenant itself.
 class TenantEntity extends Equatable {
   final int? id;
-  final int bedId;
+  final int? bedId;
   final String fullName;
   final String phoneNumber;
   final String? email;
@@ -23,7 +23,7 @@ class TenantEntity extends Equatable {
 
   const TenantEntity({
     this.id,
-    required this.bedId,
+    this.bedId,
     required this.fullName,
     required this.phoneNumber,
     this.email,

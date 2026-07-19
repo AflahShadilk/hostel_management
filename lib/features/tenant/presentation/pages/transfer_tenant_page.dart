@@ -7,11 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../hostel/presentation/cubit/hostel_cubit.dart';
-import '../../../room/domain/repositories/bed_repository.dart';
-import '../../../room/domain/repositories/room_repository.dart';
 import '../../domain/entities/tenant_entity.dart';
-import '../cubit/bed_selection_cubit.dart';
-import '../cubit/bed_selection_state.dart';
 import '../cubit/tenant_cubit.dart';
 import '../cubit/tenant_state.dart';
 import '../cubit/transfer_tenant_form_cubit.dart';
@@ -20,7 +16,7 @@ import '../widgets/bed_selection_widget.dart';
 /// Bed transfer page.
 ///
 /// UI state (selected new bed) is fully managed by [TransferTenantFormCubit].
-/// Current bed identity is resolved via [BedSelectionCubit] reading from DB.
+/// Current bed labels are read from the existing [TenantCubit] state.
 /// No setState() calls exist in this file.
 class TransferTenantPage extends StatelessWidget {
   final TenantEntity? tenant;
@@ -47,13 +43,6 @@ class TransferTenantPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => TransferTenantFormCubit()),
-        // Dedicated BedSelectionCubit for resolving the current bed display label.
-        BlocProvider(
-          create: (_) => BedSelectionCubit(
-            getIt<RoomRepository>(),
-            getIt<BedRepository>(),
-          )..loadAvailableBeds(hostelId),
-        ),
       ],
       child: BlocListener<TenantCubit, TenantState>(
         listenWhen: (prev, curr) => prev.status != curr.status,
@@ -136,7 +125,7 @@ class TransferTenantPage extends StatelessWidget {
                                             .read<TenantCubit>()
                                             .transferTenant(
                                               tenant!.id!,
-                                              oldBedId: tenant!.bedId,
+                                              oldBedId: tenant!.bedId!,
                                               newBedId: selectedBed.id!,
                                             );
                                       },
@@ -157,7 +146,7 @@ class TransferTenantPage extends StatelessWidget {
   }
 }
 
-/// Resolves and displays the current bed and room names via [BedSelectionCubit].
+/// Resolves and displays the current bed and room names from [TenantCubit].
 /// Never displays raw database IDs to the user.
 class _CurrentBedLabel extends StatelessWidget {
   final TenantEntity tenant;
@@ -165,12 +154,12 @@ class _CurrentBedLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BedSelectionCubit, BedSelectionState>(
+    return BlocBuilder<TenantCubit, TenantState>(
       builder: (context, state) {
         // We use the BedSelectionCubit just to check if loading is done —
         // actual current-bed resolution is done via a separate loading mechanism.
         // For the label, we rely on the TenantViewModel (already loaded by TenantCubit).
-        final vms = context.read<TenantCubit>().state.viewModels;
+        final vms = state.viewModels;
         final vm = vms.where((v) => v.tenant.id == tenant.id).firstOrNull;
 
         final roomLabel = vm?.roomName ?? '—';

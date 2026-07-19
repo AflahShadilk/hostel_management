@@ -25,7 +25,11 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
   @override
   Future<TenantEntity> assignTenant(TenantEntity tenant) async {
-    final bed = await _bedRepository.getBedById(tenant.bedId);
+    if (tenant.status != TenantStatus.active || tenant.bedId == null) {
+      throw ArgumentError('Only active tenants can be assigned to a bed.');
+    }
+
+    final bed = await _bedRepository.getBedById(tenant.bedId!);
     if (bed == null) {
       throw StateError('Cannot assign tenant: Bed not found.');
     }
@@ -50,6 +54,17 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     return await db.transaction((txn) async {
       final model = TenantModel.fromEntity(tenant);
       final map = model.toMap();
+      final roomRows = await txn.query(
+        RoomLocalSchema.tableRooms,
+        columns: ['hostel_id'],
+        where: 'id = ?',
+        whereArgs: [bed.roomId],
+        limit: 1,
+      );
+      if (roomRows.isEmpty) {
+        throw StateError('Cannot assign tenant: Room not found.');
+      }
+      map[TenantLocalSchema.colHostelId] = roomRows.first['hostel_id'];
       map[TenantLocalSchema.colFullName] = tenant.fullName.trim();
       map[TenantLocalSchema.colPhoneNumber] = tenant.phoneNumber.trim();
       map[TenantLocalSchema.colEmail] =
@@ -89,14 +104,43 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
   @override
   Future<TenantEntity> updateTenantDetails(TenantEntity tenant) async {
-    // Only basic tenant details updated, no bed changes, so we can delegate.
+    final existing = tenant.id == null
+        ? null
+        : await _tenantRepository.getTenantById(tenant.id!);
+    if (existing == null) {
+      throw StateError('Tenant update failed: record not found.');
+    }
+    if (existing.status != tenant.status || existing.bedId != tenant.bedId) {
+      throw StateError(
+        'Tenant status and bed assignment can only be changed by checkout or transfer.',
+      );
+    }
+
     await _tenantRepository.updateTenant(tenant);
     return tenant;
   }
 
   @override
-  Future<void> deleteTenant(int tenantId, {required int bedId}) async {
-    final bed = await _bedRepository.getBedById(bedId);
+  Future<void> deleteTenant(int tenantId, {int? bedId}) async {
+    final tenant = await _tenantRepository.getTenantById(tenantId);
+    if (tenant == null) return;
+
+    final assignedBedId = tenant.bedId;
+    if (assignedBedId == null) {
+      final db = await _appDatabase.database;
+      await db.delete(
+        TenantLocalSchema.tableTenants,
+        where: 'id = ?',
+        whereArgs: [tenantId],
+      );
+      return;
+    }
+
+    if (bedId != null && bedId != assignedBedId) {
+      throw StateError('Tenant bed assignment changed. Reload and try again.');
+    }
+
+    final bed = await _bedRepository.getBedById(assignedBedId);
     if (bed == null) return;
 
     final db = await _appDatabase.database;
@@ -117,7 +161,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
           'updated_at': DateTime.now().toIso8601String(),
         },
         where: 'id = ?',
-        whereArgs: [bedId],
+        whereArgs: [assignedBedId],
       );
 
       await _roomManagementRepository.syncRoomStatus(bed.roomId, txn: txn);
@@ -136,6 +180,9 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     if (tenant == null) {
       throw StateError('Tenant not found.');
     }
+    if (tenant.status != TenantStatus.active || tenant.bedId != bedId) {
+      throw StateError('Tenant is not assigned to this bed.');
+    }
 
     final db = await _appDatabase.database;
 
@@ -145,6 +192,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         TenantLocalSchema.tableTenants,
         {
           TenantLocalSchema.colStatus: TenantStatus.checkedOut.databaseValue,
+          TenantLocalSchema.colBedId: null,
           TenantLocalSchema.colCheckOutDate: now.toIso8601String(),
           TenantLocalSchema.colUpdatedAt: now.toIso8601String(),
         },
@@ -166,6 +214,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
       final model = TenantModel.fromEntity(tenant);
       return model.copyWith(
+        bedId: null,
         status: TenantStatus.checkedOut,
         checkOutDate: now,
         updatedAt: now,
@@ -199,6 +248,9 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     final tenant = await _tenantRepository.getTenantById(tenantId);
     if (tenant == null) {
       throw StateError('Tenant not found.');
+    }
+    if (tenant.status != TenantStatus.active || tenant.bedId != oldBedId) {
+      throw StateError('Tenant is not assigned to the original bed.');
     }
 
     final db = await _appDatabase.database;

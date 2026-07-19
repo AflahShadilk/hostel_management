@@ -65,6 +65,10 @@ class AppDatabase {
       // v1 → v2: introduce the tenants table.
       await TenantLocalSchema.createTable(db);
     }
+
+    if (oldVersion < 3) {
+      await TenantLocalSchema.migrateFromVersion2(db);
+    }
   }
 
   Future<void> close() async {

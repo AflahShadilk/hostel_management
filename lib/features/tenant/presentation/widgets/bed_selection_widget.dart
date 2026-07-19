@@ -5,8 +5,6 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../room/domain/entities/bed_entity.dart';
-import '../../../room/domain/repositories/bed_repository.dart';
-import '../../../room/domain/repositories/room_repository.dart';
 import '../cubit/bed_selection_cubit.dart';
 import '../cubit/bed_selection_state.dart';
 
@@ -30,10 +28,7 @@ class BedSelectionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => BedSelectionCubit(
-        getIt<RoomRepository>(),
-        getIt<BedRepository>(),
-      )..loadAvailableBeds(hostelId),
+      create: (_) => getIt<BedSelectionCubit>()..loadAvailableBeds(hostelId),
       child: BlocBuilder<BedSelectionCubit, BedSelectionState>(
         builder: (context, state) {
           if (state is BedSelectionLoading || state is BedSelectionInitial) {

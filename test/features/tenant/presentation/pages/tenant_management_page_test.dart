@@ -100,6 +100,7 @@ void main() {
     // Resolved business values — no raw IDs shown
     expect(find.text('Room 101'), findsOneWidget);
     expect(find.text('Bed B1'), findsOneWidget);
+    expect(find.byTooltip('Check Out Tenant'), findsOneWidget);
   });
 
   testWidgets('search filters list via cubit (no setState)', (tester) async {
