@@ -12,7 +12,16 @@ class StayCubit extends Cubit<StayState> {
   Future<void> createStay(StayEntity stay) async {
     emit(const StayLoading());
     try {
-      await _rentRepository.createStay(stay);
+      await _rentRepository.checkInTenant(
+        tenantId: stay.tenantId,
+        roomId: stay.roomId,
+        bedId: stay.bedId,
+        checkInDate: stay.checkInDate,
+        expectedCheckoutDate: stay.expectedCheckoutDate,
+        monthlyRent: stay.monthlyRentSnapshot,
+        dailyRate: stay.dailyRate,
+        depositAmount: 0.0, // UI does not currently collect this
+      );
       await _reloadAllStays();
     } catch (error) {
       emit(StayError(error.toString()));

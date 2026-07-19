@@ -44,6 +44,30 @@ class RentRepositoryImpl implements RentRepository {
   Future<void> deleteStay(int id) => _localDataSource.deleteStay(id);
 
   @override
+  Future<StayEntity> checkInTenant({
+    required int tenantId,
+    required int roomId,
+    required int bedId,
+    required DateTime checkInDate,
+    DateTime? expectedCheckoutDate,
+    required double monthlyRent,
+    required double dailyRate,
+    required double depositAmount,
+  }) async {
+    return (await _localDataSource.checkInTenant(
+      tenantId: tenantId,
+      roomId: roomId,
+      bedId: bedId,
+      checkInDate: checkInDate,
+      expectedCheckoutDate: expectedCheckoutDate,
+      monthlyRent: monthlyRent,
+      dailyRate: dailyRate,
+      depositAmount: depositAmount,
+    ))
+        .toEntity();
+  }
+
+  @override
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord) async =>
       (await _localDataSource.createRentRecord(RentRecordModel.fromEntity(rentRecord)))
           .toEntity();

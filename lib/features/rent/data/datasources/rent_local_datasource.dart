@@ -14,6 +14,17 @@ abstract class RentLocalDataSource {
   Future<StayModel> updateStay(StayModel stay);
   Future<void> deleteStay(int id);
 
+  Future<StayModel> checkInTenant({
+    required int tenantId,
+    required int roomId,
+    required int bedId,
+    required DateTime checkInDate,
+    DateTime? expectedCheckoutDate,
+    required double monthlyRent,
+    required double dailyRate,
+    required double depositAmount,
+  });
+
   Future<RentRecordModel> createRentRecord(RentRecordModel rentRecord);
   Future<RentRecordModel?> getRentRecordById(int id);
   Future<List<RentRecordModel>> getRentRecordsByStayId(int stayId);

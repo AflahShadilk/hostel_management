@@ -14,6 +14,17 @@ abstract interface class RentRepository {
   Future<StayEntity> updateStay(StayEntity stay);
   Future<void> deleteStay(int id);
 
+  Future<StayEntity> checkInTenant({
+    required int tenantId,
+    required int roomId,
+    required int bedId,
+    required DateTime checkInDate,
+    DateTime? expectedCheckoutDate,
+    required double monthlyRent,
+    required double dailyRate,
+    required double depositAmount,
+  });
+
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord);
   Future<RentRecordEntity?> getRentRecordById(int id);
   Future<List<RentRecordEntity>> getRentRecordsByStayId(int stayId);

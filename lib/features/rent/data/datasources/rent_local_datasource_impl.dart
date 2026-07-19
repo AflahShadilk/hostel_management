@@ -111,6 +111,83 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
       _delete(RentLocalSchema.tableStays, id, 'delete stay');
 
   @override
+  Future<StayModel> checkInTenant({
+    required int tenantId,
+    required int roomId,
+    required int bedId,
+    required DateTime checkInDate,
+    DateTime? expectedCheckoutDate,
+    required double monthlyRent,
+    required double dailyRate,
+    required double depositAmount,
+  }) async {
+    final database = await _appDatabase.database;
+    return _perform('check in tenant', () async {
+      return await database.transaction((txn) async {
+        // 1. Verify tenant exists
+        final tenants = await txn.query('tenants', where: 'id = ?', whereArgs: [tenantId], limit: 1);
+        if (tenants.isEmpty) throw Exception('Tenant not found.');
+
+        // 2. Verify room exists
+        final rooms = await txn.query('rooms', where: 'id = ?', whereArgs: [roomId], limit: 1);
+        if (rooms.isEmpty) throw Exception('Room not found.');
+
+        // 3. Verify bed exists, belongs to room, is vacant
+        final beds = await txn.query('beds', where: 'id = ?', whereArgs: [bedId], limit: 1);
+        if (beds.isEmpty) throw Exception('Bed not found.');
+        if (beds.first['room_id'] != roomId) throw Exception('Bed does not belong to the selected room.');
+        if (beds.first['status'] != 'vacant') throw Exception('Bed is not vacant.');
+
+        // 4. Verify tenant does not have active stay
+        final stays = await txn.query(RentLocalSchema.tableStays,
+            where: 'tenant_id = ? AND status = ?',
+            whereArgs: [tenantId, StayStatus.active],
+            limit: 1);
+        if (stays.isNotEmpty) throw Exception('Tenant already has an active stay.');
+
+        final now = DateTime.now().toIso8601String();
+
+        // 5. Update bed to occupied
+        await txn.update('beds', {'status': 'occupied', 'updated_at': now}, where: 'id = ?', whereArgs: [bedId]);
+
+        // 6. Update tenant to active and assign to bed
+        await txn.update('tenants', {'status': 'active', 'bed_id': bedId, 'updated_at': now}, where: 'id = ?', whereArgs: [tenantId]);
+
+        // 7. Insert Stay
+        final stayMap = {
+          'tenant_id': tenantId,
+          'room_id': roomId,
+          'bed_id': bedId,
+          'check_in_date': checkInDate.toIso8601String(),
+          'expected_checkout_date': expectedCheckoutDate?.toIso8601String(),
+          'monthly_rent_snapshot': monthlyRent,
+          'daily_rate': dailyRate,
+          'status': StayStatus.active,
+          'created_at': now,
+          'updated_at': now,
+        };
+        final stayId = await txn.insert(RentLocalSchema.tableStays, stayMap);
+        final createdStay = StayModel.fromMap(<String, dynamic>{...stayMap, 'id': stayId});
+
+        // 8. If deposit > 0, Insert Deposit
+        if (depositAmount > 0) {
+          await txn.insert(RentLocalSchema.tableDeposits, {
+            'stay_id': stayId,
+            'amount': depositAmount,
+            'received_date': now,
+            'refunded_amount': 0.0,
+            'status': 'held',
+            'created_at': now,
+            'updated_at': now,
+          });
+        }
+
+        return createdStay;
+      });
+    });
+  }
+
+  @override
   Future<RentRecordModel> createRentRecord(RentRecordModel rentRecord) async {
     final database = await _appDatabase.database;
     return _perform('create rent record', () async {
