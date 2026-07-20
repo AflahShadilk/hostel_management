@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../core/database/database_constants.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../domain/entities/settings_entity.dart';
 import '../../domain/repositories/export_repository.dart';
@@ -17,9 +19,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late final Future<PackageInfo> _packageInfo;
+
   @override
   void initState() {
     super.initState();
+    _packageInfo = PackageInfo.fromPlatform();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<SettingsCubit>().loadSettings();
     });
@@ -64,35 +69,35 @@ class _SettingsPageState extends State<SettingsPage> {
                 return ListView(
                   padding: EdgeInsets.all(padding),
                   children: [
+                    if (isProcessing) const LinearProgressIndicator(),
+                    if (isProcessing) const SizedBox(height: 16),
                     SettingsSection(
-                      title: 'Appearance',
-                      child: SettingsTile(
-                        title: 'Theme',
-                        trailing: DropdownButton<String>(
-                          value: settings.themeMode,
-                          items: const ['system', 'light', 'dark']
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: isProcessing
-                              ? null
-                              : (value) {
-                                  if (value != null) {
-                                    _save(settings.copyWith(themeMode: value));
-                                  }
-                                },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SettingsSection(
-                      title: 'Regional',
+                      title: 'General',
                       child: Column(
                         children: [
+                          SettingsTile(
+                            title: 'Theme',
+                            trailing: DropdownButton<String>(
+                              value: settings.themeMode,
+                              items: const ['system', 'light', 'dark']
+                                  .map(
+                                    (value) => DropdownMenuItem(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: isProcessing
+                                  ? null
+                                  : (value) {
+                                      if (value != null) {
+                                        _save(settings.copyWith(
+                                          themeMode: value,
+                                        ));
+                                      }
+                                    },
+                            ),
+                          ),
                           SettingsTile(
                             title: 'Currency symbol',
                             trailing: SizedBox(
@@ -171,22 +176,18 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                           ),
+                          SettingsTile(
+                            title: 'Notifications',
+                            trailing: Switch(
+                              value: settings.notificationsEnabled,
+                              onChanged: isProcessing
+                                  ? null
+                                  : (value) => _save(settings.copyWith(
+                                        notificationsEnabled: value,
+                                      )),
+                            ),
+                          ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SettingsSection(
-                      title: 'Notifications',
-                      child: SettingsTile(
-                        title: 'Notifications enabled',
-                        trailing: Switch(
-                          value: settings.notificationsEnabled,
-                          onChanged: isProcessing
-                              ? null
-                              : (value) => _save(settings.copyWith(
-                                    notificationsEnabled: value,
-                                  )),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -234,12 +235,69 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    _aboutSection(context),
                   ],
                 );
               },
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _aboutSection(BuildContext context) {
+    return SettingsSection(
+      title: 'About',
+      child: FutureBuilder<PackageInfo>(
+        future: _packageInfo,
+        builder: (context, snapshot) {
+          final packageInfo = snapshot.data;
+          final version = packageInfo != null
+              ? 'Version ${packageInfo.version} (${packageInfo.buildNumber})'
+              : snapshot.hasError
+                  ? 'Version information unavailable'
+                  : 'Loading version information...';
+          return Column(
+            children: [
+              SettingsTile(
+                title: 'Hostel Management System',
+                subtitle: version,
+                trailing: const Icon(Icons.info_outline),
+              ),
+              SettingsTile(
+                title: 'Database',
+                subtitle: 'Version ${DatabaseConstants.databaseVersion}',
+                trailing: const Icon(Icons.storage_outlined),
+              ),
+              SettingsTile(
+                title: 'Developer',
+                subtitle: 'Hostel Management Team',
+                trailing: const Icon(Icons.code_outlined),
+              ),
+              SettingsTile(
+                title: 'Copyright',
+                subtitle: 'Copyright ${DateTime.now().year} Hostel Management System',
+                trailing: const Icon(Icons.copyright_outlined),
+              ),
+              SettingsTile(
+                title: 'Open-source licenses',
+                subtitle: 'View licenses for packages used by this app.',
+                trailing: FilledButton.tonal(
+                  onPressed: () => showLicensePage(
+                    context: context,
+                    applicationName: 'Hostel Management System',
+                    applicationVersion: packageInfo == null
+                        ? null
+                        : '${packageInfo.version} (${packageInfo.buildNumber})',
+                  ),
+                  child: const Text('View'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
