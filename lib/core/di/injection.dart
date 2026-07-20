@@ -48,6 +48,12 @@ import '../../features/rent/presentation/cubit/ui/deleting_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/selected_date_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/selected_status_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/balance_cubit.dart';
+import '../../features/expense/data/datasources/expense_local_datasource.dart';
+import '../../features/expense/data/datasources/expense_local_datasource_impl.dart';
+import '../../features/expense/data/repositories/expense_repository_impl.dart';
+import '../../features/expense/domain/repositories/expense_repository.dart';
+import '../../features/expense/presentation/cubit/expense/expense_cubit.dart';
+import '../../features/expense/presentation/cubit/expense_category/expense_category_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -176,6 +182,19 @@ Future<void> configureDependencies() async {
     () => DamageChargeCubit(getIt<RentRepository>()),
   );
   getIt.registerFactory<CheckoutCubit>(() => CheckoutCubit(getIt<RentRepository>()));
+
+  getIt.registerLazySingleton<ExpenseLocalDataSource>(
+    () => ExpenseLocalDataSourceImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerLazySingleton<ExpenseRepository>(
+    () => ExpenseRepositoryImpl(getIt<ExpenseLocalDataSource>()),
+  );
+  getIt.registerFactory<ExpenseCategoryCubit>(
+    () => ExpenseCategoryCubit(getIt<ExpenseRepository>()),
+  );
+  getIt.registerFactory<ExpenseCubit>(
+    () => ExpenseCubit(getIt<ExpenseRepository>()),
+  );
 
   // Lightweight UI Cubits — no repository dependencies
   getIt.registerFactory<SubmittingCubit>(() => SubmittingCubit());
