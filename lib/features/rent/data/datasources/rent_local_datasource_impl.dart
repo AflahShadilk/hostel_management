@@ -326,10 +326,122 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
   @override
   Future<PaymentModel> createPayment(PaymentModel payment) async {
     final database = await _appDatabase.database;
-    return _perform('create payment', () async {
-      final map = payment.toMap();
-      final id = await database.insert(RentLocalSchema.tablePayments, map);
-      return PaymentModel.fromMap(<String, dynamic>{...map, 'id': id});
+    return _perform('allocate payment', () async {
+      if (payment.id != null) {
+        throw StateError('A payment that already has an ID cannot be allocated again.');
+      }
+      if (!payment.amount.isFinite || payment.amount <= 0) {
+        throw ArgumentError('Payment amount must be greater than zero.');
+      }
+      if (!PaymentMethod.values.contains(payment.paymentMethod)) {
+        throw ArgumentError('Payment method is not supported.');
+      }
+      if (payment.status != PaymentStatus.completed) {
+        throw ArgumentError('Only completed payments can be allocated.');
+      }
+
+      return database.transaction((txn) async {
+        final rentRows = await txn.query(
+          RentLocalSchema.tableRentRecords,
+          where: 'id = ?',
+          whereArgs: [payment.rentRecordId],
+          limit: 1,
+        );
+        if (rentRows.isEmpty) {
+          throw StateError('Rent record not found.');
+        }
+
+        final rentRecord = rentRows.first;
+        final stayId = rentRecord['stay_id'] as int;
+        final amountDue = (rentRecord['amount_due'] as num).toDouble();
+        final amountPaid = (rentRecord['amount_paid'] as num).toDouble();
+        const moneyPrecision = 0.000001;
+        final outstanding = amountDue - amountPaid;
+        if (outstanding < -moneyPrecision) {
+          throw StateError('Rent record has an invalid negative outstanding balance.');
+        }
+        if (payment.amount - outstanding > moneyPrecision) {
+          throw StateError('Payment amount exceeds the outstanding balance.');
+        }
+
+        final stayRows = await txn.query(
+          RentLocalSchema.tableStays,
+          columns: ['tenant_id', 'status'],
+          where: 'id = ?',
+          whereArgs: [stayId],
+          limit: 1,
+        );
+        if (stayRows.isEmpty) {
+          throw StateError('Stay not found.');
+        }
+        final stay = stayRows.first;
+        if (stay['status'] != StayStatus.active) {
+          throw StateError('Stay is not active.');
+        }
+
+        final tenantRows = await txn.query(
+          'tenants',
+          columns: ['status'],
+          where: 'id = ?',
+          whereArgs: [stay['tenant_id']],
+          limit: 1,
+        );
+        if (tenantRows.isEmpty ||
+            tenantRows.first['status'] != TenantStatus.active.databaseValue) {
+          throw StateError('Tenant is not active.');
+        }
+
+        final map = payment.toMap();
+        final duplicatePayments = await txn.query(
+          RentLocalSchema.tablePayments,
+          columns: ['id'],
+          where:
+              'rent_record_id = ? AND amount = ? AND payment_date = ? AND '
+              'payment_method = ? AND status = ? AND created_at = ? AND '
+              'updated_at = ?',
+          whereArgs: [
+            map['rent_record_id'],
+            map['amount'],
+            map['payment_date'],
+            map['payment_method'],
+            map['status'],
+            map['created_at'],
+            map['updated_at'],
+          ],
+          limit: 1,
+        );
+        if (duplicatePayments.isNotEmpty) {
+          throw StateError('This payment has already been allocated.');
+        }
+        final paymentId = await txn.insert(RentLocalSchema.tablePayments, map);
+
+        final rawUpdatedAmountPaid = amountPaid + payment.amount;
+        final updatedAmountPaid =
+            (amountDue - rawUpdatedAmountPaid).abs() <= moneyPrecision
+                ? amountDue
+                : rawUpdatedAmountPaid;
+        final remaining = amountDue - updatedAmountPaid;
+        final status = remaining <= moneyPrecision
+            ? RentStatus.paid
+            : updatedAmountPaid == 0
+                ? RentStatus.pending
+                : RentStatus.partial;
+        final updatedRows = await txn.update(
+          RentLocalSchema.tableRentRecords,
+          {
+            'amount_paid': updatedAmountPaid,
+            'status': status,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: [payment.rentRecordId],
+        );
+        if (updatedRows != 1) {
+          throw StateError('Rent record update failed.');
+        }
+
+        return PaymentModel.fromMap(<String, dynamic>{...map, 'id': paymentId});
+      });
     });
   }
 

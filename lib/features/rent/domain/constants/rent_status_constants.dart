@@ -38,3 +38,23 @@ abstract final class SettlementStatus {
 
   static const List<String> values = <String>[draft, completed];
 }
+
+/// Known payment methods for Rent payments.
+///
+/// The [payments] table has no SQL CHECK constraint on [payment_method],
+/// so this class acts as the single source of truth for valid values.
+abstract final class PaymentMethod {
+  static const String cash = 'cash';
+  static const String bankTransfer = 'bank_transfer';
+  static const String upi = 'upi';
+  static const String cheque = 'cheque';
+  static const String other = 'other';
+
+  static const List<String> values = <String>[
+    cash,
+    bankTransfer,
+    upi,
+    cheque,
+    other,
+  ];
+}
