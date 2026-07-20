@@ -63,6 +63,13 @@ import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
 import '../../features/rent/presentation/pages/checkout/add_edit_checkout_page.dart';
 import '../../features/rent/presentation/pages/checkout/checkout_details_page.dart';
 import '../../features/rent/presentation/pages/checkout/checkout_list_page.dart';
+import '../../features/expense/domain/entities/expense_entity.dart';
+import '../../features/expense/presentation/cubit/expense/expense_cubit.dart';
+import '../../features/expense/presentation/cubit/expense_category/expense_category_cubit.dart';
+import '../../features/expense/presentation/pages/expense/add_expense_page.dart';
+import '../../features/expense/presentation/pages/expense/edit_expense_page.dart';
+import '../../features/expense/presentation/pages/expense/expense_list_page.dart';
+import '../../features/expense/presentation/pages/expense_category/expense_category_list_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -121,6 +128,8 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<DepositCubit>()),
               BlocProvider(create: (_) => getIt<DamageChargeCubit>()),
               BlocProvider(create: (_) => getIt<CheckoutCubit>()),
+              BlocProvider(create: (_) => getIt<ExpenseCategoryCubit>()),
+              BlocProvider(create: (_) => getIt<ExpenseCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
           );
@@ -367,6 +376,35 @@ abstract final class AppRouter {
                     path: AppRoutes.editRentRecordPath,
                     builder: (context, state) => AddEditRentRecordPage(
                       record: state.extra as RentRecordEntity?,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 10: Expense Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.expenseManagementName,
+                path: AppRoutes.expenseManagementPath,
+                builder: (context, state) => const ExpenseListPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.expenseCategoryManagementName,
+                    path: AppRoutes.expenseCategoryManagementPath,
+                    builder: (context, state) => const ExpenseCategoryListPage(),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.addExpenseName,
+                    path: AppRoutes.addExpensePath,
+                    builder: (context, state) => const AddExpensePage(),
+                  ),
+                  GoRoute(
+                    name: AppRoutes.editExpenseName,
+                    path: AppRoutes.editExpensePath,
+                    builder: (context, state) => EditExpensePage(
+                      expense: state.extra as ExpenseEntity,
                     ),
                   ),
                 ],

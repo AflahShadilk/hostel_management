@@ -90,6 +90,11 @@ class MainShellPage extends StatelessWidget {
                       selectedIcon: Icon(Icons.exit_to_app),
                       label: Text('Checkout'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.account_balance_outlined),
+                      selectedIcon: Icon(Icons.account_balance),
+                      label: Text('Expenses'),
+                    ),
                   ],
                 ),
                     ),
@@ -157,6 +162,11 @@ class MainShellPage extends StatelessWidget {
                 icon: Icon(Icons.exit_to_app_outlined),
                 selectedIcon: Icon(Icons.exit_to_app),
                 label: 'Checkout',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.account_balance_outlined),
+                selectedIcon: Icon(Icons.account_balance),
+                label: 'Expenses',
               ),
             ],
           ),

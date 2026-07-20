@@ -109,4 +109,14 @@ abstract final class AppRoutes {
   static const String checkoutDetailsPath = ':checkoutId';
   static const String editCheckoutName = 'editCheckout';
   static const String editCheckoutPath = ':checkoutId/edit';
+
+  static const String expenseManagementName = 'expenseManagement';
+  static const String expenseManagementPath = '/expenses';
+  static const String expenseCategoryManagementName =
+      'expenseCategoryManagement';
+  static const String expenseCategoryManagementPath = 'categories';
+  static const String addExpenseName = 'addExpense';
+  static const String addExpensePath = 'add';
+  static const String editExpenseName = 'editExpense';
+  static const String editExpensePath = ':expenseId/edit';
 }
