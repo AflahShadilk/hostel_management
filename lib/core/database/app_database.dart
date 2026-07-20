@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'database_constants.dart';
 import '../../features/auth/data/datasources/auth_local_schema.dart';
+import '../../features/expense/data/datasources/expense_local_schema.dart';
 import '../../features/hostel/data/datasources/hostel_local_schema.dart';
 import '../../features/room/data/datasources/room_local_schema.dart';
 import '../../features/rent/data/datasources/rent_local_schema.dart';
@@ -60,6 +61,8 @@ class AppDatabase {
 
     // Rent management tables reference tenants, then each other.
     await RentLocalSchema.createTables(db);
+
+    await ExpenseLocalSchema.createTables(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -80,6 +83,12 @@ class AppDatabase {
 
     if (oldVersion < 5) {
       await RentLocalSchema.migrateFromVersion4(db);
+    }
+
+    if (oldVersion < 6) {
+      await db.transaction((txn) async {
+        await ExpenseLocalSchema.createTables(txn);
+      });
     }
   }
 

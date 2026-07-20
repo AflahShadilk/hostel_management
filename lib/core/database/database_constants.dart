@@ -1,4 +1,4 @@
 abstract final class DatabaseConstants {
   static const String databaseName = 'hostel_management.db';
-  static const int databaseVersion = 5;
+  static const int databaseVersion = 6;
 }
