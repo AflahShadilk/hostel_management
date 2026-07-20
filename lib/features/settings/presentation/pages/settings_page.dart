@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../domain/entities/settings_entity.dart';
+import '../../domain/repositories/export_repository.dart';
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
 import '../widgets/settings_section.dart';
@@ -218,12 +219,39 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    SettingsSection(
+                      title: 'Export Data',
+                      child: Column(
+                        children: [
+                          _exportTile('Export Tenant CSV', ExportDataType.tenantCsv, isProcessing),
+                          _exportTile('Export Room CSV', ExportDataType.roomCsv, isProcessing),
+                          _exportTile('Export Rent CSV', ExportDataType.rentCsv, isProcessing),
+                          _exportTile('Export Expense CSV', ExportDataType.expenseCsv, isProcessing),
+                          _exportTile('Export Tenant PDF', ExportDataType.tenantPdf, isProcessing),
+                          _exportTile('Export Rent PDF', ExportDataType.rentPdf, isProcessing),
+                          _exportTile('Export Expense PDF', ExportDataType.expensePdf, isProcessing),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               },
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _exportTile(String title, ExportDataType type, bool isProcessing) {
+    return SettingsTile(
+      title: title,
+      trailing: FilledButton.tonal(
+        onPressed: isProcessing
+            ? null
+            : () => context.read<SettingsCubit>().exportData(type),
+        child: const Text('Export'),
       ),
     );
   }

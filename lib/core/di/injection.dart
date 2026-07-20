@@ -65,6 +65,10 @@ import '../../features/settings/data/datasources/backup_local_datasource.dart';
 import '../../features/settings/data/datasources/backup_local_datasource_impl.dart';
 import '../../features/settings/data/repositories/backup_repository_impl.dart';
 import '../../features/settings/domain/repositories/backup_repository.dart';
+import '../../features/settings/data/datasources/export_local_datasource.dart';
+import '../../features/settings/data/datasources/export_local_datasource_impl.dart';
+import '../../features/settings/data/repositories/export_repository_impl.dart';
+import '../../features/settings/domain/repositories/export_repository.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
@@ -231,8 +235,25 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<BackupRepository>(
     () => BackupRepositoryImpl(getIt<BackupLocalDataSource>()),
   );
+  getIt.registerLazySingleton<ExportLocalDataSource>(
+    () => ExportLocalDataSourceImpl(
+      getIt<TenantRepository>(),
+      getIt<RoomRepository>(),
+      getIt<RentRepository>(),
+      getIt<ExpenseRepository>(),
+      getIt<HostelRepository>(),
+      getIt<AuthSessionService>(),
+    ),
+  );
+  getIt.registerLazySingleton<ExportRepository>(
+    () => ExportRepositoryImpl(getIt<ExportLocalDataSource>()),
+  );
   getIt.registerFactory<SettingsCubit>(
-    () => SettingsCubit(getIt<SettingsRepository>(), getIt<BackupRepository>()),
+    () => SettingsCubit(
+      getIt<SettingsRepository>(),
+      getIt<BackupRepository>(),
+      getIt<ExportRepository>(),
+    ),
   );
 
   // Lightweight UI Cubits — no repository dependencies
