@@ -23,6 +23,9 @@ abstract final class AppRoutes {
   static const String homeName = 'home';
   static const String homePath = '/home';
 
+  static const String searchName = 'search';
+  static const String searchPath = '/search';
+
   static const String roomManagementName = 'roomManagement';
   static const String roomManagementPath = '/rooms';
 

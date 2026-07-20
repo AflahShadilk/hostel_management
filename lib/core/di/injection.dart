@@ -54,6 +54,11 @@ import '../../features/expense/data/repositories/expense_repository_impl.dart';
 import '../../features/expense/domain/repositories/expense_repository.dart';
 import '../../features/expense/presentation/cubit/expense/expense_cubit.dart';
 import '../../features/expense/presentation/cubit/expense_category/expense_category_cubit.dart';
+import '../../features/communication/data/repositories/communication_repository_impl.dart';
+import '../../features/communication/domain/repositories/communication_repository.dart';
+import '../../features/search/data/repositories/search_repository_impl.dart';
+import '../../features/search/domain/repositories/search_repository.dart';
+import '../../features/search/presentation/cubit/search_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -175,13 +180,17 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<RentRecordCubit>(
     () => RentRecordCubit(getIt<RentRepository>()),
   );
-  getIt.registerFactory<PaymentCubit>(() => PaymentCubit(getIt<RentRepository>()));
-  getIt.registerFactory<ReceiptCubit>(() => ReceiptCubit(getIt<RentRepository>()));
-  getIt.registerFactory<DepositCubit>(() => DepositCubit(getIt<RentRepository>()));
+  getIt.registerFactory<PaymentCubit>(
+      () => PaymentCubit(getIt<RentRepository>()));
+  getIt.registerFactory<ReceiptCubit>(
+      () => ReceiptCubit(getIt<RentRepository>()));
+  getIt.registerFactory<DepositCubit>(
+      () => DepositCubit(getIt<RentRepository>()));
   getIt.registerFactory<DamageChargeCubit>(
     () => DamageChargeCubit(getIt<RentRepository>()),
   );
-  getIt.registerFactory<CheckoutCubit>(() => CheckoutCubit(getIt<RentRepository>()));
+  getIt.registerFactory<CheckoutCubit>(
+      () => CheckoutCubit(getIt<RentRepository>()));
 
   getIt.registerLazySingleton<ExpenseLocalDataSource>(
     () => ExpenseLocalDataSourceImpl(getIt<AppDatabase>()),
@@ -195,6 +204,16 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<ExpenseCubit>(
     () => ExpenseCubit(getIt<ExpenseRepository>()),
   );
+
+  getIt.registerLazySingleton<CommunicationRepository>(
+    () => const CommunicationRepositoryImpl(),
+  );
+
+  getIt.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerFactory<SearchCubit>(
+      () => SearchCubit(getIt<SearchRepository>()));
 
   // Lightweight UI Cubits — no repository dependencies
   getIt.registerFactory<SubmittingCubit>(() => SubmittingCubit());

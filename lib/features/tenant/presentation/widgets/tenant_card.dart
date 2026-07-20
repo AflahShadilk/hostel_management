@@ -18,6 +18,10 @@ class TenantCard extends StatelessWidget {
   final VoidCallback? onTransfer;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onWhatsApp;
+  final VoidCallback? onCallTenant;
+  final VoidCallback? onCallGuardian;
+  final VoidCallback? onSms;
 
   const TenantCard({
     super.key,
@@ -29,6 +33,10 @@ class TenantCard extends StatelessWidget {
     this.onTransfer,
     this.onEdit,
     this.onDelete,
+    this.onWhatsApp,
+    this.onCallTenant,
+    this.onCallGuardian,
+    this.onSms,
   });
 
   String _formatDate(DateTime date) {
@@ -121,6 +129,52 @@ class TenantCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (onWhatsApp != null ||
+                    onCallTenant != null ||
+                    onCallGuardian != null ||
+                    onSms != null)
+                  PopupMenuButton<_TenantCommunicationAction>(
+                    icon: const Icon(Icons.more_vert_outlined, size: 20),
+                    tooltip: 'Contact tenant',
+                    onSelected: (action) {
+                      switch (action) {
+                        case _TenantCommunicationAction.whatsApp:
+                          onWhatsApp?.call();
+                        case _TenantCommunicationAction.callTenant:
+                          onCallTenant?.call();
+                        case _TenantCommunicationAction.callGuardian:
+                          onCallGuardian?.call();
+                        case _TenantCommunicationAction.sms:
+                          onSms?.call();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (onWhatsApp != null)
+                        const PopupMenuItem(
+                            value: _TenantCommunicationAction.whatsApp,
+                            child: ListTile(
+                                leading: Icon(Icons.chat_outlined),
+                                title: Text('WhatsApp'))),
+                      if (onCallTenant != null)
+                        const PopupMenuItem(
+                            value: _TenantCommunicationAction.callTenant,
+                            child: ListTile(
+                                leading: Icon(Icons.call_outlined),
+                                title: Text('Call Tenant'))),
+                      if (onCallGuardian != null)
+                        const PopupMenuItem(
+                            value: _TenantCommunicationAction.callGuardian,
+                            child: ListTile(
+                                leading: Icon(Icons.contact_phone_outlined),
+                                title: Text('Call Guardian'))),
+                      if (onSms != null)
+                        const PopupMenuItem(
+                            value: _TenantCommunicationAction.sms,
+                            child: ListTile(
+                                leading: Icon(Icons.sms_outlined),
+                                title: Text('SMS'))),
+                    ],
+                  ),
                 if (tenant.status == TenantStatus.active)
                   IconButton(
                     icon: const Icon(Icons.exit_to_app_outlined, size: 20),
@@ -157,6 +211,8 @@ class TenantCard extends StatelessWidget {
     );
   }
 }
+
+enum _TenantCommunicationAction { whatsApp, callTenant, callGuardian, sms }
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;

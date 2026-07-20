@@ -70,6 +70,8 @@ import '../../features/expense/presentation/pages/expense/add_expense_page.dart'
 import '../../features/expense/presentation/pages/expense/edit_expense_page.dart';
 import '../../features/expense/presentation/pages/expense/expense_list_page.dart';
 import '../../features/expense/presentation/pages/expense_category/expense_category_list_page.dart';
+import '../../features/search/presentation/cubit/search_cubit.dart';
+import '../../features/search/presentation/pages/search_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -130,11 +132,22 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<CheckoutCubit>()),
               BlocProvider(create: (_) => getIt<ExpenseCategoryCubit>()),
               BlocProvider(create: (_) => getIt<ExpenseCubit>()),
+              BlocProvider(create: (_) => getIt<SearchCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
           );
         },
         branches: [
+          // Branch 0: Search
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.searchName,
+                path: AppRoutes.searchPath,
+                builder: (context, state) => const SearchPage(),
+              ),
+            ],
+          ),
           // Branch 0: Dashboard
           StatefulShellBranch(
             routes: [
@@ -175,11 +188,13 @@ abstract final class AppRouter {
                         name: AppRoutes.bedManagementName,
                         path: AppRoutes.bedManagementPath,
                         builder: (context, state) {
-                          final roomIdStr = state.pathParameters['roomId'] ?? '';
+                          final roomIdStr =
+                              state.pathParameters['roomId'] ?? '';
                           final room = state.extra as RoomEntity?;
                           return BlocProvider(
                             create: (_) => getIt<BedCubit>(),
-                            child: BedManagementPage(roomIdStr: roomIdStr, room: room),
+                            child: BedManagementPage(
+                                roomIdStr: roomIdStr, room: room),
                           );
                         },
                       ),
@@ -268,9 +283,22 @@ abstract final class AppRouter {
                 path: AppRoutes.checkoutManagementPath,
                 builder: (context, state) => const CheckoutListPage(),
                 routes: [
-                  GoRoute(name: AppRoutes.addCheckoutName, path: AppRoutes.addCheckoutPath, builder: (context, state) => const AddEditCheckoutPage()),
-                  GoRoute(name: AppRoutes.checkoutDetailsName, path: AppRoutes.checkoutDetailsPath, builder: (context, state) => CheckoutDetailsPage(settlement: state.extra as CheckoutSettlementEntity?)),
-                  GoRoute(name: AppRoutes.editCheckoutName, path: AppRoutes.editCheckoutPath, builder: (context, state) => AddEditCheckoutPage(settlement: state.extra as CheckoutSettlementEntity?)),
+                  GoRoute(
+                      name: AppRoutes.addCheckoutName,
+                      path: AppRoutes.addCheckoutPath,
+                      builder: (context, state) => const AddEditCheckoutPage()),
+                  GoRoute(
+                      name: AppRoutes.checkoutDetailsName,
+                      path: AppRoutes.checkoutDetailsPath,
+                      builder: (context, state) => CheckoutDetailsPage(
+                          settlement:
+                              state.extra as CheckoutSettlementEntity?)),
+                  GoRoute(
+                      name: AppRoutes.editCheckoutName,
+                      path: AppRoutes.editCheckoutPath,
+                      builder: (context, state) => AddEditCheckoutPage(
+                          settlement:
+                              state.extra as CheckoutSettlementEntity?)),
                 ],
               ),
             ],
@@ -283,9 +311,21 @@ abstract final class AppRouter {
                 path: AppRoutes.damageChargeManagementPath,
                 builder: (context, state) => const DamageChargeListPage(),
                 routes: [
-                  GoRoute(name: AppRoutes.addDamageChargeName, path: AppRoutes.addDamageChargePath, builder: (context, state) => const AddEditDamageChargePage()),
-                  GoRoute(name: AppRoutes.damageChargeDetailsName, path: AppRoutes.damageChargeDetailsPath, builder: (context, state) => DamageChargeDetailsPage(damageCharge: state.extra as DamageChargeEntity?)),
-                  GoRoute(name: AppRoutes.editDamageChargeName, path: AppRoutes.editDamageChargePath, builder: (context, state) => AddEditDamageChargePage(damageCharge: state.extra as DamageChargeEntity?)),
+                  GoRoute(
+                      name: AppRoutes.addDamageChargeName,
+                      path: AppRoutes.addDamageChargePath,
+                      builder: (context, state) =>
+                          const AddEditDamageChargePage()),
+                  GoRoute(
+                      name: AppRoutes.damageChargeDetailsName,
+                      path: AppRoutes.damageChargeDetailsPath,
+                      builder: (context, state) => DamageChargeDetailsPage(
+                          damageCharge: state.extra as DamageChargeEntity?)),
+                  GoRoute(
+                      name: AppRoutes.editDamageChargeName,
+                      path: AppRoutes.editDamageChargePath,
+                      builder: (context, state) => AddEditDamageChargePage(
+                          damageCharge: state.extra as DamageChargeEntity?)),
                 ],
               ),
             ],
@@ -298,9 +338,20 @@ abstract final class AppRouter {
                 path: AppRoutes.depositManagementPath,
                 builder: (context, state) => const DepositListPage(),
                 routes: [
-                  GoRoute(name: AppRoutes.addDepositName, path: AppRoutes.addDepositPath, builder: (context, state) => const AddEditDepositPage()),
-                  GoRoute(name: AppRoutes.depositDetailsName, path: AppRoutes.depositDetailsPath, builder: (context, state) => DepositDetailsPage(deposit: state.extra as DepositEntity?)),
-                  GoRoute(name: AppRoutes.editDepositName, path: AppRoutes.editDepositPath, builder: (context, state) => AddEditDepositPage(deposit: state.extra as DepositEntity?)),
+                  GoRoute(
+                      name: AppRoutes.addDepositName,
+                      path: AppRoutes.addDepositPath,
+                      builder: (context, state) => const AddEditDepositPage()),
+                  GoRoute(
+                      name: AppRoutes.depositDetailsName,
+                      path: AppRoutes.depositDetailsPath,
+                      builder: (context, state) => DepositDetailsPage(
+                          deposit: state.extra as DepositEntity?)),
+                  GoRoute(
+                      name: AppRoutes.editDepositName,
+                      path: AppRoutes.editDepositPath,
+                      builder: (context, state) => AddEditDepositPage(
+                          deposit: state.extra as DepositEntity?)),
                 ],
               ),
             ],
@@ -313,9 +364,20 @@ abstract final class AppRouter {
                 path: AppRoutes.receiptManagementPath,
                 builder: (context, state) => const ReceiptListPage(),
                 routes: [
-                  GoRoute(name: AppRoutes.addReceiptName, path: AppRoutes.addReceiptPath, builder: (context, state) => const AddEditReceiptPage()),
-                  GoRoute(name: AppRoutes.receiptDetailsName, path: AppRoutes.receiptDetailsPath, builder: (context, state) => ReceiptDetailsPage(receipt: state.extra as ReceiptEntity?)),
-                  GoRoute(name: AppRoutes.editReceiptName, path: AppRoutes.editReceiptPath, builder: (context, state) => AddEditReceiptPage(receipt: state.extra as ReceiptEntity?)),
+                  GoRoute(
+                      name: AppRoutes.addReceiptName,
+                      path: AppRoutes.addReceiptPath,
+                      builder: (context, state) => const AddEditReceiptPage()),
+                  GoRoute(
+                      name: AppRoutes.receiptDetailsName,
+                      path: AppRoutes.receiptDetailsPath,
+                      builder: (context, state) => ReceiptDetailsPage(
+                          receipt: state.extra as ReceiptEntity?)),
+                  GoRoute(
+                      name: AppRoutes.editReceiptName,
+                      path: AppRoutes.editReceiptPath,
+                      builder: (context, state) => AddEditReceiptPage(
+                          receipt: state.extra as ReceiptEntity?)),
                 ],
               ),
             ],
@@ -393,7 +455,8 @@ abstract final class AppRouter {
                   GoRoute(
                     name: AppRoutes.expenseCategoryManagementName,
                     path: AppRoutes.expenseCategoryManagementPath,
-                    builder: (context, state) => const ExpenseCategoryListPage(),
+                    builder: (context, state) =>
+                        const ExpenseCategoryListPage(),
                   ),
                   GoRoute(
                     name: AppRoutes.addExpenseName,
@@ -414,7 +477,6 @@ abstract final class AppRouter {
         ],
       ),
     ],
-
   );
 }
 

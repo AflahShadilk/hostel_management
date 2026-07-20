@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/di/injection.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../domain/entities/tenant_entity.dart';
+import '../../../communication/domain/repositories/communication_repository.dart';
 import '../cubit/tenant_cubit.dart';
 import '../cubit/tenant_state.dart';
 import '../models/tenant_view_model.dart';
@@ -58,27 +60,59 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
   }
 
   void _navigateToEditTenant(BuildContext context, TenantEntity tenant) {
-    context.pushNamed(
+    context
+        .pushNamed(
       AppRoutes.editTenantName,
       pathParameters: {'tenantId': tenant.id!.toString()},
       extra: tenant,
-    ).then((changed) {
+    )
+        .then((changed) {
       if (changed == true && mounted) _triggerLoad();
     });
   }
 
   void _navigateToTransferTenant(BuildContext context, TenantEntity tenant) {
-    context.pushNamed(
+    context
+        .pushNamed(
       AppRoutes.transferTenantName,
       pathParameters: {'tenantId': tenant.id!.toString()},
       extra: tenant,
-    ).then((changed) {
+    )
+        .then((changed) {
       if (changed == true && mounted) _triggerLoad();
     });
   }
 
-  Future<void> _confirmDelete(
-      BuildContext context, TenantEntity tenant) async {
+  Future<void> _runCommunication(Future<CommunicationResult> action) async {
+    final result = await action;
+    if (!mounted || result.isSuccess) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message ?? 'Communication action failed.')),
+    );
+  }
+
+  void _contactTenant(TenantEntity tenant, _TenantContactAction action) {
+    final communication = getIt<CommunicationRepository>();
+    switch (action) {
+      case _TenantContactAction.whatsApp:
+        _runCommunication(communication.openWhatsAppChat(tenant.phoneNumber));
+      case _TenantContactAction.callTenant:
+        _runCommunication(communication.makePhoneCall(tenant.phoneNumber));
+      case _TenantContactAction.callGuardian:
+        final guardianPhone = tenant.emergencyContactPhone;
+        if (guardianPhone == null || guardianPhone.trim().isEmpty) return;
+        _runCommunication(communication.makePhoneCall(guardianPhone));
+      case _TenantContactAction.sms:
+        _runCommunication(communication.sendSms(
+          tenant.phoneNumber,
+          'Hello ${tenant.fullName}, this is a message from Hostel Management.',
+        ));
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, TenantEntity tenant) async {
     final tenantCubit = context.read<TenantCubit>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -276,8 +310,8 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
     );
   }
 
-  Widget _buildList(BuildContext context, List<TenantViewModel> viewModels,
-      bool isMutating) {
+  Widget _buildList(
+      BuildContext context, List<TenantViewModel> viewModels, bool isMutating) {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: viewModels.length,
@@ -293,6 +327,16 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
           onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
           onEdit: () => _navigateToEditTenant(context, vm.tenant),
           onDelete: () => _confirmDelete(context, vm.tenant),
+          onWhatsApp: () =>
+              _contactTenant(vm.tenant, _TenantContactAction.whatsApp),
+          onCallTenant: () =>
+              _contactTenant(vm.tenant, _TenantContactAction.callTenant),
+          onCallGuardian: vm.tenant.emergencyContactPhone?.trim().isNotEmpty ==
+                  true
+              ? () =>
+                  _contactTenant(vm.tenant, _TenantContactAction.callGuardian)
+              : null,
+          onSms: () => _contactTenant(vm.tenant, _TenantContactAction.sms),
         );
       },
     );
@@ -320,8 +364,20 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
           onTransfer: () => _navigateToTransferTenant(context, vm.tenant),
           onEdit: () => _navigateToEditTenant(context, vm.tenant),
           onDelete: () => _confirmDelete(context, vm.tenant),
+          onWhatsApp: () =>
+              _contactTenant(vm.tenant, _TenantContactAction.whatsApp),
+          onCallTenant: () =>
+              _contactTenant(vm.tenant, _TenantContactAction.callTenant),
+          onCallGuardian: vm.tenant.emergencyContactPhone?.trim().isNotEmpty ==
+                  true
+              ? () =>
+                  _contactTenant(vm.tenant, _TenantContactAction.callGuardian)
+              : null,
+          onSms: () => _contactTenant(vm.tenant, _TenantContactAction.sms),
         );
       },
     );
   }
 }
+
+enum _TenantContactAction { whatsApp, callTenant, callGuardian, sms }

@@ -41,6 +41,8 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   crypto: ^3.0.7
   sqflite_common_ffi: ^2.3.4+1
+  share_plus: ^10.1.4
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
