@@ -7,6 +7,7 @@ import '../../features/expense/data/datasources/expense_local_schema.dart';
 import '../../features/hostel/data/datasources/hostel_local_schema.dart';
 import '../../features/room/data/datasources/room_local_schema.dart';
 import '../../features/rent/data/datasources/rent_local_schema.dart';
+import '../../features/settings/data/datasources/settings_local_schema.dart';
 import '../../features/tenant/data/datasources/tenant_local_schema.dart';
 
 class AppDatabase {
@@ -63,6 +64,7 @@ class AppDatabase {
     await RentLocalSchema.createTables(db);
 
     await ExpenseLocalSchema.createTables(db);
+    await SettingsLocalSchema.createTable(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -90,6 +92,10 @@ class AppDatabase {
         await ExpenseLocalSchema.createTables(txn);
       });
     }
+
+    if (oldVersion < 7) {
+      await SettingsLocalSchema.createTable(db);
+    }
   }
 
   Future<void> close() async {
@@ -97,5 +103,11 @@ class AppDatabase {
       await _database!.close();
       _database = null;
     }
+  }
+
+  /// Opens a fresh connection after a backup or restore operation has closed
+  /// the active database connection.
+  Future<void> reopen() async {
+    await database;
   }
 }

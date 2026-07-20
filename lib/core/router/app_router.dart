@@ -72,6 +72,8 @@ import '../../features/expense/presentation/pages/expense/expense_list_page.dart
 import '../../features/expense/presentation/pages/expense_category/expense_category_list_page.dart';
 import '../../features/search/presentation/cubit/search_cubit.dart';
 import '../../features/search/presentation/pages/search_page.dart';
+import '../../features/settings/presentation/cubit/settings_cubit.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
@@ -112,6 +114,14 @@ abstract final class AppRouter {
         name: AppRoutes.hostelSetupName,
         path: AppRoutes.hostelSetupPath,
         builder: (context, state) => const HostelSetupPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.settingsName,
+        path: AppRoutes.settingsPath,
+        builder: (context, state) => BlocProvider(
+          create: (_) => getIt<SettingsCubit>(),
+          child: const SettingsPage(),
+        ),
       ),
       // -----------------------------------------------------------------------
       // Main Application Shell
