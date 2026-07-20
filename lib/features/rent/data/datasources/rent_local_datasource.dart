@@ -45,6 +45,7 @@ abstract class RentLocalDataSource {
   Future<PaymentModel> updatePayment(PaymentModel payment);
   Future<void> deletePayment(int id);
 
+  Future<ReceiptModel> generateReceiptForPayment(int paymentId);
   Future<ReceiptModel> createReceipt(ReceiptModel receipt);
   Future<ReceiptModel?> getReceiptByPaymentId(int paymentId);
   Future<List<ReceiptModel>> getAllReceipts();

@@ -492,6 +492,78 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
       _delete(RentLocalSchema.tablePayments, id, 'delete payment');
 
   @override
+  Future<ReceiptModel> generateReceiptForPayment(int paymentId) async {
+    final database = await _appDatabase.database;
+    return _perform('generate receipt', () async {
+      return database.transaction((txn) async {
+        final paymentRows = await txn.query(
+          RentLocalSchema.tablePayments,
+          where: 'id = ?',
+          whereArgs: [paymentId],
+          limit: 1,
+        );
+        if (paymentRows.isEmpty) {
+          throw StateError('Payment not found.');
+        }
+        final payment = PaymentModel.fromMap(paymentRows.first);
+        if (payment.status != PaymentStatus.completed) {
+          throw StateError('A receipt can only be generated for a completed payment.');
+        }
+
+        final rentRecordRows = await txn.query(
+          RentLocalSchema.tableRentRecords,
+          columns: ['stay_id'],
+          where: 'id = ?',
+          whereArgs: [payment.rentRecordId],
+          limit: 1,
+        );
+        if (rentRecordRows.isEmpty) {
+          throw StateError('Associated rent record not found.');
+        }
+
+        final stayRows = await txn.query(
+          RentLocalSchema.tableStays,
+          columns: ['status'],
+          where: 'id = ?',
+          whereArgs: [rentRecordRows.first['stay_id']],
+          limit: 1,
+        );
+        if (stayRows.isEmpty) {
+          throw StateError('Associated stay not found.');
+        }
+        if (stayRows.first['status'] != StayStatus.active) {
+          throw StateError('A receipt can only be generated for an active stay.');
+        }
+
+        final existingReceiptRows = await txn.query(
+          RentLocalSchema.tableReceipts,
+          columns: ['id'],
+          where: 'payment_id = ?',
+          whereArgs: [paymentId],
+          limit: 1,
+        );
+        if (existingReceiptRows.isNotEmpty) {
+          throw StateError('A receipt already exists for this payment.');
+        }
+
+        final now = DateTime.now();
+        final receipt = ReceiptModel(
+          paymentId: paymentId,
+          receiptNumber: 'RCT-${paymentId.toString().padLeft(4, '0')}',
+          paymentAmountSnapshot: payment.amount,
+          paymentMethodSnapshot: payment.paymentMethod,
+          issuedAt: payment.paymentDate,
+          createdAt: now,
+          updatedAt: now,
+        );
+        final map = receipt.toMap();
+        final receiptId = await txn.insert(RentLocalSchema.tableReceipts, map);
+        return ReceiptModel.fromMap(<String, dynamic>{...map, 'id': receiptId});
+      });
+    });
+  }
+
+  @override
   Future<ReceiptModel> createReceipt(ReceiptModel receipt) async {
     final database = await _appDatabase.database;
     return _perform('create receipt', () async {

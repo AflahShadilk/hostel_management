@@ -45,6 +45,7 @@ abstract interface class RentRepository {
   Future<PaymentEntity> updatePayment(PaymentEntity payment);
   Future<void> deletePayment(int id);
 
+  Future<ReceiptEntity> generateReceiptForPayment(int paymentId);
   Future<ReceiptEntity> createReceipt(ReceiptEntity receipt);
   Future<ReceiptEntity?> getReceiptByPaymentId(int paymentId);
   Future<List<ReceiptEntity>> getAllReceipts();

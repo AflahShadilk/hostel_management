@@ -134,6 +134,10 @@ class RentRepositoryImpl implements RentRepository {
   Future<void> deletePayment(int id) => _localDataSource.deletePayment(id);
 
   @override
+  Future<ReceiptEntity> generateReceiptForPayment(int paymentId) async =>
+      (await _localDataSource.generateReceiptForPayment(paymentId)).toEntity();
+
+  @override
   Future<ReceiptEntity> createReceipt(ReceiptEntity receipt) async =>
       (await _localDataSource.createReceipt(ReceiptModel.fromEntity(receipt))).toEntity();
 

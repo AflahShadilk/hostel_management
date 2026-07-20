@@ -12,7 +12,12 @@ class PaymentCubit extends Cubit<PaymentState> {
   Future<void> createPayment(PaymentEntity payment) async {
     emit(const PaymentLoading());
     try {
-      await _rentRepository.createPayment(payment);
+      final allocatedPayment = await _rentRepository.createPayment(payment);
+      final paymentId = allocatedPayment.id;
+      if (paymentId == null) {
+        throw StateError('Allocated payment did not return an ID.');
+      }
+      await _rentRepository.generateReceiptForPayment(paymentId);
       await _reloadAllPayments();
     } catch (error) {
       emit(PaymentError(error.toString()));
