@@ -45,6 +45,10 @@ dependencies:
   file_picker: ^8.1.7
   pdf: ^3.11.3
   package_info_plus: ^8.1.4
+  # Native splash — provides both the runtime API (FlutterNativeSplash.preserve/remove)
+  # imported in main.dart, AND the code-gen tool (dart run flutter_native_splash:create).
+  flutter_native_splash: ^2.4.4
+
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +72,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/splash/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -99,3 +106,29 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# -----------------------------------------------------------------------
+# flutter_native_splash configuration
+# Generates native launch screens for Android (incl. Android 12+) and iOS.
+# Run: dart run flutter_native_splash:create
+# -----------------------------------------------------------------------
+flutter_native_splash:
+  # Brand background — matches AppColors.background (#F8FAFC)
+  color: "#F8FAFC"
+
+  # Centered logo on the splash screen (512x512 PNG, blue icon on transparent bg)
+  image: assets/splash/splash_logo.png
+
+  # Android 12+ splash screen API (SplashScreen API)
+  android_12:
+    image: assets/splash/splash_logo.png
+    color: "#F8FAFC"
+    # Icon background is the same as the main background
+    icon_background_color: "#F8FAFC"
+
+  # Platform targets
+  android: true
+  ios: true
+
+  # Do not force full-screen mode
+  fullscreen: false
