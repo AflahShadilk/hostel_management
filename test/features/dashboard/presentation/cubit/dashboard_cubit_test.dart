@@ -19,6 +19,9 @@ class FakeDashboardRepository implements DashboardRepository {
     totalTenants: 10,
     activeTenants: 10,
     checkedOutTenants: 0,
+    pendingRent: 0.0,
+    todayCheckouts: 0,
+    recentActivities: [],
   );
 
   @override
@@ -82,6 +85,9 @@ void main() {
         totalTenants: 10,
         activeTenants: 10,
         checkedOutTenants: 0,
+        pendingRent: 0.0,
+        todayCheckouts: 0,
+        recentActivities: [],
       );
 
       // We cannot easily test the 'refreshing' intermediate state with simple await,
@@ -118,6 +124,9 @@ void main() {
         totalTenants: 10,
         activeTenants: 10,
         checkedOutTenants: 0,
+        pendingRent: 0.0,
+        todayCheckouts: 0,
+        recentActivities: [],
       );
 
       await cubit.loadDashboard(1);

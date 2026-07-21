@@ -157,10 +157,13 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
               elevation: 0,
               scrolledUnderElevation: 1,
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () => _navigateToAddRoom(context),
-              tooltip: 'Add Room',
-              child: const Icon(Icons.add),
+            floatingActionButton: Padding(
+              padding: const EdgeInsets.only(bottom: 80.0),
+              child: FloatingActionButton(
+                onPressed: () => _navigateToAddRoom(context),
+                tooltip: 'Add Room',
+                child: const Icon(Icons.add),
+              ),
             ),
             body: _buildBody(context, state),
           );

@@ -64,11 +64,9 @@ class BedCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
 
             // Context/Action row
-            Expanded(
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: _buildActionRow(context),
-              ),
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: _buildActionRow(context),
             ),
           ],
         ),

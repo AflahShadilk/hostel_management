@@ -363,16 +363,16 @@ class _BedManagementPageState extends State<BedManagementPage> {
         }).toList();
 
         if (filteredBeds.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Text(
-                'No beds match the selected filter.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-            ),
+          final emptyMessage = switch (filter) {
+            BedFilter.all      => 'No beds have been added to this room yet.',
+            BedFilter.vacant   => 'No vacant beds found.',
+            BedFilter.occupied => 'No occupied beds.',
+            BedFilter.inactive => 'No inactive beds.',
+          };
+          return AppEmptyState(
+            icon: Icons.single_bed_outlined,
+            title: 'No beds to show',
+            message: emptyMessage,
           );
         }
 

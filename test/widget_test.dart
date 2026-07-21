@@ -145,6 +145,9 @@ class FakeDashboardRepository implements DashboardRepository {
       totalTenants: 10,
       activeTenants: 10,
       checkedOutTenants: 0,
+      pendingRent: 0.0,
+      todayCheckouts: 0,
+      recentActivities: [],
     );
   }
 }

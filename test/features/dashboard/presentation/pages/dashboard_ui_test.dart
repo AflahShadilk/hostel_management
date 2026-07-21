@@ -185,6 +185,9 @@ void main() {
       totalTenants: 10,
       activeTenants: 8,
       checkedOutTenants: 2,
+      pendingRent: 0.0,
+      todayCheckouts: 0,
+      recentActivities: [],
     );
 
     testWidgets('Dashboard loads using valid Hostel ID', (tester) async {

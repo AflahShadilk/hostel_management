@@ -46,10 +46,13 @@ class _StayListPageState extends State<StayListPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(title: const Text('Stays')),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.pushNamed(AppRoutes.addStayName),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Stay'),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 80.0),
+          child: FloatingActionButton.extended(
+            onPressed: () => context.pushNamed(AppRoutes.addStayName),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Stay'),
+          ),
         ),
         body: BlocBuilder<StayCubit, StayState>(
           builder: (context, state) {

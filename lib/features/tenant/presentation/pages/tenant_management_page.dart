@@ -227,10 +227,13 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _navigateToAddTenant(context),
-            tooltip: 'Add Tenant',
-            child: const Icon(Icons.add),
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 80.0),
+            child: FloatingActionButton(
+              onPressed: () => _navigateToAddTenant(context),
+              tooltip: 'Add Tenant',
+              child: const Icon(Icons.add),
+            ),
           ),
           body: _buildBody(context, state),
         );

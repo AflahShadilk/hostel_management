@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_floating_bottom_bar/flutter_floating_bottom_bar.dart';
 import 'package:go_router/go_router.dart';
 import '../router/app_routes.dart';
 import '../theme/app_colors.dart';
 
-class MainShellPage extends StatelessWidget {
+class MainShellPage extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainShellPage({
     super.key,
     required this.navigationShell,
   });
+
+  @override
+  State<MainShellPage> createState() => _MainShellPageState();
+}
+
+class _MainShellPageState extends State<MainShellPage> {
+  late final BottomBarController _bottomBarController;
+
+  @override
+  void initState() {
+    super.initState();
+    _bottomBarController = BottomBarController();
+  }
+
+  @override
+  void dispose() {
+    // The bottom bar package doesn't expose a dispose method for BottomBarController in 1.4.0
+    super.dispose();
+  }
 
   /// Maps the 12 router branches to the 5 bottom navigation tabs.
   int _getSelectedIndex(int branchIndex) {
@@ -62,9 +82,9 @@ class MainShellPage extends StatelessWidget {
   }
 
   void _goBranch(int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
@@ -302,7 +322,7 @@ class MainShellPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = _getSelectedIndex(navigationShell.currentIndex);
+    final selectedIndex = _getSelectedIndex(widget.navigationShell.currentIndex);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -343,7 +363,7 @@ class MainShellPage extends StatelessWidget {
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
-                Expanded(child: navigationShell),
+                Expanded(child: widget.navigationShell),
               ],
             ),
           );
@@ -351,6 +371,7 @@ class MainShellPage extends StatelessWidget {
 
         return Scaffold(
           body: BottomBar(
+            controller: _bottomBarController,
             borderRadius: BorderRadius.circular(500),
             barColor: Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(240),
             hideOnScroll: true,
@@ -393,9 +414,16 @@ class MainShellPage extends StatelessWidget {
                 ],
               ),
             ),
-            body: (context, controller) => PrimaryScrollController(
-              controller: controller,
-              child: navigationShell,
+            body: (context, controller) => NotificationListener<UserScrollNotification>(
+              onNotification: (notification) {
+                if (notification.direction == ScrollDirection.forward) {
+                  _bottomBarController.show();
+                } else if (notification.direction == ScrollDirection.reverse) {
+                  _bottomBarController.hide();
+                }
+                return false;
+              },
+              child: widget.navigationShell,
             ),
           ),
         );

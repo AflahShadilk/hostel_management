@@ -319,5 +319,146 @@ void main() {
       expect(find.text('Reactivate'), findsNothing);
       expect(find.text('Managed through tenant assignment'), findsOneWidget);
     });
+
+    testWidgets('Vacant filter shows only vacant beds', (tester) async {
+      final room = _makeRoom();
+      final beds = [
+        _makeBed(id: 1, number: 'B1', status: BedStatus.vacant),
+        _makeBed(id: 2, number: 'B2', status: BedStatus.occupied),
+        _makeBed(id: 3, number: 'B3', status: BedStatus.inactive),
+      ];
+      final bedCubit =
+          FakeBedCubit(BedState(status: BedOperationStatus.loaded, beds: beds));
+      final roomCubit = FakeRoomCubit(const RoomState());
+
+      await tester.pumpWidget(_buildTestApp(
+        child: BedManagementPage(roomIdStr: '1', room: room),
+        bedCubit: bedCubit,
+        roomCubit: roomCubit,
+      ));
+
+      await tester.pumpAndSettle();
+
+      // Tap the Vacant filter chip
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.pumpAndSettle();
+
+      // Only B1 (vacant) should be visible; B2 and B3 should be hidden
+      expect(find.text('B1'), findsOneWidget);
+      expect(find.text('B2'), findsNothing);
+      expect(find.text('B3'), findsNothing);
+    });
+
+    testWidgets('Occupied filter shows only occupied beds', (tester) async {
+      final room = _makeRoom();
+      final beds = [
+        _makeBed(id: 1, number: 'B1', status: BedStatus.vacant),
+        _makeBed(id: 2, number: 'B2', status: BedStatus.occupied),
+        _makeBed(id: 3, number: 'B3', status: BedStatus.inactive),
+      ];
+      final bedCubit =
+          FakeBedCubit(BedState(status: BedOperationStatus.loaded, beds: beds));
+      final roomCubit = FakeRoomCubit(const RoomState());
+
+      await tester.pumpWidget(_buildTestApp(
+        child: BedManagementPage(roomIdStr: '1', room: room),
+        bedCubit: bedCubit,
+        roomCubit: roomCubit,
+      ));
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Occupied'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('B1'), findsNothing);
+      expect(find.text('B2'), findsOneWidget);
+      expect(find.text('B3'), findsNothing);
+    });
+
+    testWidgets('Inactive filter shows only inactive beds', (tester) async {
+      final room = _makeRoom();
+      final beds = [
+        _makeBed(id: 1, number: 'B1', status: BedStatus.vacant),
+        _makeBed(id: 2, number: 'B2', status: BedStatus.occupied),
+        _makeBed(id: 3, number: 'B3', status: BedStatus.inactive),
+      ];
+      final bedCubit =
+          FakeBedCubit(BedState(status: BedOperationStatus.loaded, beds: beds));
+      final roomCubit = FakeRoomCubit(const RoomState());
+
+      await tester.pumpWidget(_buildTestApp(
+        child: BedManagementPage(roomIdStr: '1', room: room),
+        bedCubit: bedCubit,
+        roomCubit: roomCubit,
+      ));
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Inactive'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('B1'), findsNothing);
+      expect(find.text('B2'), findsNothing);
+      expect(find.text('B3'), findsOneWidget);
+    });
+
+    testWidgets('All filter shows all beds after switching back', (tester) async {
+      final room = _makeRoom();
+      final beds = [
+        _makeBed(id: 1, number: 'B1', status: BedStatus.vacant),
+        _makeBed(id: 2, number: 'B2', status: BedStatus.occupied),
+      ];
+      final bedCubit =
+          FakeBedCubit(BedState(status: BedOperationStatus.loaded, beds: beds));
+      final roomCubit = FakeRoomCubit(const RoomState());
+
+      await tester.pumpWidget(_buildTestApp(
+        child: BedManagementPage(roomIdStr: '1', room: room),
+        bedCubit: bedCubit,
+        roomCubit: roomCubit,
+      ));
+
+      await tester.pumpAndSettle();
+
+      // Switch to Vacant
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('B2'), findsNothing);
+
+      // Switch back to All
+      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('B1'), findsOneWidget);
+      expect(find.text('B2'), findsOneWidget);
+    });
+
+    testWidgets('Filter empty state shows specific message for vacant',
+        (tester) async {
+      final room = _makeRoom();
+      // Only occupied beds — no vacant
+      final beds = [
+        _makeBed(id: 1, number: 'B1', status: BedStatus.occupied),
+      ];
+      final bedCubit =
+          FakeBedCubit(BedState(status: BedOperationStatus.loaded, beds: beds));
+      final roomCubit = FakeRoomCubit(const RoomState());
+
+      await tester.pumpWidget(_buildTestApp(
+        child: BedManagementPage(roomIdStr: '1', room: room),
+        bedCubit: bedCubit,
+        roomCubit: roomCubit,
+      ));
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppEmptyState), findsOneWidget);
+      expect(find.text('No vacant beds found.'), findsOneWidget);
+    });
   });
 }
