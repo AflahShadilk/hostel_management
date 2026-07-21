@@ -186,8 +186,12 @@ void main() {
       activeTenants: 8,
       checkedOutTenants: 2,
       pendingRent: 0.0,
+      monthlyRentCollected: 0.0,
+      monthlyExpenses: 0.0,
       todayCheckouts: 0,
       recentActivities: [],
+      recentCheckIns: [],
+      recentCheckOuts: [],
     );
 
     testWidgets('Dashboard loads using valid Hostel ID', (tester) async {

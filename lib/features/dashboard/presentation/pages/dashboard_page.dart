@@ -7,6 +7,7 @@ import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../../domain/entities/dashboard_activity_entity.dart';
+import '../../domain/entities/recent_stay_item_entity.dart';
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_operation_status.dart';
 import '../cubit/dashboard_state.dart';
@@ -31,8 +32,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _loadInitialData() {
     final hostelState = context.read<HostelCubit>().state;
-
-    // Only load if we have a resolved hostel.
     if (hostelState.hostel?.id != null) {
       context.read<DashboardCubit>().loadDashboard(hostelState.hostel!.id!);
     }
@@ -47,7 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = context.watch<AuthCubit>().state;
+    final authState   = context.watch<AuthCubit>().state;
     final hostelState = context.watch<HostelCubit>().state;
 
     final isManager = authState.user?.role == UserRole.manager;
@@ -64,9 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             tooltip: 'Logout',
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthCubit>().logout();
-            },
+            onPressed: () => context.read<AuthCubit>().logout(),
           ),
         ],
       ),
@@ -107,18 +104,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 listenWhen: (previous, current) =>
                     previous.status != TenantOperationStatus.loaded &&
                     current.status == TenantOperationStatus.loaded,
-                listener: (context, state) {
-                  _refresh();
-                },
+                listener: (context, state) => _refresh(),
               ),
             ],
             child: BlocBuilder<DashboardCubit, DashboardState>(
               builder: (context, state) {
+                // Full-screen loading on first load
                 if (state.status == DashboardOperationStatus.initial ||
                     (state.status == DashboardOperationStatus.loading && state.summary == null)) {
                   return const Center(child: AppLoadingIndicator());
                 }
 
+                // Full-screen error when no cached data is available
                 if (state.status == DashboardOperationStatus.failure && state.summary == null) {
                   return AppEmptyState(
                     icon: Icons.warning_amber_rounded,
@@ -132,17 +129,21 @@ class _DashboardPageState extends State<DashboardPage> {
                 }
 
                 final summary = state.summary!;
-                final theme = Theme.of(context);
+                final theme   = Theme.of(context);
+                // ignore: unnecessary_string_escapes
+                const rupee = '\u20B9';
 
                 return RefreshIndicator(
                   onRefresh: _refresh,
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     children: [
-                      // 1. KPI Cards Section
+                      // ── 1. Occupancy KPI Grid ────────────────────────────
+                      _sectionTitle(theme, 'Occupancy'),
+                      const SizedBox(height: 12),
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          int crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+                          final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
                           return GridView.count(
                             crossAxisCount: crossAxisCount,
                             shrinkWrap: true,
@@ -153,8 +154,14 @@ class _DashboardPageState extends State<DashboardPage> {
                             children: [
                               DashboardMetricCard(
                                 icon: Icons.door_front_door_rounded,
-                                label: 'Available Rooms',
-                                value: summary.vacantRooms.toString(),
+                                label: 'Total Rooms',
+                                value: summary.totalRooms.toString(),
+                                iconColor: theme.colorScheme.primary,
+                              ),
+                              DashboardMetricCard(
+                                icon: Icons.bed_rounded,
+                                label: 'Total Beds',
+                                value: summary.totalBeds.toString(),
                                 iconColor: theme.colorScheme.primary,
                               ),
                               DashboardMetricCard(
@@ -164,69 +171,91 @@ class _DashboardPageState extends State<DashboardPage> {
                                 iconColor: theme.colorScheme.tertiary,
                               ),
                               DashboardMetricCard(
+                                icon: Icons.king_bed_outlined,
+                                label: 'Vacant Beds',
+                                value: summary.vacantBeds.toString(),
+                                iconColor: theme.colorScheme.secondary,
+                              ),
+                              DashboardMetricCard(
                                 icon: Icons.groups_rounded,
                                 label: 'Active Tenants',
                                 value: summary.activeTenants.toString(),
                                 iconColor: theme.colorScheme.secondary,
                               ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ── 2. Financial KPI Grid ────────────────────────────
+                      _sectionTitle(theme, 'Financials (This Month)'),
+                      const SizedBox(height: 12),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+                          return GridView.count(
+                            crossAxisCount: crossAxisCount,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.0,
+                            children: [
                               DashboardMetricCard(
                                 icon: Icons.payments_rounded,
+                                label: 'Rent Collected',
+                                value: '$rupee${summary.monthlyRentCollected.toStringAsFixed(0)}',
+                                iconColor: Colors.green,
+                              ),
+                              DashboardMetricCard(
+                                icon: Icons.pending_actions_rounded,
                                 label: 'Pending Rent',
-                                // ignore: unnecessary_string_escapes
-                                value: '\₹${summary.pendingRent.toStringAsFixed(2)}',
+                                value: '$rupee${summary.pendingRent.toStringAsFixed(0)}',
                                 iconColor: theme.colorScheme.error,
+                              ),
+                              DashboardMetricCard(
+                                icon: Icons.receipt_long_rounded,
+                                label: 'Expenses',
+                                value: '$rupee${summary.monthlyExpenses.toStringAsFixed(0)}',
+                                iconColor: Colors.orange,
+                              ),
+                              DashboardMetricCard(
+                                icon: Icons.trending_up_rounded,
+                                label: 'Profit',
+                                value: '$rupee${summary.monthlyProfit.toStringAsFixed(0)}',
+                                iconColor: summary.monthlyProfit >= 0 ? Colors.green : theme.colorScheme.error,
                               ),
                             ],
                           );
                         },
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
-                      // 2. Pending Actions (Attention) Section
-                      Text(
-                        'Attention Required',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      // ── 3. Attention Required ────────────────────────────
+                      _sectionTitle(theme, 'Attention Required'),
+                      const SizedBox(height: 12),
                       if (summary.vacantBeds == 0 && summary.todayCheckouts == 0 && summary.pendingRent == 0)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainer,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.fromBorderSide(
-                              BorderSide(
-                                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                              ),
-                            ),
-                          ),
+                        _attentionContainer(
+                          theme,
+                          color: theme.colorScheme.surfaceContainer,
+                          borderColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                           child: const Row(
                             children: [
                               Icon(Icons.check_circle_outline_rounded, color: Colors.green),
                               SizedBox(width: 16),
-                              Expanded(
-                                child: Text('No pending actions. You are all caught up!'),
-                              ),
+                              Expanded(child: Text('No pending actions. You are all caught up!')),
                             ],
                           ),
                         )
                       else
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.errorContainer.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.fromBorderSide(
-                              BorderSide(
-                                color: theme.colorScheme.error.withValues(alpha: 0.3),
-                              ),
-                            ),
-                          ),
+                        _attentionContainer(
+                          theme,
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.6),
+                          borderColor: theme.colorScheme.error.withValues(alpha: 0.3),
                           child: Column(
                             children: [
-                              if (summary.vacantBeds > 0) ...[
+                              if (summary.vacantBeds > 0)
                                 _buildActionRow(
                                   context,
                                   Icons.warning_amber_rounded,
@@ -234,13 +263,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                   'Fill them up to maximize revenue.',
                                   theme.colorScheme.error,
                                 ),
-                              ],
                               if (summary.todayCheckouts > 0) ...[
                                 if (summary.vacantBeds > 0) const Divider(height: 24),
                                 _buildActionRow(
                                   context,
                                   Icons.event_busy_rounded,
-                                  '${summary.todayCheckouts} Tenants checking out today',
+                                  '${summary.todayCheckouts} tenants checking out today',
                                   'Ensure checkout procedures are completed.',
                                   theme.colorScheme.error,
                                 ),
@@ -251,7 +279,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   context,
                                   Icons.account_balance_wallet_rounded,
                                   // ignore: unnecessary_string_escapes
-                                  '\₹${summary.pendingRent.toStringAsFixed(2)} in pending rent',
+                                  '$rupee${summary.pendingRent.toStringAsFixed(2)} in pending rent',
                                   'Follow up on outstanding payments.',
                                   theme.colorScheme.error,
                                 ),
@@ -259,63 +287,57 @@ class _DashboardPageState extends State<DashboardPage> {
                             ],
                           ),
                         ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
-                      // 3. Quick Actions Section
-                      Text(
-                        'Quick Actions',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      // ── 4. Quick Actions ─────────────────────────────────
+                      _sectionTitle(theme, 'Quick Actions'),
+                      const SizedBox(height: 12),
                       DashboardQuickActionCard(
                         icon: Icons.meeting_room_rounded,
                         title: 'Manage Rooms',
                         description: 'Add or edit rooms, update capacities and statuses.',
-                        onTap: () {
-                          StatefulNavigationShell.of(context).goBranch(2);
-                        },
+                        onTap: () => StatefulNavigationShell.of(context).goBranch(2),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       DashboardQuickActionCard(
                         icon: Icons.person_add_alt_1_rounded,
                         title: 'Manage Tenants',
                         description: 'Register new tenants, manage stays, and handle check-outs.',
-                        onTap: () {
-                          StatefulNavigationShell.of(context).goBranch(3);
-                        },
+                        onTap: () => StatefulNavigationShell.of(context).goBranch(3),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       DashboardQuickActionCard(
                         icon: Icons.payments_rounded,
                         title: 'Collect Rent',
                         description: 'Record rent payments and manage rent records.',
-                        onTap: () {
-                          StatefulNavigationShell.of(context).goBranch(10);
-                        },
+                        onTap: () => StatefulNavigationShell.of(context).goBranch(10),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       DashboardQuickActionCard(
                         icon: Icons.account_balance_rounded,
                         title: 'Add Expense',
                         description: 'Log new hostel expenses and manage categories.',
-                        onTap: () {
-                          StatefulNavigationShell.of(context).goBranch(11);
-                        },
+                        onTap: () => StatefulNavigationShell.of(context).goBranch(11),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
-                      // 4. Recent Activity Section
-                      Text(
-                        'Recent Activity',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      // ── 5. Recent Check-ins ──────────────────────────────
+                      _sectionTitle(theme, 'Recent Check-ins'),
+                      const SizedBox(height: 12),
+                      _buildRecentStayList(theme, summary.recentCheckIns, isCheckIn: true),
+                      const SizedBox(height: 28),
+
+                      // ── 6. Recent Check-outs ─────────────────────────────
+                      _sectionTitle(theme, 'Recent Checkouts'),
+                      const SizedBox(height: 12),
+                      _buildRecentStayList(theme, summary.recentCheckOuts, isCheckIn: false),
+                      const SizedBox(height: 28),
+
+                      // ── 7. Recent Activity ───────────────────────────────
+                      _sectionTitle(theme, 'Recent Activity'),
+                      const SizedBox(height: 12),
                       _buildRecentActivityList(theme, summary.recentActivities),
-                      const SizedBox(height: 80), // Padding for floating bottom bar
+                      const SizedBox(height: 80),
                     ],
                   ),
                 );
@@ -324,6 +346,27 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         },
       ),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _sectionTitle(ThemeData theme, String title) {
+    return Text(
+      title,
+      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+
+  Widget _attentionContainer(ThemeData theme, {required Color color, required Color borderColor, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.fromBorderSide(BorderSide(color: borderColor)),
+      ),
+      child: child,
     );
   }
 
@@ -337,24 +380,60 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
+              Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
+              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRecentStayList(ThemeData theme, List<RecentStayItemEntity> items, {required bool isCheckIn}) {
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
+        ),
+        child: Center(
+          child: Text(isCheckIn ? 'No recent check-ins' : 'No recent checkouts', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(8),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3), height: 1, indent: 64, endIndent: 16),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Icon(
+                isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+                color: theme.colorScheme.onPrimaryContainer,
+                size: 20,
+              ),
+            ),
+            title: Text(item.tenantName, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+            subtitle: Text('${item.roomNumber} · ${item.bedNumber}', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            trailing: Text(_formatDate(item.date), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          );
+        },
+      ),
     );
   }
 
@@ -365,15 +444,9 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
-          border: Border.fromBorderSide(
-            BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-            ),
-          ),
+          border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
         ),
-        child: const Center(
-          child: Text('No recent activity.'),
-        ),
+        child: const Center(child: Text('No recent activity.')),
       );
     }
 
@@ -381,94 +454,50 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.fromBorderSide(
-          BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
+        border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(8),
         itemCount: activities.length,
-        separatorBuilder: (context, index) => Divider(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          height: 1,
-          indent: 64,
-          endIndent: 16,
-        ),
+        separatorBuilder: (_, __) => Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3), height: 1, indent: 64, endIndent: 16),
         itemBuilder: (context, index) {
           final activity = activities[index];
-          IconData iconData;
-          switch (activity.type) {
-            case DashboardActivityType.tenantCheckIn:
-              iconData = Icons.login_rounded;
-              break;
-            case DashboardActivityType.tenantCheckOut:
-              iconData = Icons.logout_rounded;
-              break;
-            case DashboardActivityType.rentCollected:
-              iconData = Icons.payments_rounded;
-              break;
-            case DashboardActivityType.roomAdded:
-              iconData = Icons.meeting_room_rounded;
-              break;
-            case DashboardActivityType.expenseAdded:
-              iconData = Icons.account_balance_rounded;
-              break;
-            case DashboardActivityType.other:
-              iconData = Icons.info_outline_rounded;
-              break;
-          }
-
+          final iconData = switch (activity.type) {
+            DashboardActivityType.tenantCheckIn  => Icons.login_rounded,
+            DashboardActivityType.tenantCheckOut => Icons.logout_rounded,
+            DashboardActivityType.rentCollected  => Icons.payments_rounded,
+            DashboardActivityType.roomAdded      => Icons.meeting_room_rounded,
+            DashboardActivityType.expenseAdded   => Icons.account_balance_rounded,
+            DashboardActivityType.other          => Icons.info_outline_rounded,
+          };
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(
-                iconData,
-                color: theme.colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
+              child: Icon(iconData, color: theme.colorScheme.onPrimaryContainer, size: 20),
             ),
-            title: Text(
-              activity.title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            subtitle: Text(
-              activity.subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            trailing: Text(
-              _formatTimeAgo(activity.time),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+            title: Text(activity.title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
+            subtitle: Text(activity.subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            trailing: Text(_formatTimeAgo(activity.time), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           );
         },
       ),
     );
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
   String _formatTimeAgo(DateTime time) {
-    final difference = DateTime.now().difference(time);
-    if (difference.inDays > 0) {
-      if (difference.inDays == 1) return 'Yesterday';
-      return '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      if (difference.inHours == 1) return '1 hour ago';
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      if (difference.inMinutes == 1) return '1 minute ago';
-      return '${difference.inMinutes} mins ago';
-    } else {
-      return 'Just now';
-    }
+    final diff = DateTime.now().difference(time);
+    if (diff.inDays > 1)    return '${diff.inDays} days ago';
+    if (diff.inDays == 1)   return 'Yesterday';
+    if (diff.inHours > 1)   return '${diff.inHours} hours ago';
+    if (diff.inHours == 1)  return '1 hour ago';
+    if (diff.inMinutes > 1) return '${diff.inMinutes} mins ago';
+    if (diff.inMinutes == 1)return '1 minute ago';
+    return 'Just now';
   }
 }

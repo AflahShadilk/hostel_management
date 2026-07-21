@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'dashboard_activity_entity.dart';
+import 'recent_stay_item_entity.dart';
 
 class DashboardSummaryEntity extends Equatable {
   final int totalRooms;
@@ -19,13 +20,20 @@ class DashboardSummaryEntity extends Equatable {
   final int checkedOutTenants;
 
   final double pendingRent;
+  final double monthlyRentCollected;
+  final double monthlyExpenses;
   final int todayCheckouts;
   final List<DashboardActivityEntity> recentActivities;
+
+  final List<RecentStayItemEntity> recentCheckIns;
+  final List<RecentStayItemEntity> recentCheckOuts;
 
   double get occupancyPercentage {
     if (totalBeds == 0) return 0.0;
     return (occupiedBeds / totalBeds) * 100;
   }
+
+  double get monthlyProfit => monthlyRentCollected - monthlyExpenses;
 
   const DashboardSummaryEntity({
     required this.totalRooms,
@@ -41,8 +49,12 @@ class DashboardSummaryEntity extends Equatable {
     required this.activeTenants,
     required this.checkedOutTenants,
     required this.pendingRent,
+    required this.monthlyRentCollected,
+    required this.monthlyExpenses,
     required this.todayCheckouts,
     required this.recentActivities,
+    required this.recentCheckIns,
+    required this.recentCheckOuts,
   });
 
   @override
@@ -60,7 +72,11 @@ class DashboardSummaryEntity extends Equatable {
         activeTenants,
         checkedOutTenants,
         pendingRent,
+        monthlyRentCollected,
+        monthlyExpenses,
         todayCheckouts,
         recentActivities,
+        recentCheckIns,
+        recentCheckOuts,
       ];
 }
