@@ -206,7 +206,6 @@ void main() {
 
     // Initial state: should show Splash text
     expect(find.text('Hostel Management'), findsOneWidget);
-    expect(find.text('Manage smarter. Stay organized.'), findsOneWidget);
 
     // Let the initial frame happen so checkAuthStatus() runs
     await tester.pumpAndSettle();

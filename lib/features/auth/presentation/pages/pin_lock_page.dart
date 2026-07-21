@@ -131,7 +131,7 @@ class _PinLockPageState extends State<PinLockPage>
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 24.0),
+                      horizontal: 32.0, vertical: 16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -149,7 +149,7 @@ class _PinLockPageState extends State<PinLockPage>
                           color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const Flexible(child: SizedBox(height: 24)),
 
                       // ── Welcome Text ─────────────────────────────────────
                       Text(
@@ -180,7 +180,7 @@ class _PinLockPageState extends State<PinLockPage>
                                   color: AppColors.textSecondary,
                                 ),
                       ),
-                      const SizedBox(height: 40),
+                      const Flexible(flex: 2, child: SizedBox(height: 40)),
 
                       // ── PIN Dot Indicators ───────────────────────────────
                       _PinDotIndicator(
@@ -189,7 +189,7 @@ class _PinLockPageState extends State<PinLockPage>
                         errorMessage: state.errorMessage,
                       ),
 
-                      const SizedBox(height: 40),
+                      const Flexible(flex: 2, child: SizedBox(height: 40)),
 
                       // ── Numeric Keypad ───────────────────────────────────
                       _NumericKeypad(
@@ -198,7 +198,7 @@ class _PinLockPageState extends State<PinLockPage>
                         isLoading: isLoading,
                       ),
 
-                      const SizedBox(height: 32),
+                      const Flexible(child: SizedBox(height: 32)),
 
                       // ── Forgot PIN ───────────────────────────────────────
                       TextButton(
