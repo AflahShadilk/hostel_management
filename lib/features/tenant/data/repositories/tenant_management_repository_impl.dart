@@ -2,13 +2,17 @@ import '../../../../core/database/app_database.dart';
 import '../../../room/data/datasources/room_local_schema.dart';
 import '../../../room/domain/entities/bed_status.dart';
 import '../../../room/domain/repositories/bed_repository.dart';
+import '../../../room/domain/repositories/room_repository.dart';
 import '../../../room/domain/repositories/room_management_repository.dart';
 import '../../domain/entities/tenant_entity.dart';
+import '../../domain/entities/tenant_registration_context.dart';
 import '../../domain/entities/tenant_status.dart';
 import '../../domain/repositories/tenant_management_repository.dart';
 import '../../domain/repositories/tenant_repository.dart';
 import '../../../rent/data/datasources/rent_local_schema.dart';
 import '../../../rent/domain/constants/rent_status_constants.dart';
+import '../../../rent/domain/entities/rent_record_entity.dart';
+import '../../../rent/domain/entities/stay_entity.dart';
 import '../datasources/tenant_local_schema.dart';
 import '../models/tenant_model.dart';
 
@@ -16,17 +20,19 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
   final AppDatabase _appDatabase;
   final TenantRepository _tenantRepository;
   final BedRepository _bedRepository;
+  final RoomRepository _roomRepository;
   final RoomManagementRepository _roomManagementRepository;
 
   TenantManagementRepositoryImpl(
     this._appDatabase,
     this._tenantRepository,
     this._bedRepository,
+    this._roomRepository,
     this._roomManagementRepository,
   );
 
   @override
-  Future<TenantEntity> assignTenant(TenantEntity tenant) async {
+  Future<TenantRegistrationContext> assignTenant(TenantEntity tenant) async {
     if (tenant.status != TenantStatus.active || tenant.bedId == null) {
       throw ArgumentError('Only active tenants can be assigned to a bed.');
     }
@@ -37,6 +43,10 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     }
     if (bed.status != BedStatus.vacant) {
       throw StateError('Cannot assign tenant: Bed is not vacant.');
+    }
+    final room = await _roomRepository.getRoomById(bed.roomId);
+    if (room == null) {
+      throw StateError('Cannot assign tenant: Room not found.');
     }
 
     if (await _tenantRepository.phoneExists(tenant.phoneNumber)) {
@@ -56,17 +66,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     return await db.transaction((txn) async {
       final model = TenantModel.fromEntity(tenant);
       final map = model.toMap();
-      final roomRows = await txn.query(
-        RoomLocalSchema.tableRooms,
-        columns: ['hostel_id'],
-        where: 'id = ?',
-        whereArgs: [bed.roomId],
-        limit: 1,
-      );
-      if (roomRows.isEmpty) {
-        throw StateError('Cannot assign tenant: Room not found.');
-      }
-      map[TenantLocalSchema.colHostelId] = roomRows.first['hostel_id'];
+      map[TenantLocalSchema.colHostelId] = room.hostelId;
       map[TenantLocalSchema.colFullName] = tenant.fullName.trim();
       map[TenantLocalSchema.colPhoneNumber] = tenant.phoneNumber.trim();
       map[TenantLocalSchema.colEmail] =
@@ -109,20 +109,10 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         'created_at': now,
         'updated_at': now,
       };
-      await txn.insert(RentLocalSchema.tableRentRecords, rentRecordMap);
-
-      // Create initial deposit record (defaulting to 1x monthly rent)
-      final depositMap = {
-        'stay_id': stayId,
-        'amount': monthlyRent,
-        'received_date': now,
-        'refund_date': null,
-        'refunded_amount': 0.0,
-        'status': DepositStatus.pending,
-        'created_at': now,
-        'updated_at': now,
-      };
-      await txn.insert(RentLocalSchema.tableDeposits, depositMap);
+      final rentRecordId = await txn.insert(
+        RentLocalSchema.tableRentRecords,
+        rentRecordMap,
+      );
       await txn.update(
         RoomLocalSchema.tableBeds,
         {
@@ -135,7 +125,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
       await _roomManagementRepository.syncRoomStatus(bed.roomId, txn: txn);
 
-      return TenantModel(
+      final registeredTenant = TenantModel(
         id: tenantId,
         bedId: tenant.bedId,
         fullName: map[TenantLocalSchema.colFullName] as String,
@@ -149,6 +139,38 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         status: tenant.status,
         createdAt: tenant.createdAt,
         updatedAt: tenant.updatedAt,
+      );
+      final createdAt = DateTime.parse(now);
+      return TenantRegistrationContext(
+        tenant: registeredTenant,
+        stay: StayEntity(
+          id: stayId,
+          tenantId: tenantId,
+          roomId: bed.roomId,
+          bedId: tenant.bedId!,
+          checkInDate: tenant.checkInDate,
+          expectedCheckoutDate: tenant.checkOutDate,
+          monthlyRentSnapshot: monthlyRent,
+          dailyRate: dailyRate,
+          status: StayStatus.active,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        ),
+        room: room,
+        bed: bed,
+        initialRentRecord: RentRecordEntity(
+          id: rentRecordId,
+          stayId: stayId,
+          startDate: checkIn,
+          endDate: periodEndDate,
+          dueDate: checkIn,
+          generatedAt: createdAt,
+          amountDue: monthlyRent,
+          amountPaid: 0,
+          status: RentStatus.pending,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        ),
       );
     });
   }
@@ -421,19 +443,6 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         'updated_at': now.toIso8601String(),
       };
       await txn.insert(RentLocalSchema.tableRentRecords, rentRecordMap);
-
-      // Create deposit record for the new stay
-      final depositMap = {
-        'stay_id': stayId,
-        'amount': monthlyRent,
-        'received_date': now.toIso8601String(),
-        'refund_date': null,
-        'refunded_amount': 0.0,
-        'status': DepositStatus.pending,
-        'created_at': now.toIso8601String(),
-        'updated_at': now.toIso8601String(),
-      };
-      await txn.insert(RentLocalSchema.tableDeposits, depositMap);
 
       // Update tenant
       await txn.update(

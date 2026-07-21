@@ -56,6 +56,7 @@ class _AddExpenseCategoryDialogState extends State<AddExpenseCategoryDialog> {
           ? null
           : _descriptionController.text.trim(),
       isActive: _isActiveController.text == 'true',
+      isDefault: widget.category?.isDefault ?? false,
       createdAt: widget.category?.createdAt ?? now,
     );
     context.read<SubmittingCubit>().start();

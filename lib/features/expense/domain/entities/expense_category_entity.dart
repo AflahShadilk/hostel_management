@@ -5,6 +5,7 @@ class ExpenseCategoryEntity extends Equatable {
   final String name;
   final String? description;
   final bool isActive;
+  final bool isDefault;
   final DateTime createdAt;
 
   const ExpenseCategoryEntity({
@@ -12,6 +13,7 @@ class ExpenseCategoryEntity extends Equatable {
     required this.name,
     this.description,
     required this.isActive,
+    this.isDefault = false,
     required this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class ExpenseCategoryEntity extends Equatable {
         name,
         description,
         isActive,
+        isDefault,
         createdAt,
       ];
 }

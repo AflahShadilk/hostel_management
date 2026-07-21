@@ -1,5 +1,7 @@
 import '../entities/expense_category_entity.dart';
 import '../entities/expense_entity.dart';
+import '../entities/expense_query.dart';
+import '../entities/expense_summary_entity.dart';
 
 abstract interface class ExpenseRepository {
   Future<ExpenseCategoryEntity> createCategory(ExpenseCategoryEntity category);
@@ -12,5 +14,6 @@ abstract interface class ExpenseRepository {
   Future<ExpenseEntity> updateExpense(ExpenseEntity expense);
   Future<void> deleteExpense(int id);
   Future<ExpenseEntity?> getExpenseById(int id);
-  Future<List<ExpenseEntity>> getAllExpenses();
+  Future<List<ExpenseEntity>> getAllExpenses([ExpenseQuery query = const ExpenseQuery()]);
+  Future<ExpenseSummaryEntity> getExpenseSummary();
 }

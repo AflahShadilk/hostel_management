@@ -9,9 +9,11 @@ class ExpenseEntity extends Equatable {
   final DateTime expenseDate;
   final String paymentMethod;
   final String? referenceNumber;
+  final String? vendorName;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isDeleted;
 
   const ExpenseEntity({
     this.id,
@@ -22,9 +24,11 @@ class ExpenseEntity extends Equatable {
     required this.expenseDate,
     required this.paymentMethod,
     this.referenceNumber,
+    this.vendorName,
     this.notes,
     required this.createdAt,
     required this.updatedAt,
+    this.isDeleted = false,
   });
 
   @override
@@ -37,8 +41,10 @@ class ExpenseEntity extends Equatable {
         expenseDate,
         paymentMethod,
         referenceNumber,
+        vendorName,
         notes,
         createdAt,
         updatedAt,
+        isDeleted,
       ];
 }

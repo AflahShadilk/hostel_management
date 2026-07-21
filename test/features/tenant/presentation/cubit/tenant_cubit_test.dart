@@ -2,9 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hostel_management/features/room/domain/entities/bed_entity.dart';
 import 'package:hostel_management/features/room/domain/entities/bed_status.dart';
 import 'package:hostel_management/features/room/domain/entities/room_entity.dart';
+import 'package:hostel_management/features/room/domain/entities/room_status.dart';
+import 'package:hostel_management/features/room/domain/entities/room_type.dart';
+import 'package:hostel_management/features/rent/domain/constants/rent_status_constants.dart';
+import 'package:hostel_management/features/rent/domain/entities/rent_record_entity.dart';
+import 'package:hostel_management/features/rent/domain/entities/stay_entity.dart';
 import 'package:hostel_management/features/room/domain/repositories/bed_repository.dart';
 import 'package:hostel_management/features/room/domain/repositories/room_repository.dart';
 import 'package:hostel_management/features/tenant/domain/entities/tenant_entity.dart';
+import 'package:hostel_management/features/tenant/domain/entities/tenant_registration_context.dart';
 import 'package:hostel_management/features/tenant/domain/entities/tenant_status.dart';
 import 'package:hostel_management/features/tenant/domain/repositories/tenant_management_repository.dart';
 import 'package:hostel_management/features/tenant/domain/repositories/tenant_repository.dart';
@@ -30,10 +36,61 @@ class FakeTenantManagementRepository implements TenantManagementRepository {
   int callCount = 0;
 
   @override
-  Future<TenantEntity> assignTenant(TenantEntity tenant) async {
+  Future<TenantRegistrationContext> assignTenant(TenantEntity tenant) async {
     callCount++;
     if (shouldFail) throw Exception('Assign failed');
-    return tenant;
+    final now = DateTime.now();
+    final bed = BedEntity(
+      id: tenant.bedId,
+      roomId: 1,
+      bedNumber: 'B${tenant.bedId}',
+      monthlyRent: 5000,
+      status: BedStatus.occupied,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final stay = StayEntity(
+      id: 1,
+      tenantId: tenant.id ?? 1,
+      roomId: bed.roomId,
+      bedId: tenant.bedId ?? 1,
+      checkInDate: tenant.checkInDate,
+      monthlyRentSnapshot: bed.monthlyRent,
+      dailyRate: bed.monthlyRent / 30,
+      status: StayStatus.active,
+      createdAt: now,
+      updatedAt: now,
+    );
+    return TenantRegistrationContext(
+      tenant: tenant,
+      stay: stay,
+      room: RoomEntity(
+        id: 1,
+        hostelId: 1,
+        roomNumber: '101',
+        floor: 'G',
+        roomType: RoomType.single,
+        numberOfBeds: 1,
+        monthlyRent: bed.monthlyRent,
+        status: RoomStatus.partiallyOccupied,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      bed: bed,
+      initialRentRecord: RentRecordEntity(
+        id: 1,
+        stayId: stay.id!,
+        startDate: tenant.checkInDate,
+        endDate: tenant.checkInDate.add(const Duration(days: 30)),
+        dueDate: tenant.checkInDate,
+        generatedAt: now,
+        amountDue: bed.monthlyRent,
+        amountPaid: 0,
+        status: RentStatus.pending,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
   }
 
   @override

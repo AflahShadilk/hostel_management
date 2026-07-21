@@ -64,6 +64,7 @@ class AppDatabase {
     await RentLocalSchema.createTables(db);
 
     await ExpenseLocalSchema.createTables(db);
+    await ExpenseLocalSchema.ensureDefaultCategories(db);
     await SettingsLocalSchema.createTable(db);
   }
 
@@ -90,6 +91,7 @@ class AppDatabase {
     if (oldVersion < 6) {
       await db.transaction((txn) async {
         await ExpenseLocalSchema.createTables(txn);
+        await ExpenseLocalSchema.ensureDefaultCategories(txn);
       });
     }
 
@@ -111,6 +113,18 @@ class AppDatabase {
 
     if (oldVersion < 11) {
       await RentLocalSchema.migrateFromVersion10(db);
+    }
+
+    if (oldVersion < 12) {
+      await RentLocalSchema.migrateFromVersion11(db);
+    }
+
+    if (oldVersion >= 6 && oldVersion < 13) {
+      await ExpenseLocalSchema.migrateFromVersion12(db);
+    }
+
+    if (oldVersion < 14) {
+      await RentLocalSchema.migrateFromVersion13(db);
     }
   }
 

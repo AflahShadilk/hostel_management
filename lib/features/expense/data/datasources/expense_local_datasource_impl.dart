@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/app_database.dart';
 import '../models/expense_category_model.dart';
 import '../models/expense_model.dart';
+import '../../domain/entities/expense_query.dart';
 import 'expense_local_datasource.dart';
 import 'expense_local_schema.dart';
 
@@ -109,7 +110,7 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
       final rows = await database.update(
         ExpenseLocalSchema.tableExpenses,
         expense.toMap(),
-        where: 'id = ?',
+        where: 'id = ? AND is_deleted = 0',
         whereArgs: [expense.id],
       );
       if (rows == 0) {
@@ -124,9 +125,13 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     final database = await _appDatabase.database;
     await _perform(
       'delete expense',
-      () => database.delete(
+      () => database.update(
         ExpenseLocalSchema.tableExpenses,
-        where: 'id = ?',
+        <String, Object?>{
+          'is_deleted': 1,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ? AND is_deleted = 0',
         whereArgs: [id],
       ),
     );
@@ -138,7 +143,7 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     return _perform('get expense', () async {
       final rows = await database.query(
         ExpenseLocalSchema.tableExpenses,
-        where: 'id = ?',
+        where: 'id = ? AND is_deleted = 0',
         whereArgs: [id],
         limit: 1,
       );
@@ -147,11 +152,77 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
   }
 
   @override
-  Future<List<ExpenseModel>> getAllExpenses() async {
+  Future<List<ExpenseModel>> getAllExpenses([
+    ExpenseQuery query = const ExpenseQuery(),
+  ]) async {
     final database = await _appDatabase.database;
     return _perform('get all expenses', () async {
-      final rows = await database.query(ExpenseLocalSchema.tableExpenses);
+      final clauses = <String>['is_deleted = 0'];
+      final arguments = <Object?>[];
+      final searchTerm = query.searchTerm.trim();
+      if (searchTerm.isNotEmpty) {
+        clauses.add(
+          '(title LIKE ? OR description LIKE ? OR vendor_name LIKE ? OR reference_number LIKE ?)',
+        );
+        final pattern = '%$searchTerm%';
+        arguments.addAll(<String>[pattern, pattern, pattern, pattern]);
+      }
+      if (query.startDate != null) {
+        clauses.add('expense_date >= ?');
+        arguments.add(query.startDate!.toIso8601String());
+      }
+      if (query.endDate != null) {
+        clauses.add('expense_date < ?');
+        arguments.add(
+          DateTime(
+            query.endDate!.year,
+            query.endDate!.month,
+            query.endDate!.day + 1,
+          ).toIso8601String(),
+        );
+      }
+      final orderBy = switch (query.sort) {
+        ExpenseSort.newest => 'expense_date DESC, id DESC',
+        ExpenseSort.oldest => 'expense_date ASC, id ASC',
+        ExpenseSort.highestAmount => 'amount DESC, id DESC',
+        ExpenseSort.lowestAmount => 'amount ASC, id ASC',
+      };
+      final rows = await database.query(
+        ExpenseLocalSchema.tableExpenses,
+        where: clauses.join(' AND '),
+        whereArgs: arguments,
+        orderBy: orderBy,
+      );
       return rows.map(ExpenseModel.fromMap).toList();
+    });
+  }
+
+  @override
+  Future<ExpenseSummaryData> getExpenseSummary() async {
+    final database = await _appDatabase.database;
+    return _perform('get expense summary', () async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day).toIso8601String();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1).toIso8601String();
+      final month = DateTime(now.year, now.month).toIso8601String();
+      final nextMonth = DateTime(now.year, now.month + 1).toIso8601String();
+      final year = DateTime(now.year).toIso8601String();
+      final nextYear = DateTime(now.year + 1).toIso8601String();
+      final row = (await database.rawQuery('''
+        SELECT
+          COALESCE(SUM(CASE WHEN expense_date >= ? AND expense_date < ? THEN amount END), 0) AS today_total,
+          COALESCE(SUM(CASE WHEN expense_date >= ? AND expense_date < ? THEN amount END), 0) AS month_total,
+          COALESCE(SUM(CASE WHEN expense_date >= ? AND expense_date < ? THEN amount END), 0) AS year_total,
+          COALESCE(SUM(amount), 0) AS overall_total
+        FROM ${ExpenseLocalSchema.tableExpenses}
+        WHERE is_deleted = 0
+      ''', <Object?>[today, tomorrow, month, nextMonth, year, nextYear])).first;
+      return ExpenseSummaryData(
+        todayTotal: (row['today_total'] as num).toDouble(),
+        monthTotal: (row['month_total'] as num).toDouble(),
+        yearTotal: (row['year_total'] as num).toDouble(),
+        overallTotal: (row['overall_total'] as num).toDouble(),
+      );
     });
   }
 }

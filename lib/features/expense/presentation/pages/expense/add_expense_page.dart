@@ -31,6 +31,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   late final TextEditingController _amountController;
   late final TextEditingController _paymentMethodController;
   late final TextEditingController _referenceNumberController;
+  late final TextEditingController _vendorNameController;
   late final TextEditingController _notesController;
 
   bool get _isEditing => widget.expense != null;
@@ -44,6 +45,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     _amountController = TextEditingController(text: expense?.amount.toString() ?? '');
     _paymentMethodController = TextEditingController(text: expense?.paymentMethod ?? '');
     _referenceNumberController = TextEditingController(text: expense?.referenceNumber ?? '');
+    _vendorNameController = TextEditingController(text: expense?.vendorName ?? '');
     _notesController = TextEditingController(text: expense?.notes ?? '');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<ExpenseCategoryCubit>().loadCategories();
@@ -57,6 +59,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     _amountController.dispose();
     _paymentMethodController.dispose();
     _referenceNumberController.dispose();
+    _vendorNameController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -89,6 +92,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
       expenseDate: context.read<SelectedDateCubit>().state ?? DateTime.now(),
       paymentMethod: _paymentMethodController.text.trim(),
       referenceNumber: _nullable(_referenceNumberController.text),
+      vendorName: _nullable(_vendorNameController.text),
       notes: _nullable(_notesController.text),
       createdAt: widget.expense?.createdAt ?? now,
       updatedAt: now,
@@ -185,9 +189,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             label: 'Amount',
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                            validator: (value) => value == null || double.tryParse(value.trim()) == null
-                                ? 'Amount is required.'
-                                : null,
+                            validator: (value) {
+                              final amount = double.tryParse(value?.trim() ?? '');
+                              return amount == null || amount <= 0
+                                  ? 'Amount must be greater than zero.'
+                                  : null;
+                            },
                           ),
                           const SizedBox(height: AppSpacing.md),
                           BlocBuilder<SelectedDateCubit, DateTime?>(
@@ -212,6 +219,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           AppTextField(controller: _referenceNumberController, label: 'Reference Number'),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(controller: _vendorNameController, label: 'Vendor Name'),
                           const SizedBox(height: AppSpacing.md),
                           AppTextField(controller: _notesController, label: 'Notes', maxLines: 3),
                           const SizedBox(height: AppSpacing.xl),

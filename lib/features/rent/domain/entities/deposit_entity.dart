@@ -7,6 +7,8 @@ class DepositEntity extends Equatable {
   final double refundedAmount;
   final DateTime receivedDate;
   final DateTime? refundDate;
+  final String paymentMethod;
+  final String? notes;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,6 +20,8 @@ class DepositEntity extends Equatable {
     required this.refundedAmount,
     required this.receivedDate,
     this.refundDate,
+    this.paymentMethod = '',
+    this.notes,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -31,6 +35,8 @@ class DepositEntity extends Equatable {
         refundedAmount,
         receivedDate,
         refundDate,
+        paymentMethod,
+        notes,
         status,
         createdAt,
         updatedAt,

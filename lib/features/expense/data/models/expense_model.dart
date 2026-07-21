@@ -10,9 +10,11 @@ class ExpenseModel extends ExpenseEntity {
     required super.expenseDate,
     required super.paymentMethod,
     super.referenceNumber,
+    super.vendorName,
     super.notes,
     required super.createdAt,
     required super.updatedAt,
+    super.isDeleted,
   });
 
   factory ExpenseModel.fromEntity(ExpenseEntity entity) {
@@ -25,9 +27,11 @@ class ExpenseModel extends ExpenseEntity {
       expenseDate: entity.expenseDate,
       paymentMethod: entity.paymentMethod,
       referenceNumber: entity.referenceNumber,
+      vendorName: entity.vendorName,
       notes: entity.notes,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      isDeleted: entity.isDeleted,
     );
   }
 
@@ -41,9 +45,11 @@ class ExpenseModel extends ExpenseEntity {
       expenseDate: DateTime.parse(map['expense_date'] as String),
       paymentMethod: map['payment_method'] as String,
       referenceNumber: map['reference_number'] as String?,
+      vendorName: map['vendor_name'] as String?,
       notes: map['notes'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
+      isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
     );
   }
 
@@ -56,9 +62,11 @@ class ExpenseModel extends ExpenseEntity {
       'expense_date': expenseDate.toIso8601String(),
       'payment_method': paymentMethod,
       'reference_number': referenceNumber,
+      'vendor_name': vendorName,
       'notes': notes,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'is_deleted': isDeleted ? 1 : 0,
     };
     if (id != null) {
       map['id'] = id;

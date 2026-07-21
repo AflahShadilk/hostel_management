@@ -11,6 +11,7 @@ class CheckoutSettlementEntity extends Equatable {
   final double refundAmount;
   final double finalAmount;
   final DateTime? settlementDate;
+  final String? notes;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -26,6 +27,7 @@ class CheckoutSettlementEntity extends Equatable {
     required this.refundAmount,
     required this.finalAmount,
     this.settlementDate,
+    this.notes,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -43,6 +45,7 @@ class CheckoutSettlementEntity extends Equatable {
         refundAmount,
         finalAmount,
         settlementDate,
+        notes,
         status,
         createdAt,
         updatedAt,

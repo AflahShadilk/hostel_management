@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/tenant_entity.dart';
+import '../../domain/entities/tenant_registration_context.dart';
 import '../../domain/repositories/tenant_management_repository.dart';
 import '../../domain/repositories/tenant_repository.dart';
 import '../../../room/domain/repositories/bed_repository.dart';
@@ -21,7 +22,11 @@ class TenantCubit extends Cubit<TenantState> {
     this._bedRepository,
   ) : super(const TenantState());
 
-  Future<void> loadTenants() async {
+  Future<void> loadTenants() => _loadTenants();
+
+  Future<void> _loadTenants({
+    TenantRegistrationContext? registrationContext,
+  }) async {
     emit(state.copyWith(status: TenantOperationStatus.loading));
     try {
       final tenants = await _tenantRepository.getAllTenants();
@@ -32,6 +37,8 @@ class TenantCubit extends Cubit<TenantState> {
         filteredTenants: _applySearch(tenants, state.searchQuery),
         viewModels: viewModels,
         filteredViewModels: _applyViewModelSearch(viewModels, state.searchQuery),
+        registrationContext: registrationContext,
+        clearRegistrationContext: registrationContext == null,
       ));
     } catch (e) {
       emit(state.copyWith(
@@ -126,8 +133,9 @@ class TenantCubit extends Cubit<TenantState> {
   Future<void> createTenant(TenantEntity tenant) async {
     emit(state.copyWith(status: TenantOperationStatus.creating));
     try {
-      await _tenantManagementRepository.assignTenant(tenant);
-      await loadTenants();
+      final registrationContext =
+          await _tenantManagementRepository.assignTenant(tenant);
+      await _loadTenants(registrationContext: registrationContext);
     } catch (e) {
       emit(state.copyWith(
         status: TenantOperationStatus.failure,

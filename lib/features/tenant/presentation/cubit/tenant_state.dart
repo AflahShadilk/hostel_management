@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/tenant_entity.dart';
+import '../../domain/entities/tenant_registration_context.dart';
 import '../models/tenant_view_model.dart';
 
 enum TenantOperationStatus {
@@ -24,6 +25,7 @@ class TenantState extends Equatable {
   final String? errorMessage;
   final String searchQuery;
   final bool isSearchActive;
+  final TenantRegistrationContext? registrationContext;
 
   const TenantState({
     this.status = TenantOperationStatus.initial,
@@ -34,6 +36,7 @@ class TenantState extends Equatable {
     this.errorMessage,
     this.searchQuery = '',
     this.isSearchActive = false,
+    this.registrationContext,
   });
 
   TenantState copyWith({
@@ -45,6 +48,8 @@ class TenantState extends Equatable {
     String? errorMessage,
     String? searchQuery,
     bool? isSearchActive,
+    TenantRegistrationContext? registrationContext,
+    bool clearRegistrationContext = false,
   }) {
     return TenantState(
       status: status ?? this.status,
@@ -55,6 +60,9 @@ class TenantState extends Equatable {
       errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
       isSearchActive: isSearchActive ?? this.isSearchActive,
+      registrationContext: clearRegistrationContext
+          ? null
+          : registrationContext ?? this.registrationContext,
     );
   }
 
@@ -68,5 +76,6 @@ class TenantState extends Equatable {
         errorMessage,
         searchQuery,
         isSearchActive,
+        registrationContext,
       ];
 }

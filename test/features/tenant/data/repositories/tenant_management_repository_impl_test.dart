@@ -4,6 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:hostel_management/core/database/app_database.dart';
 import 'package:hostel_management/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:hostel_management/features/room/data/repositories/bed_repository_impl.dart';
+import 'package:hostel_management/features/room/data/repositories/room_repository_impl.dart';
 import 'package:hostel_management/features/room/data/repositories/room_management_repository_impl.dart';
 import 'package:hostel_management/features/room/domain/entities/bed_status.dart';
 import 'package:hostel_management/features/room/domain/entities/room_status.dart';
@@ -47,6 +48,7 @@ void main() {
   late TenantManagementRepositoryImpl managementRepo;
   late TenantRepositoryImpl tenantRepo;
   late BedRepositoryImpl bedRepo;
+  late RoomRepositoryImpl roomRepo;
   late RoomManagementRepositoryImpl roomManagementRepo;
   late DashboardRepositoryImpl dashboardRepo;
 
@@ -86,6 +88,7 @@ void main() {
   setUp(() async {
     tenantRepo = TenantRepositoryImpl(appDatabase);
     bedRepo = BedRepositoryImpl(appDatabase);
+    roomRepo = RoomRepositoryImpl(appDatabase);
     roomManagementRepo = RoomManagementRepositoryImpl(appDatabase);
     dashboardRepo = DashboardRepositoryImpl(appDatabase);
 
@@ -93,6 +96,7 @@ void main() {
       appDatabase,
       tenantRepo,
       bedRepo,
+      roomRepo,
       roomManagementRepo,
     );
 
@@ -115,7 +119,15 @@ void main() {
         'creates tenant, marks bed occupied, and updates room to partially_occupied',
         () async {
       final tenant = await managementRepo.assignTenant(buildTenant(bedId: 1));
-      expect(tenant.id, isNotNull);
+      expect(tenant.tenant.id, isNotNull);
+      expect(tenant.stay.id, isNotNull);
+      expect(tenant.initialRentRecord.amountPaid, 0);
+      expect(tenant.initialRentRecord.status, 'pending');
+      final db = await appDatabase.database;
+      final deposits = await db.query('deposits');
+      final payments = await db.query('payments');
+      expect(deposits, isEmpty);
+      expect(payments, isEmpty);
 
       // Bed is occupied
       final bed = await bedRepo.getBedById(1);
@@ -182,13 +194,13 @@ void main() {
 
       expect(await getRoomStatus(1), RoomStatus.occupied);
 
-      final out = await managementRepo.checkOutTenant(t1.id!, bedId: 1);
+      final out = await managementRepo.checkOutTenant(t1.tenant.id!, bedId: 1);
 
       expect(out.status, TenantStatus.checkedOut);
       expect(out.bedId, isNull);
       expect(out.checkOutDate, isNotNull);
 
-      final stored = await tenantRepo.getTenantById(t1.id!);
+      final stored = await tenantRepo.getTenantById(t1.tenant.id!);
       expect(stored!.bedId, isNull);
 
       // Bed is vacant
@@ -208,14 +220,14 @@ void main() {
         buildTenant(bedId: 1, phoneNumber: '111', email: '1@a.com'),
       );
 
-      await managementRepo.checkOutTenant(first.id!, bedId: 1);
+      await managementRepo.checkOutTenant(first.tenant.id!, bedId: 1);
 
       final second = await managementRepo.assignTenant(
         buildTenant(bedId: 1, phoneNumber: '222', email: '2@a.com'),
       );
 
-      expect(second.bedId, 1);
-      expect((await tenantRepo.getTenantById(first.id!))!.bedId, isNull);
+      expect(second.tenant.bedId, 1);
+      expect((await tenantRepo.getTenantById(first.tenant.id!))!.bedId, isNull);
       expect((await bedRepo.getBedById(1))!.status, BedStatus.occupied);
       expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
     });
@@ -226,18 +238,18 @@ void main() {
         buildTenant(bedId: 1, phoneNumber: '111', email: '1@a.com'),
       );
 
-      await managementRepo.checkOutTenant(first.id!, bedId: 1);
+      await managementRepo.checkOutTenant(first.tenant.id!, bedId: 1);
       final replacement = await managementRepo.assignTenant(
         buildTenant(bedId: 1, phoneNumber: '222', email: '2@a.com'),
       );
 
       final transferred = await managementRepo.transferTenant(
-        replacement.id!,
+        replacement.tenant.id!,
         oldBedId: 1,
         newBedId: 2,
       );
 
-      final historical = await tenantRepo.getTenantById(first.id!);
+      final historical = await tenantRepo.getTenantById(first.tenant.id!);
       expect(historical!.status, TenantStatus.checkedOut);
       expect(historical.bedId, isNull);
       expect(historical.checkOutDate, isNotNull);
@@ -254,9 +266,9 @@ void main() {
 
       expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
 
-      await managementRepo.deleteTenant(t1.id!, bedId: 1);
+      await managementRepo.deleteTenant(t1.tenant.id!, bedId: 1);
 
-      final fetched = await tenantRepo.getTenantById(t1.id!);
+      final fetched = await tenantRepo.getTenantById(t1.tenant.id!);
       expect(fetched, isNull);
 
       final bed = await bedRepo.getBedById(1);
@@ -285,7 +297,7 @@ void main() {
       expect(await getRoomStatus(1), RoomStatus.partiallyOccupied);
       expect(await getRoomStatus(2), RoomStatus.vacant);
 
-      final transferred = await managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 3);
+      final transferred = await managementRepo.transferTenant(t1.tenant.id!, oldBedId: 1, newBedId: 3);
 
       expect(transferred.bedId, 3);
       
@@ -303,7 +315,7 @@ void main() {
       final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1));
 
       await expectLater(
-        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 1),
+        managementRepo.transferTenant(t1.tenant.id!, oldBedId: 1, newBedId: 1),
         throwsStateError,
       );
     });
@@ -313,7 +325,7 @@ void main() {
       await managementRepo.assignTenant(buildTenant(bedId: 2, phoneNumber: '222', email: '2@a.com'));
 
       await expectLater(
-        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 2),
+        managementRepo.transferTenant(t1.tenant.id!, oldBedId: 1, newBedId: 2),
         throwsStateError,
       );
     });
@@ -325,7 +337,7 @@ void main() {
       await db.update('beds', {'status': 'inactive'}, where: 'id = ?', whereArgs: [2]);
 
       await expectLater(
-        managementRepo.transferTenant(t1.id!, oldBedId: 1, newBedId: 2),
+        managementRepo.transferTenant(t1.tenant.id!, oldBedId: 1, newBedId: 2),
         throwsStateError,
       );
     });

@@ -11,6 +11,7 @@ class CheckoutSettlementModel {
   final double refundAmount;
   final double finalAmount;
   final DateTime? settlementDate;
+  final String? notes;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -26,6 +27,7 @@ class CheckoutSettlementModel {
     required this.refundAmount,
     required this.finalAmount,
     this.settlementDate,
+    this.notes,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -45,6 +47,7 @@ class CheckoutSettlementModel {
       settlementDate: map['settlement_date'] == null
           ? null
           : DateTime.parse(map['settlement_date'] as String),
+      notes: map['notes'] as String?,
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
@@ -65,6 +68,7 @@ class CheckoutSettlementModel {
       refundAmount: entity.refundAmount,
       finalAmount: entity.finalAmount,
       settlementDate: entity.settlementDate,
+      notes: entity.notes,
       status: entity.status,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -82,6 +86,7 @@ class CheckoutSettlementModel {
       'refund_amount': refundAmount,
       'final_amount': finalAmount,
       'settlement_date': settlementDate?.toIso8601String(),
+      'notes': notes,
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -102,6 +107,7 @@ class CheckoutSettlementModel {
       refundAmount: refundAmount,
       finalAmount: finalAmount,
       settlementDate: settlementDate,
+      notes: notes,
       status: status,
       createdAt: createdAt,
       updatedAt: updatedAt,

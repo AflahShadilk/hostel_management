@@ -121,6 +121,8 @@ class RentLocalSchema {
         received_date TEXT NOT NULL,
         refund_date TEXT,
         refunded_amount REAL NOT NULL DEFAULT 0,
+        payment_method TEXT NOT NULL DEFAULT '',
+        notes TEXT,
         status TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -162,6 +164,7 @@ class RentLocalSchema {
         late_fee REAL NOT NULL DEFAULT 0,
         refund_amount REAL NOT NULL DEFAULT 0,
         settlement_date TEXT,
+        notes TEXT,
         status TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -172,6 +175,20 @@ class RentLocalSchema {
         FOREIGN KEY(stay_id) REFERENCES $tableStays(id) ON DELETE RESTRICT
       )
     ''');
+  }
+
+  /// Adds deposit collection metadata used by Financial Onboarding.
+  static Future<void> migrateFromVersion11(Database db) async {
+    await db.transaction((txn) async {
+      await txn.execute(
+        "ALTER TABLE $tableDeposits ADD COLUMN payment_method TEXT NOT NULL DEFAULT ''",
+      );
+      await txn.execute('ALTER TABLE $tableDeposits ADD COLUMN notes TEXT');
+    });
+  }
+
+  static Future<void> migrateFromVersion13(Database db) async {
+    await db.execute('ALTER TABLE $tableCheckoutSettlements ADD COLUMN notes TEXT');
   }
 
   /// Migrates the v4 rent foundation to v5 without deleting financial rows.

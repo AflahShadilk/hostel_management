@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/di/injection.dart';
+import '../../../financial_onboarding/presentation/cubit/financial_onboarding_cubit.dart';
+import '../../../financial_onboarding/presentation/pages/financial_onboarding_page.dart';
 import '../cubit/tenant_cubit.dart';
 import '../cubit/tenant_state.dart';
 import '../widgets/tenant_form.dart';
@@ -16,13 +19,31 @@ class AddTenantPage extends StatelessWidget {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == TenantOperationStatus.loaded) {
+          final registrationContext = state.registrationContext;
           // Because creating -> loading -> loaded.
           // If we reach loaded and canPop, it means the operation succeeded.
           if (context.canPop()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tenant added successfully.')),
-            );
-            context.pop(true);
+            if (registrationContext == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tenant added successfully.')),
+              );
+              context.pop(true);
+              return;
+            }
+            Navigator.of(context)
+                .push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider(
+                      create: (_) => getIt<FinancialOnboardingCubit>(),
+                      child: FinancialOnboardingPage(
+                        registrationContext: registrationContext,
+                      ),
+                    ),
+                  ),
+                )
+                .then((_) {
+              if (context.mounted && context.canPop()) context.pop(true);
+            });
           }
         }
       },

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/checkout_settlement_entity.dart';
+import '../../../domain/entities/checkout_request.dart';
 import '../../../domain/repositories/rent_repository.dart';
 import 'checkout_state.dart';
 
@@ -58,6 +59,16 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     try {
       await _rentRepository.deleteCheckoutSettlement(id);
       await _reloadAllCheckoutSettlements();
+    } catch (error) {
+      emit(CheckoutError(error.toString()));
+    }
+  }
+
+  Future<void> completeCheckout(CheckoutRequest request) async {
+    emit(const CheckoutLoading());
+    try {
+      final settlement = await _rentRepository.completeCheckout(request);
+      emit(CheckoutLoaded(<CheckoutSettlementEntity>[settlement]));
     } catch (error) {
       emit(CheckoutError(error.toString()));
     }

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/expense_entity.dart';
+import '../../../domain/entities/expense_query.dart';
 import '../../../domain/repositories/expense_repository.dart';
 import 'expense_state.dart';
 
@@ -9,6 +10,12 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
   ExpenseCubit(this._expenseRepository) : super(const ExpenseInitial());
 
+  ExpenseQuery _query = const ExpenseQuery();
+
+  ExpenseQuery get query => _query;
+
+  
+
   Future<void> loadExpenses() async {
     emit(const ExpenseLoading());
     try {
@@ -16,6 +23,29 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     } catch (error) {
       emit(ExpenseError(error.toString()));
     }
+  }
+
+  Future<void> searchExpenses(String searchTerm) async {
+    _query = _query.copyWith(searchTerm: searchTerm);
+    await loadExpenses();
+  }
+
+  Future<void> sortExpenses(ExpenseSort sort) async {
+    _query = _query.copyWith(sort: sort);
+    await loadExpenses();
+  }
+
+  Future<void> filterExpensesByDateRange({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    _query = _query.copyWith(
+      startDate: startDate,
+      endDate: endDate,
+      clearStartDate: startDate == null,
+      clearEndDate: endDate == null,
+    );
+    await loadExpenses();
   }
 
   Future<void> getExpenseById(int id) async {
@@ -59,7 +89,7 @@ class ExpenseCubit extends Cubit<ExpenseState> {
   }
 
   Future<void> _reloadExpenses() async {
-    final expenses = await _expenseRepository.getAllExpenses();
+    final expenses = await _expenseRepository.getAllExpenses(_query);
     _emitExpenses(expenses);
   }
 

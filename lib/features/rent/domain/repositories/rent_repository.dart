@@ -1,4 +1,5 @@
 import '../entities/checkout_settlement_entity.dart';
+import '../entities/checkout_request.dart';
 import '../entities/damage_charge_entity.dart';
 import '../entities/deposit_entity.dart';
 import '../entities/payment_entity.dart';
@@ -71,4 +72,5 @@ abstract interface class RentRepository {
     CheckoutSettlementEntity checkoutSettlement,
   );
   Future<void> deleteCheckoutSettlement(int id);
+  Future<CheckoutSettlementEntity> completeCheckout(CheckoutRequest request);
 }

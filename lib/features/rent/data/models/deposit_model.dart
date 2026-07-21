@@ -7,6 +7,8 @@ class DepositModel {
   final double refundedAmount;
   final DateTime receivedDate;
   final DateTime? refundDate;
+  final String paymentMethod;
+  final String? notes;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,6 +20,8 @@ class DepositModel {
     required this.refundedAmount,
     required this.receivedDate,
     this.refundDate,
+    this.paymentMethod = '',
+    this.notes,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -33,6 +37,8 @@ class DepositModel {
       refundDate: map['refund_date'] == null
           ? null
           : DateTime.parse(map['refund_date'] as String),
+      paymentMethod: map['payment_method'] as String? ?? '',
+      notes: map['notes'] as String?,
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
@@ -47,6 +53,8 @@ class DepositModel {
       refundedAmount: entity.refundedAmount,
       receivedDate: entity.receivedDate,
       refundDate: entity.refundDate,
+      paymentMethod: entity.paymentMethod,
+      notes: entity.notes,
       status: entity.status,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -60,6 +68,8 @@ class DepositModel {
       'received_date': receivedDate.toIso8601String(),
       'refund_date': refundDate?.toIso8601String(),
       'refunded_amount': refundedAmount,
+      'payment_method': paymentMethod,
+      'notes': notes,
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -76,6 +86,8 @@ class DepositModel {
       refundedAmount: refundedAmount,
       receivedDate: receivedDate,
       refundDate: refundDate,
+      paymentMethod: paymentMethod,
+      notes: notes,
       status: status,
       createdAt: createdAt,
       updatedAt: updatedAt,

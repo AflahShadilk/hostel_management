@@ -1,3 +1,12 @@
+import 'package:hostel_management/core/database/app_database.dart';
+import 'package:hostel_management/features/rent/domain/constants/rent_status_constants.dart';
+import 'package:hostel_management/features/rent/domain/entities/checkout_request.dart';
+import 'package:hostel_management/features/room/data/datasources/room_local_schema.dart';
+import 'package:hostel_management/features/room/domain/entities/bed_status.dart';
+import 'package:hostel_management/features/room/domain/entities/room_status.dart';
+import 'package:hostel_management/features/tenant/data/datasources/tenant_local_schema.dart';
+import 'package:hostel_management/features/tenant/domain/entities/tenant_status.dart';
+
 import '../../domain/entities/checkout_settlement_entity.dart';
 import '../../domain/entities/damage_charge_entity.dart';
 import '../../domain/entities/deposit_entity.dart';
@@ -14,11 +23,13 @@ import '../models/payment_model.dart';
 import '../models/receipt_model.dart';
 import '../models/rent_record_model.dart';
 import '../models/stay_model.dart';
+import '../datasources/rent_local_schema.dart';
 
 class RentRepositoryImpl implements RentRepository {
   final RentLocalDataSource _localDataSource;
+  final AppDatabase _appDatabase;
 
-  const RentRepositoryImpl(this._localDataSource);
+  const RentRepositoryImpl(this._localDataSource, this._appDatabase);
 
   @override
   Future<StayEntity> createStay(StayEntity stay) async =>
@@ -234,4 +245,93 @@ class RentRepositoryImpl implements RentRepository {
   @override
   Future<void> deleteCheckoutSettlement(int id) =>
       _localDataSource.deleteCheckoutSettlement(id);
+
+  @override
+  Future<CheckoutSettlementEntity> completeCheckout(
+    CheckoutRequest request,
+  ) async {
+    if (!request.damageAmount.isFinite || request.damageAmount < 0) {
+      throw ArgumentError('Damage amount cannot be negative.');
+    }
+    final database = await _appDatabase.database;
+    return database.transaction((txn) async {
+      final stayRows = await txn.query(
+        RentLocalSchema.tableStays,
+        where: 'id = ? AND status = ?',
+        whereArgs: <Object?>[request.stayId, StayStatus.active],
+        limit: 1,
+      );
+      if (stayRows.isEmpty) throw StateError('Active stay not found.');
+      final stay = stayRows.first;
+      final existing = await txn.query(
+        RentLocalSchema.tableCheckoutSettlements,
+        where: 'stay_id = ?',
+        whereArgs: <Object?>[request.stayId],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) throw StateError('Checkout settlement already exists.');
+
+      final rent = await txn.rawQuery('''
+        SELECT COALESCE(SUM(amount_due - amount_paid), 0) AS outstanding
+        FROM ${RentLocalSchema.tableRentRecords} WHERE stay_id = ?
+      ''', <Object?>[request.stayId]);
+      final outstanding = (rent.first['outstanding'] as num).toDouble();
+      final depositRows = await txn.query(
+        RentLocalSchema.tableDeposits,
+        where: 'stay_id = ? AND status = ?',
+        whereArgs: <Object?>[request.stayId, 'held'],
+        limit: 1,
+      );
+      final deposit = depositRows.isEmpty ? null : depositRows.first;
+      final held = deposit == null ? 0.0 : (deposit['amount'] as num).toDouble();
+      final totalDue = outstanding + request.damageAmount;
+      final refund = (held - totalDue).clamp(0, double.infinity).toDouble();
+      final adjustment = held - refund;
+      final remaining = (totalDue - held).clamp(0, double.infinity).toDouble();
+      final now = DateTime.now();
+      final nowText = now.toIso8601String();
+
+      final settlementId = await txn.insert(RentLocalSchema.tableCheckoutSettlements, {
+        'stay_id': request.stayId, 'outstanding_amount': outstanding,
+        'rent_due': outstanding, 'late_fee': 0.0,
+        'damage_charges': request.damageAmount, 'deposit_adjustment': adjustment,
+        'refund_amount': refund, 'final_amount': remaining,
+        'settlement_date': nowText, 'notes': request.notes?.trim().isEmpty == true ? null : request.notes?.trim(),
+        'status': SettlementStatus.completed, 'created_at': nowText, 'updated_at': nowText,
+      });
+      if (request.damageAmount > 0) {
+        await txn.insert(RentLocalSchema.tableDamageCharges, {
+          'stay_id': request.stayId, 'description': request.notes?.trim().isNotEmpty == true ? request.notes!.trim() : 'Checkout damage charge',
+          'amount': request.damageAmount, 'status': 'paid', 'created_at': nowText, 'updated_at': nowText,
+        });
+      }
+      if (deposit != null) {
+        await txn.update(RentLocalSchema.tableDeposits, {
+          'refunded_amount': refund, 'refund_date': nowText,
+          'status': refund > 0 ? 'refunded' : 'forfeited', 'updated_at': nowText,
+        }, where: 'id = ?', whereArgs: <Object?>[deposit['id']]);
+      }
+      await txn.update(RentLocalSchema.tableStays, {
+        'status': StayStatus.checkedOut, 'check_out_date': nowText, 'updated_at': nowText,
+      }, where: 'id = ?', whereArgs: <Object?>[request.stayId]);
+      await txn.update(TenantLocalSchema.tableTenants, {
+        TenantLocalSchema.colStatus: TenantStatus.checkedOut.databaseValue,
+        TenantLocalSchema.colBedId: null, TenantLocalSchema.colCheckOutDate: nowText,
+        TenantLocalSchema.colUpdatedAt: nowText,
+      }, where: 'id = ?', whereArgs: <Object?>[stay['tenant_id']]);
+      await txn.update(RoomLocalSchema.tableBeds, {
+        'status': BedStatus.vacant.databaseValue, 'updated_at': nowText,
+      }, where: 'id = ?', whereArgs: <Object?>[stay['bed_id']]);
+      final roomId = stay['room_id'] as int;
+      final occupancy = await txn.rawQuery('SELECT COUNT(*) AS occupied, (SELECT COUNT(*) FROM ${RoomLocalSchema.tableBeds} WHERE room_id = ?) AS total FROM ${RoomLocalSchema.tableBeds} WHERE room_id = ? AND status = ?', <Object?>[roomId, roomId, BedStatus.occupied.databaseValue]);
+      final occupied = (occupancy.first['occupied'] as num).toInt();
+      final total = (occupancy.first['total'] as num).toInt();
+      await txn.update(RoomLocalSchema.tableRooms, {
+        'status': occupied == 0 ? RoomStatus.vacant.databaseValue : occupied == total ? RoomStatus.occupied.databaseValue : RoomStatus.partiallyOccupied.databaseValue,
+        'updated_at': nowText,
+      }, where: 'id = ?', whereArgs: <Object?>[roomId]);
+      return CheckoutSettlementEntity(id: settlementId, stayId: request.stayId, outstandingAmount: outstanding, rentDue: outstanding, lateFee: 0, damageCharges: request.damageAmount, depositAdjustment: adjustment, refundAmount: refund, finalAmount: remaining, settlementDate: now, notes: request.notes?.trim().isEmpty == true ? null : request.notes?.trim(), status: SettlementStatus.completed, createdAt: now, updatedAt: now);
+    });
+  }
 }
+

@@ -1,5 +1,7 @@
 import '../../domain/entities/expense_category_entity.dart';
 import '../../domain/entities/expense_entity.dart';
+import '../../domain/entities/expense_query.dart';
+import '../../domain/entities/expense_summary_entity.dart';
 import '../../domain/repositories/expense_repository.dart';
 import '../datasources/expense_local_datasource.dart';
 import '../models/expense_category_model.dart';
@@ -115,6 +117,19 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       _localDataSource.getExpenseById(id);
 
   @override
-  Future<List<ExpenseEntity>> getAllExpenses() =>
-      _localDataSource.getAllExpenses();
+  Future<List<ExpenseEntity>> getAllExpenses([
+    ExpenseQuery query = const ExpenseQuery(),
+  ]) =>
+      _localDataSource.getAllExpenses(query);
+
+  @override
+  Future<ExpenseSummaryEntity> getExpenseSummary() async {
+    final summary = await _localDataSource.getExpenseSummary();
+    return ExpenseSummaryEntity(
+      todayTotal: summary.todayTotal,
+      monthTotal: summary.monthTotal,
+      yearTotal: summary.yearTotal,
+      overallTotal: summary.overallTotal,
+    );
+  }
 }

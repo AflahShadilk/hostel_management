@@ -1,4 +1,5 @@
 import '../entities/tenant_entity.dart';
+import '../entities/tenant_registration_context.dart';
 
 /// Orchestrates cross-domain transactional operations for Tenants.
 ///
@@ -11,9 +12,11 @@ abstract interface class TenantManagementRepository {
   /// 1. Validates bed exists and is vacant.
   /// 2. Validates phone/email uniqueness.
   /// 3. Creates the tenant record.
-  /// 4. Updates BedStatus -> occupied.
-  /// 5. Recalculates RoomStatus.
-  Future<TenantEntity> assignTenant(TenantEntity tenant);
+  /// 4. Creates the initial pending rent obligation.
+  /// 5. Updates BedStatus -> occupied and recalculates RoomStatus.
+  ///
+  /// No deposit or payment transaction is created automatically.
+  Future<TenantRegistrationContext> assignTenant(TenantEntity tenant);
 
   /// Updates an existing tenant's personal details.
   ///

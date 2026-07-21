@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hostel_management/features/tenant/presentation/cubit/tenant_cubit.dart';
+import 'package:hostel_management/features/tenant/presentation/cubit/tenant_state.dart';
 
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/router/app_routes.dart';
@@ -11,10 +13,11 @@ import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
+import '../../../domain/entities/checkout_request.dart';
+import '../../cubit/checkout/checkout_cubit.dart';
+import '../../cubit/checkout/checkout_state.dart';
 import '../../cubit/stay/stay_cubit.dart';
 import '../../cubit/stay/stay_state.dart';
-import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
-import '../../../../tenant/presentation/cubit/tenant_state.dart';
 
 /// Entry point for the Checkout workflow.
 ///
@@ -67,9 +70,9 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
     );
 
     if (confirmed == true && mounted) {
-      await context
-          .read<TenantCubit>()
-          .checkOutTenant(stay.tenantId, bedId: stay.bedId);
+      await context.read<CheckoutCubit>().completeCheckout(
+            CheckoutRequest(stayId: stay.id!),
+          );
       // Reload stays after checkout
       if (mounted) context.read<StayCubit>().loadAllStays();
     }
@@ -90,17 +93,15 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
             }
           },
         ),
-        BlocListener<TenantCubit, TenantState>(
-          listenWhen: (prev, curr) => prev.status != curr.status,
+        BlocListener<CheckoutCubit, CheckoutState>(
           listener: (context, state) {
-            if (state.status == TenantOperationStatus.failure &&
-                state.errorMessage != null) {
+            if (state is CheckoutError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text(state.errorMessage!),
+                    content: Text(state.message),
                     backgroundColor: AppColors.error),
               );
-            } else if (state.status == TenantOperationStatus.success) {
+            } else if (state is CheckoutLoaded) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Checkout completed successfully.'),

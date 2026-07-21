@@ -6,6 +6,7 @@ class ExpenseCategoryModel extends ExpenseCategoryEntity {
     required super.name,
     super.description,
     required super.isActive,
+    super.isDefault,
     required super.createdAt,
   });
 
@@ -15,6 +16,7 @@ class ExpenseCategoryModel extends ExpenseCategoryEntity {
       name: entity.name,
       description: entity.description,
       isActive: entity.isActive,
+      isDefault: entity.isDefault,
       createdAt: entity.createdAt,
     );
   }
@@ -25,6 +27,7 @@ class ExpenseCategoryModel extends ExpenseCategoryEntity {
       name: map['name'] as String,
       description: map['description'] as String?,
       isActive: (map['is_active'] as int) == 1,
+      isDefault: (map['is_default'] as int? ?? 0) == 1,
       createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
@@ -34,6 +37,7 @@ class ExpenseCategoryModel extends ExpenseCategoryEntity {
       'name': name,
       'description': description,
       'is_active': isActive ? 1 : 0,
+      'is_default': isDefault ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
     };
     if (id != null) {

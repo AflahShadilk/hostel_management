@@ -75,6 +75,7 @@ import '../../features/settings/domain/repositories/export_repository.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
+import '../../features/financial_onboarding/presentation/cubit/financial_onboarding_cubit.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -166,6 +167,7 @@ Future<void> configureDependencies() async {
       getIt<AppDatabase>(),
       getIt<TenantRepository>(),
       getIt<BedRepository>(),
+      getIt<RoomRepository>(),
       getIt<RoomManagementRepository>(),
     ),
   );
@@ -190,7 +192,10 @@ Future<void> configureDependencies() async {
     () => RentLocalDataSourceImpl(getIt<AppDatabase>()),
   );
   getIt.registerLazySingleton<RentRepository>(
-    () => RentRepositoryImpl(getIt<RentLocalDataSource>()),
+    () => RentRepositoryImpl(
+      getIt<RentLocalDataSource>(),
+      getIt<AppDatabase>(),
+    ),
   );
   getIt.registerFactory<StayCubit>(() => StayCubit(getIt<RentRepository>()));
   getIt.registerFactory<RentRecordCubit>(
@@ -267,6 +272,9 @@ Future<void> configureDependencies() async {
       getIt<BackupRepository>(),
       getIt<ExportRepository>(),
     ),
+  );
+  getIt.registerFactory<FinancialOnboardingCubit>(
+    () => FinancialOnboardingCubit(getIt<RentRepository>()),
   );
 
   // Lightweight UI Cubits — no repository dependencies
