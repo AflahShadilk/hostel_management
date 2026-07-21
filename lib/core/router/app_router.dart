@@ -1,3 +1,4 @@
+import '../../features/rent/presentation/pages/checkout/checkout_settlement_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -317,6 +318,11 @@ abstract final class AppRouter {
                       builder: (context, state) => AddEditCheckoutPage(
                           settlement:
                               state.extra as CheckoutSettlementEntity?)),
+                  GoRoute(
+                      name: AppRoutes.checkoutSettlementFormName,
+                      path: AppRoutes.checkoutSettlementFormPath,
+                      builder: (context, state) => CheckoutSettlementPage(
+                          stay: state.extra as StayEntity)),
                 ],
               ),
             ],
@@ -533,3 +539,6 @@ class _RouteErrorPage extends StatelessWidget {
     );
   }
 }
+
+
+

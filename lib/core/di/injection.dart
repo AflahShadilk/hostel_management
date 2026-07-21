@@ -43,6 +43,7 @@ import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
 import '../../features/rent/presentation/cubit/deposit/deposit_cubit.dart';
 import '../../features/rent/presentation/cubit/damage_charge/damage_charge_cubit.dart';
 import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
+import '../../features/rent/presentation/cubit/checkout/checkout_summary_cubit.dart';
 import '../../features/rent/domain/repositories/rent_collection_repository.dart';
 import '../../features/rent/data/repositories/rent_collection_repository_impl.dart';
 import '../../features/rent/presentation/cubit/rent_collection/rent_collection_cubit.dart';
@@ -283,4 +284,9 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<SelectedDateCubit>(() => SelectedDateCubit(null));
   getIt.registerFactory<SelectedStatusCubit>(() => SelectedStatusCubit(''));
   getIt.registerFactory<BalanceCubit>(() => BalanceCubit(0.0));
+  getIt.registerFactory<CheckoutSummaryCubit>(() => CheckoutSummaryCubit(getIt<RentRepository>()));
 }
+
+
+
+

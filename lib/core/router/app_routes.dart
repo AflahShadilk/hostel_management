@@ -117,6 +117,8 @@ abstract final class AppRoutes {
   static const String addCheckoutPath = 'add';
   static const String checkoutDetailsName = 'checkoutDetails';
   static const String checkoutDetailsPath = ':checkoutId';
+  static const String checkoutSettlementFormName = 'checkoutSettlementForm';
+  static const String checkoutSettlementFormPath = 'settlement';
   static const String editCheckoutName = 'editCheckout';
   static const String editCheckoutPath = ':checkoutId/edit';
 

@@ -13,11 +13,14 @@ import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
-import '../../../domain/entities/checkout_request.dart';
+
 import '../../cubit/checkout/checkout_cubit.dart';
 import '../../cubit/checkout/checkout_state.dart';
 import '../../cubit/stay/stay_cubit.dart';
 import '../../cubit/stay/stay_state.dart';
+import '../../../../room/presentation/cubit/room_cubit.dart';
+import '../../../../dashboard/presentation/cubit/dashboard_cubit.dart';
+import '../../../../hostel/presentation/cubit/hostel_cubit.dart';
 
 /// Entry point for the Checkout workflow.
 ///
@@ -43,38 +46,15 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
 
   Future<void> _confirmCheckout(
       BuildContext context, StayEntity stay) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Confirm Checkout'),
-        content: Text(
-          'Checking out Tenant #${stay.tenantId} from Room ${stay.roomId} / Bed ${stay.bedId}.\n\n'
-          'This will:\n'
-          '• Mark the stay as Checked Out\n'
-          '• Release the bed\n'
-          '• Update room occupancy\n\n'
-          'Financial history will be preserved.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Checkout'),
-          ),
-        ],
-      ),
+    final result = await context.pushNamed(
+      AppRoutes.checkoutSettlementFormName,
+      extra: stay,
     );
-
-    if (confirmed == true && mounted) {
-      await context.read<CheckoutCubit>().completeCheckout(
-            CheckoutRequest(stayId: stay.id!),
-          );
-      // Reload stays after checkout
-      if (mounted) context.read<StayCubit>().loadAllStays();
+    if (result == true && mounted) {
+      context.read<StayCubit>().loadAllStays();
+      context.read<TenantCubit>().loadTenants();
+      final hostelId = context.read<HostelCubit>().state.hostel?.id ?? 0; if(hostelId > 0) context.read<RoomCubit>().loadRooms(hostelId);
+      if(hostelId > 0) context.read<DashboardCubit>().loadDashboard(hostelId);
     }
   }
 
@@ -306,3 +286,9 @@ class _ActiveStayCard extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
