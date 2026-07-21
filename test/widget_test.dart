@@ -88,12 +88,19 @@ class FakeAuthSessionService implements AuthSessionService {
   @override
   Future<void> clearSession() async {}
   @override
-  Future<int?> getUserId() async =>
-      null; // Returns null so we go to unauthenticated -> role selection
+  Future<int?> getUserId() async => null;
   @override
   Future<bool> hasSession() async => false;
   @override
   Future<void> saveSession(int userId) async {}
+
+  @override Future<void> clearAll() async {}
+  @override Future<void> clearLoginSession() async {}
+  @override Future<void> clearRole() async {}
+  @override Future<UserRole?> getRole() async => null;
+  @override Future<bool> isLoggedIn() async => false;
+  @override Future<void> markLoggedIn(int userId) async {}
+  @override Future<void> saveRole(UserRole role) async {}
 }
 
 class FakeHostelRepository implements HostelRepository {
@@ -205,13 +212,12 @@ void main() {
     await tester.pumpAndSettle();
 
     // Now it should have navigated to Role Selection
-    expect(find.text('Welcome'), findsOneWidget);
-    expect(find.text("Choose how you'd like to continue"), findsOneWidget);
+    expect(find.text('Who are you signing in as?'), findsOneWidget);
     expect(find.text('Owner'), findsWidgets);
     expect(find.text('Manager'), findsWidgets);
 
-    // Tap Owner Login
-    await tester.tap(find.text('Login').first);
+    // Tap Owner card
+    await tester.tap(find.text('Owner').first);
     await tester.pumpAndSettle();
 
     // We should be on Owner Login Page
@@ -236,8 +242,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    // Tap Manager Login
-    await tester.tap(find.text('Login').last);
+    // Tap Manager card
+    await tester.tap(find.text('Manager').first);
     await tester.pumpAndSettle();
 
     // We should be on Manager Login Page
@@ -248,11 +254,15 @@ void main() {
     expect(find.text('Don\'t have an account?'),
         findsNothing); // Manager does NOT have sign up option
 
-    // Go back
+    // Go back to role selection
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    // Tap Owner Sign Up (last element as login is first)
+    // Tap Owner card to go to Owner Login
+    await tester.tap(find.text('Owner').first);
+    await tester.pumpAndSettle();
+
+    // Now on Owner Login, tap Sign Up
     await tester.tap(find.text('Sign Up').last);
     await tester.pumpAndSettle();
 

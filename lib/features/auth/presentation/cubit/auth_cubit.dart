@@ -22,6 +22,8 @@ class AuthCubit extends Cubit<AuthState> {
     return regex.hasMatch(email);
   }
 
+  // ── Registration ─────────────────────────────────────────────────────────────
+
   Future<void> registerOwner({
     required String name,
     required String phone,
@@ -110,6 +112,9 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
 
+      // Persist the role so the next launch knows Owner was selected
+      await _authSessionService.saveRole(UserRole.owner);
+
       emit(state.copyWith(
           status: AuthStatus.registrationPendingPin, user: persistedUser));
     } on StateError catch (e) {
@@ -121,6 +126,8 @@ class AuthCubit extends Cubit<AuthState> {
           errorMessage: 'Something went wrong. Please try again.'));
     }
   }
+
+  // ── PIN Setup (after registration) ───────────────────────────────────────────
 
   Future<void> setupPin(String pin) async {
     if (state.status == AuthStatus.loading) return;
@@ -148,7 +155,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     try {
       await _authSecurityService.savePin(userId: userId, pin: pin);
-      await _authSessionService.saveSession(userId);
+      await _authSessionService.markLoggedIn(userId);
       emit(state.copyWith(status: AuthStatus.authenticated, user: currentUser));
     } catch (_) {
       emit(state.copyWith(
@@ -157,6 +164,32 @@ class AuthCubit extends Cubit<AuthState> {
           errorMessage: 'Unable to set up PIN. Please try again.'));
     }
   }
+
+  // ── Role Selection (first-time or after logout re-select) ────────────────────
+
+  /// Called when the user taps a role card on the Role Selection page.
+  /// Persists the role and emits [AuthStatus.loginRequired] so Splash/listener
+  /// navigates to the correct Login page.
+  Future<void> selectRole(UserRole role) async {
+    if (state.status == AuthStatus.loading) return;
+
+    emit(state.copyWith(status: AuthStatus.loading));
+
+    try {
+      await _authSessionService.saveRole(role);
+      emit(AuthState(
+        status: AuthStatus.loginRequired,
+        selectedRole: role,
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: 'Unable to save role selection. Please try again.',
+      ));
+    }
+  }
+
+  // ── Password Login ────────────────────────────────────────────────────────────
 
   Future<void> loginWithPassword({
     required UserRole role,
@@ -201,7 +234,10 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
 
-      await _authSessionService.saveSession(user.id!);
+      // Persist both role and login flag
+      await _authSessionService.saveRole(role);
+      await _authSessionService.markLoggedIn(user.id!);
+
       emit(state.copyWith(status: AuthStatus.authenticated, user: user));
     } catch (_) {
       emit(state.copyWith(
@@ -209,6 +245,8 @@ class AuthCubit extends Cubit<AuthState> {
           errorMessage: 'Unable to sign in. Please try again.'));
     }
   }
+
+  // ── PIN Login (email + PIN — legacy login page mode) ────────────────────────
 
   Future<void> loginWithPin({
     required UserRole role,
@@ -252,7 +290,10 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
 
-      await _authSessionService.saveSession(user.id!);
+      // Persist both role and login flag
+      await _authSessionService.saveRole(role);
+      await _authSessionService.markLoggedIn(user.id!);
+
       emit(state.copyWith(status: AuthStatus.authenticated, user: user));
     } catch (_) {
       emit(state.copyWith(
@@ -261,31 +302,150 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  // ── PIN Unlock (PIN Lock screen — no email needed) ────────────────────────────
+
+  /// Called from the PIN Lock page. Loads the user from the stored session
+  /// and verifies only the PIN — no email input required.
+  Future<void> unlockWithPin(String pin) async {
+    if (state.status == AuthStatus.loading) return;
+
+    emit(state.copyWith(status: AuthStatus.loading));
+
+    if (pin.length != 4 || int.tryParse(pin) == null) {
+      emit(state.copyWith(
+        status: AuthStatus.pinLockRequired,
+        user: state.user,
+        selectedRole: state.selectedRole,
+        errorMessage: 'PIN must be exactly 4 digits.',
+      ));
+      return;
+    }
+
+    try {
+      final userId = await _authSessionService.getUserId();
+      if (userId == null) {
+        // Session is gone — send back to login
+        final role = await _authSessionService.getRole();
+        emit(AuthState(
+          status: AuthStatus.loginRequired,
+          selectedRole: role,
+          errorMessage: 'Session expired. Please sign in again.',
+        ));
+        return;
+      }
+
+      final user = await _authRepository.getUserById(userId);
+      if (user == null || !user.isActive) {
+        await _authSessionService.clearAll();
+        emit(const AuthState(
+          status: AuthStatus.roleSelectionRequired,
+          errorMessage: 'Account not found. Please sign in again.',
+        ));
+        return;
+      }
+
+      final valid =
+          await _authSecurityService.verifyPin(userId: userId, pin: pin);
+      if (!valid) {
+        emit(state.copyWith(
+          status: AuthStatus.pinLockRequired,
+          user: user,
+          selectedRole: user.role,
+          errorMessage: 'Incorrect PIN. Please try again.',
+        ));
+        return;
+      }
+
+      emit(state.copyWith(status: AuthStatus.authenticated, user: user));
+    } catch (_) {
+      emit(state.copyWith(
+          status: AuthStatus.pinLockRequired,
+          user: state.user,
+          selectedRole: state.selectedRole,
+          errorMessage: 'Unable to verify PIN. Please try again.'));
+    }
+  }
+
+  // ── Forgot PIN — clear login flag, return to Login ───────────────────────────
+
+  /// Clears the active login session so the next navigation goes to Login.
+  /// Keeps the role so the correct Login page is shown.
+  Future<void> forgotPin() async {
+    if (state.status == AuthStatus.loading) return;
+
+    emit(state.copyWith(status: AuthStatus.loading));
+
+    try {
+      await _authSessionService.clearLoginSession();
+      final role = state.selectedRole ?? await _authSessionService.getRole();
+      emit(AuthState(
+        status: AuthStatus.loginRequired,
+        selectedRole: role,
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: 'Unable to proceed. Please try again.',
+      ));
+    }
+  }
+
+  // ── Startup Auth Check ────────────────────────────────────────────────────────
+
   Future<void> checkAuthStatus() async {
     if (state.status == AuthStatus.loading) return;
 
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
+      // 1. Is a role stored?
+      final storedRole = await _authSessionService.getRole();
+      if (storedRole == null) {
+        emit(const AuthState(status: AuthStatus.roleSelectionRequired));
+        return;
+      }
+
+      // 2. Is the user actively logged in?
+      final loggedIn = await _authSessionService.isLoggedIn();
+      if (!loggedIn) {
+        emit(AuthState(
+          status: AuthStatus.loginRequired,
+          selectedRole: storedRole,
+        ));
+        return;
+      }
+
+      // 3. Load the user entity for the PIN Lock screen.
       final userId = await _authSessionService.getUserId();
       if (userId == null) {
-        emit(state.copyWith(status: AuthStatus.unauthenticated));
+        // Stale login flag — treat as logged out
+        await _authSessionService.clearLoginSession();
+        emit(AuthState(
+          status: AuthStatus.loginRequired,
+          selectedRole: storedRole,
+        ));
         return;
       }
 
       final user = await _authRepository.getUserById(userId);
       if (user == null || !user.isActive) {
-        await _authSessionService.clearSession();
-        emit(state.copyWith(status: AuthStatus.unauthenticated));
+        await _authSessionService.clearAll();
+        emit(const AuthState(status: AuthStatus.roleSelectionRequired));
         return;
       }
 
-      emit(state.copyWith(status: AuthStatus.authenticated, user: user));
+      emit(AuthState(
+        status: AuthStatus.pinLockRequired,
+        user: user,
+        selectedRole: storedRole,
+      ));
     } catch (_) {
-      // In case of error (e.g. database failure), remain unauthenticated
-      emit(state.copyWith(status: AuthStatus.unauthenticated));
+      // On any failure, fall back gracefully without crashing
+      emit(const AuthState(status: AuthStatus.roleSelectionRequired));
     }
   }
+
+  // ── Logout ────────────────────────────────────────────────────────────────────
 
   Future<void> logout() async {
     if (state.status == AuthStatus.loading) return;
@@ -293,8 +453,8 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
-      await _authSessionService.clearSession();
-      emit(const AuthState(status: AuthStatus.unauthenticated));
+      await _authSessionService.clearAll();
+      emit(const AuthState(status: AuthStatus.roleSelectionRequired));
     } catch (_) {
       emit(state.copyWith(
           status: AuthStatus.failure,

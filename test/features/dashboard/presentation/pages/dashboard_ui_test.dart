@@ -57,6 +57,15 @@ class FakeAuthCubit extends Cubit<AuthState> implements AuthCubit {
 
   @override
   Future<void> setupPin(String pin) async {}
+
+  @override
+  Future<void> selectRole(UserRole role) async {}
+
+  @override
+  Future<void> unlockWithPin(String pin) async {}
+
+  @override
+  Future<void> forgotPin() async {}
 }
 
 class FakeHostelCubit extends Cubit<HostelState> implements HostelCubit {

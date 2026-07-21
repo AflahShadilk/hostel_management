@@ -127,11 +127,10 @@ class _LoginPageState extends State<LoginPage> {
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.goNamed(AppRoutes.roleSelectionName);
-                  }
+                  // Always go back to role selection so the user can
+                  // switch roles. The stored role will be cleared when
+                  // they select a new one.
+                  context.goNamed(AppRoutes.roleSelectionName);
                 },
               ),
             ),

@@ -14,6 +14,7 @@ import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../features/auth/presentation/pages/owner_sign_up_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/pin_setup_page.dart';
+import '../../features/auth/presentation/pages/pin_lock_page.dart';
 import '../../features/hostel/presentation/pages/hostel_setup_page.dart';
 import '../../features/room/domain/entities/room_entity.dart';
 import '../../features/room/presentation/cubit/room_cubit.dart';
@@ -109,6 +110,11 @@ abstract final class AppRouter {
         name: AppRoutes.pinSetupName,
         path: AppRoutes.pinSetupPath,
         builder: (context, state) => const PinSetupPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.pinLockName,
+        path: AppRoutes.pinLockPath,
+        builder: (context, state) => const PinLockPage(),
       ),
       GoRoute(
         name: AppRoutes.hostelSetupName,

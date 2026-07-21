@@ -48,6 +48,8 @@ dependencies:
   # Native splash — provides both the runtime API (FlutterNativeSplash.preserve/remove)
   # imported in main.dart, AND the code-gen tool (dart run flutter_native_splash:create).
   flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.4
+  lottie: ^3.3.1
 
 
 dev_dependencies:
@@ -75,6 +77,9 @@ flutter:
 
   assets:
     - assets/splash/
+    - assets/lauch/
+    - assets/lottie/
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -132,3 +137,16 @@ flutter_native_splash:
 
   # Do not force full-screen mode
   fullscreen: false
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/lauch/hostel_manager-removebg-preview.png"
+
+  remove_alpha_ios: true
+
+  adaptive_icon_foreground: "assets/lauch/hostel_manager-removebg-preview.png"
+  adaptive_icon_background: "#F8FAFC"
+
+  min_sdk_android: 21

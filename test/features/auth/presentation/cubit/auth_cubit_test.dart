@@ -89,7 +89,11 @@ class FakeAuthSecurityService implements AuthSecurityService {
 class FakeAuthSessionService implements AuthSessionService {
   int? savedUserId;
   int? userIdToReturn;
+  UserRole? savedRole;
+  UserRole? roleToReturn;
+  bool isLoggedInValue = false;
   bool clearSessionCalled = false;
+  bool clearAllCalled = false;
 
   @override
   Future<void> clearSession() async {
@@ -106,6 +110,41 @@ class FakeAuthSessionService implements AuthSessionService {
   @override
   Future<void> saveSession(int userId) async {
     savedUserId = userId;
+  }
+
+  @override
+  Future<void> clearAll() async {
+    clearAllCalled = true;
+    savedUserId = null;
+    savedRole = null;
+    isLoggedInValue = false;
+  }
+
+  @override
+  Future<void> clearLoginSession() async {
+    isLoggedInValue = false;
+  }
+
+  @override
+  Future<void> clearRole() async {
+    savedRole = null;
+  }
+
+  @override
+  Future<UserRole?> getRole() async => roleToReturn;
+
+  @override
+  Future<bool> isLoggedIn() async => isLoggedInValue;
+
+  @override
+  Future<void> markLoggedIn(int userId) async {
+    savedUserId = userId;
+    isLoggedInValue = true;
+  }
+
+  @override
+  Future<void> saveRole(UserRole role) async {
+    savedRole = role;
   }
 }
 
@@ -312,21 +351,21 @@ void main() {
   });
 
   group('AuthCubit Session Restoration', () {
-    test('Missing session emits unauthenticated', () async {
-      authSessionService.userIdToReturn = null;
+    test('Missing role emits roleSelectionRequired', () async {
+      authSessionService.roleToReturn = null;
 
       await authCubit.checkAuthStatus();
 
-      expect(authCubit.state.status, AuthStatus.unauthenticated);
+      expect(authCubit.state.status, AuthStatus.roleSelectionRequired);
     });
   });
 
   group('AuthCubit Logout', () {
-    test('Logout clears session and emits unauthenticated', () async {
+    test('Logout clears session and emits roleSelectionRequired', () async {
       await authCubit.logout();
 
-      expect(authCubit.state.status, AuthStatus.unauthenticated);
-      expect(authSessionService.clearSessionCalled, isTrue);
+      expect(authCubit.state.status, AuthStatus.roleSelectionRequired);
+      expect(authSessionService.clearAllCalled, isTrue);
     });
   });
 }
