@@ -11,6 +11,7 @@ enum TenantOperationStatus {
   deleting,
   checkingOut,
   transferring,
+  success,
   failure,
 }
 

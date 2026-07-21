@@ -1,14 +1,15 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/app_spacing.dart';
-import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../cubit/stay/stay_cubit.dart';
-import '../../cubit/stay/stay_state.dart';
-import '../../cubit/ui/deleting_cubit.dart';
+import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
+import '../../../../tenant/presentation/cubit/tenant_state.dart';
 
 class StayDetailsPage extends StatefulWidget {
   final StayEntity? stay;
@@ -19,37 +20,63 @@ class StayDetailsPage extends StatefulWidget {
 }
 
 class _StayDetailsPageState extends State<StayDetailsPage> {
+  bool _checkingOut = false;
 
   String _date(DateTime? value) {
-    if (value == null) return 'Not set';
+    if (value == null) return '—';
     return '${value.day.toString().padLeft(2, '0')}/'
         '${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 
-  Future<void> _confirmDelete(BuildContext context, StayEntity stay) async {
-    final deletingCubit = context.read<DeletingCubit>();
-    final mainCubit = context.read<StayCubit>();
+  Future<void> _confirmCheckout(
+      BuildContext context, StayEntity stay) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Stay?'),
-        content: const Text('This action cannot be undone.'),
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Confirm Checkout'),
+        content: Text(
+          'Checking out Tenant #${stay.tenantId} from Room ${stay.roomId} / Bed ${stay.bedId}.\n\n'
+          'This will:\n'
+          '• Mark the stay as Checked Out\n'
+          '• Release the bed\n'
+          '• Update room occupancy\n\n'
+          'Financial history will be preserved.',
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text('Cancel'),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Checkout'),
           ),
         ],
       ),
     );
-    if (confirmed == true && stay.id != null) {
-      deletingCubit.start();
-      mainCubit.deleteStay(stay.id!);
+
+    if (confirmed == true && mounted) {
+      setState(() => _checkingOut = true);
+      try {
+        await context
+            .read<TenantCubit>()
+            .checkOutTenant(stay.tenantId, bedId: stay.bedId);
+        if (mounted) {
+          // Reload stay list and pop back
+          context.read<StayCubit>().loadAllStays();
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _checkingOut = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Checkout failed: $e'),
+                backgroundColor: AppColors.error),
+          );
+        }
+      }
     }
   }
 
@@ -57,76 +84,133 @@ class _StayDetailsPageState extends State<StayDetailsPage> {
   Widget build(BuildContext context) {
     final stay = widget.stay;
     if (stay == null) {
-      return const Scaffold(body: Center(child: Text('Stay data not found.')));
+      return const Scaffold(
+          body: Center(child: Text('Stay record not found.')));
     }
-    return BlocProvider<DeletingCubit>(
-      create: (_) => DeletingCubit(),
-      child: Builder(builder: (context) {
-        return BlocListener<StayCubit, StayState>(
-          listener: (context, state) {
-            if (state is StayError) {
-              context.read<DeletingCubit>().stop();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
-            } else if (context.read<DeletingCubit>().state &&
-                (state is StayLoaded || state is StayEmpty)) {
-              context.pop(true);
-            }
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Stay Details'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Edit',
-                  onPressed: () => context.pushNamed(
-                    AppRoutes.editStayName,
-                    pathParameters: {'stayId': stay.id!.toString()},
-                    extra: stay,
-                  ),
+
+    final isActive = stay.status == StayStatus.active;
+
+    return BlocListener<TenantCubit, TenantState>(
+      listenWhen: (prev, curr) => prev.status != curr.status,
+      listener: (context, state) {
+        if (state.status == TenantOperationStatus.failure &&
+            state.errorMessage != null &&
+            _checkingOut) {
+          setState(() => _checkingOut = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(state.errorMessage!),
+                backgroundColor: AppColors.error),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Stay Details'),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            // Status banner
+            _buildStatusBanner(context, stay.status),
+            const SizedBox(height: AppSpacing.md),
+            // Details card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Stay Information',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    _DetailRow('Tenant', 'Tenant #${stay.tenantId}'),
+                    _DetailRow('Room', 'Room #${stay.roomId}'),
+                    _DetailRow('Bed', 'Bed #${stay.bedId}'),
+                    _DetailRow('Check-in Date', _date(stay.checkInDate)),
+                    if (stay.checkOutDate != null)
+                      _DetailRow('Check-out Date', _date(stay.checkOutDate)),
+                    if (stay.expectedCheckoutDate != null)
+                      _DetailRow(
+                          'Expected Checkout', _date(stay.expectedCheckoutDate)),
+                    _DetailRow('Monthly Rent',
+                        '₹${stay.monthlyRentSnapshot.toStringAsFixed(2)}'),
+                    _DetailRow('Daily Rate',
+                        '₹${stay.dailyRate.toStringAsFixed(2)}'),
+                  ],
                 ),
-                BlocBuilder<DeletingCubit, bool>(
-                  builder: (context, deleting) => IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    tooltip: 'Delete',
-                    onPressed: deleting
-                        ? null
-                        : () => _confirmDelete(context, stay),
-                  ),
-                ),
-              ],
+              ),
             ),
-            body: ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Status: ${stay.status}', style: Theme.of(context).textTheme.titleMedium),
-                        const Divider(),
-                        _DetailRow('Stay ID', '${stay.id ?? 'Not assigned'}'),
-                        _DetailRow('Tenant ID', '${stay.tenantId}'),
-                        _DetailRow('Room ID', '${stay.roomId}'),
-                        _DetailRow('Bed ID', '${stay.bedId}'),
-                        _DetailRow('Check-in date', _date(stay.checkInDate)),
-                        _DetailRow('Check-out date', _date(stay.checkOutDate)),
-                        _DetailRow('Expected checkout date', _date(stay.expectedCheckoutDate)),
-                        _DetailRow('Monthly rent snapshot', stay.monthlyRentSnapshot.toStringAsFixed(2)),
-                        _DetailRow('Daily rate', stay.dailyRate.toStringAsFixed(2)),
-                        _DetailRow('Created at', _date(stay.createdAt)),
-                        _DetailRow('Updated at', _date(stay.updatedAt)),
-                      ],
-                    ),
-                  ),
+            // Checkout button — only for active stays
+            if (isActive) ...[
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton.icon(
+                onPressed: _checkingOut
+                    ? null
+                    : () => _confirmCheckout(context, stay),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                  minimumSize: const Size.fromHeight(48),
                 ),
-              ],
-            ),
+                icon: _checkingOut
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.logout_rounded),
+                label: Text(_checkingOut ? 'Processing…' : 'Checkout Tenant'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner(BuildContext context, String status) {
+    Color color;
+    IconData icon;
+    String label;
+    switch (status) {
+      case StayStatus.active:
+        color = AppColors.success;
+        icon = Icons.check_circle_outline;
+        label = 'Active Stay';
+        break;
+      case StayStatus.checkedOut:
+        color = AppColors.textSecondary;
+        icon = Icons.logout_rounded;
+        label = 'Checked Out';
+        break;
+      default:
+        color = AppColors.warning;
+        icon = Icons.info_outline;
+        label = status;
+    }
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-        );
-      }),
+        ],
+      ),
     );
   }
 }
@@ -138,13 +222,17 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 170, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
-        Expanded(child: Text(value)),
-      ],
-    ),
-  );
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+                width: 160,
+                child: Text(label,
+                    style:
+                        const TextStyle(fontWeight: FontWeight.w600))),
+            Expanded(child: Text(value)),
+          ],
+        ),
+      );
 }

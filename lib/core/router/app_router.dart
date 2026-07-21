@@ -65,7 +65,7 @@ import '../../features/rent/domain/entities/checkout_settlement_entity.dart';
 import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
 import '../../features/rent/presentation/pages/checkout/add_edit_checkout_page.dart';
 import '../../features/rent/presentation/pages/checkout/checkout_details_page.dart';
-import '../../features/rent/presentation/pages/checkout/checkout_list_page.dart';
+import '../../features/rent/presentation/pages/checkout/checkout_flow_page.dart';
 import '../../features/expense/domain/entities/expense_entity.dart';
 import '../../features/expense/presentation/cubit/expense/expense_cubit.dart';
 import '../../features/expense/presentation/cubit/expense_category/expense_category_cubit.dart';
@@ -299,7 +299,7 @@ abstract final class AppRouter {
               GoRoute(
                 name: AppRoutes.checkoutManagementName,
                 path: AppRoutes.checkoutManagementPath,
-                builder: (context, state) => const CheckoutListPage(),
+                builder: (context, state) => const CheckoutFlowPage(),
                 routes: [
                   GoRoute(
                       name: AppRoutes.addCheckoutName,

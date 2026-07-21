@@ -206,7 +206,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             children: [
                               Icon(Icons.check_circle_outline_rounded, color: Colors.green),
                               SizedBox(width: 16),
-                              Text('No pending actions. You are all caught up!'),
+                              Expanded(
+                                child: Text('No pending actions. You are all caught up!'),
+                              ),
                             ],
                           ),
                         )
