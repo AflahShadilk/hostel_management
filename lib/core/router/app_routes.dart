@@ -66,6 +66,8 @@ abstract final class AppRoutes {
 
   static const String rentRecordManagementName = 'rentRecordManagement';
   static const String rentRecordManagementPath = '/rent-records';
+  static const String rentCollectionName = 'rentCollection';
+  static const String rentCollectionPath = '/rent-collection';
   static const String addRentRecordName = 'addRentRecord';
   static const String addRentRecordPath = 'add';
   static const String rentRecordDetailsName = 'rentRecordDetails';

@@ -55,6 +55,14 @@ class HomePage extends StatelessWidget {
                   onPressed: () =>
                       context.goNamed(AppRoutes.roomManagementName),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                // Rent Collection Center
+                FilledButton.icon(
+                  icon: const Icon(Icons.payments_outlined),
+                  label: const Text('Rent Collection Center'),
+                  onPressed: () =>
+                      context.goNamed(AppRoutes.rentCollectionName),
+                ),
               ],
             ),
           ),

@@ -172,7 +172,8 @@ class _DashboardPageState extends State<DashboardPage> {
                               DashboardMetricCard(
                                 icon: Icons.payments_rounded,
                                 label: 'Pending Rent',
-                                value: '\$${summary.pendingRent.toStringAsFixed(2)}',
+                                // ignore: unnecessary_string_escapes
+                                value: '\₹${summary.pendingRent.toStringAsFixed(2)}',
                                 iconColor: theme.colorScheme.error,
                               ),
                             ],
@@ -247,7 +248,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 _buildActionRow(
                                   context,
                                   Icons.account_balance_wallet_rounded,
-                                  '\$${summary.pendingRent.toStringAsFixed(2)} in pending rent',
+                                  // ignore: unnecessary_string_escapes
+                                  '\₹${summary.pendingRent.toStringAsFixed(2)} in pending rent',
                                   'Follow up on outstanding payments.',
                                   theme.colorScheme.error,
                                 ),

@@ -43,6 +43,9 @@ import '../../features/rent/presentation/cubit/receipt/receipt_cubit.dart';
 import '../../features/rent/presentation/cubit/deposit/deposit_cubit.dart';
 import '../../features/rent/presentation/cubit/damage_charge/damage_charge_cubit.dart';
 import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
+import '../../features/rent/domain/repositories/rent_collection_repository.dart';
+import '../../features/rent/data/repositories/rent_collection_repository_impl.dart';
+import '../../features/rent/presentation/cubit/rent_collection/rent_collection_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/submitting_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/deleting_cubit.dart';
 import '../../features/rent/presentation/cubit/ui/selected_date_cubit.dart';
@@ -192,6 +195,16 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<StayCubit>(() => StayCubit(getIt<RentRepository>()));
   getIt.registerFactory<RentRecordCubit>(
     () => RentRecordCubit(getIt<RentRepository>()),
+  );
+  
+  getIt.registerLazySingleton<RentCollectionRepository>(
+    () => RentCollectionRepositoryImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerFactory<RentCollectionCubit>(
+    () => RentCollectionCubit(
+      getIt<RentCollectionRepository>(),
+      getIt<RentRepository>(),
+    ),
   );
   getIt.registerFactory<PaymentCubit>(
       () => PaymentCubit(getIt<RentRepository>()));

@@ -36,7 +36,9 @@ import '../../features/rent/presentation/pages/stay/stay_details_page.dart';
 import '../../features/rent/presentation/pages/stay/stay_list_page.dart';
 import '../../features/rent/domain/entities/rent_record_entity.dart';
 import '../../features/rent/presentation/cubit/rent_record/rent_record_cubit.dart';
+import '../../features/rent/presentation/cubit/rent_collection/rent_collection_cubit.dart';
 import '../../features/rent/presentation/pages/rent_record/add_edit_rent_record_page.dart';
+import '../../features/rent/presentation/pages/rent_collection/rent_collection_page.dart';
 import '../../features/rent/presentation/pages/rent_record/rent_record_details_page.dart';
 import '../../features/rent/presentation/pages/rent_record/rent_record_list_page.dart';
 import '../../features/rent/domain/entities/payment_entity.dart';
@@ -432,6 +434,14 @@ abstract final class AppRouter {
           // Branch 4: Rent Record Management
           StatefulShellBranch(
             routes: [
+              GoRoute(
+                name: AppRoutes.rentCollectionName,
+                path: AppRoutes.rentCollectionPath,
+                builder: (context, state) => BlocProvider(
+                  create: (_) => getIt<RentCollectionCubit>(),
+                  child: const RentCollectionPage(),
+                ),
+              ),
               GoRoute(
                 name: AppRoutes.rentRecordManagementName,
                 path: AppRoutes.rentRecordManagementPath,
