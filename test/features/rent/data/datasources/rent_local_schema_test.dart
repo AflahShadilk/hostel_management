@@ -88,7 +88,6 @@ void main() {
         RentLocalSchema.tableStays,
         RentLocalSchema.tableRentRecords,
         RentLocalSchema.tablePayments,
-        RentLocalSchema.tableReceipts,
         RentLocalSchema.tableDeposits,
         RentLocalSchema.tableDamageCharges,
         RentLocalSchema.tableCheckoutSettlements,
@@ -112,9 +111,8 @@ void main() {
     });
     final rentRecordId = await database.insert(RentLocalSchema.tableRentRecords, {
       'stay_id': stayId,
-      'rent_period': '2026-07',
-      'billing_month': 7,
-      'billing_year': 2026,
+      'start_date': timestamp,
+      'end_date': '2026-08-09T00:00:00.000',
       'generated_at': timestamp,
       'due_date': timestamp,
       'amount_due': 1000,
@@ -122,37 +120,19 @@ void main() {
       'created_at': timestamp,
       'updated_at': timestamp,
     });
-    final paymentId = await database.insert(RentLocalSchema.tablePayments, {
+    await database.insert(RentLocalSchema.tablePayments, {
       'rent_record_id': rentRecordId,
+      'stay_id': stayId,
+      'tenant_id': 1,
       'amount': 1000,
       'payment_date': timestamp,
       'payment_method': 'cash',
+      'receipt_number': 'RCT-0001',
       'status': 'completed',
       'created_at': timestamp,
       'updated_at': timestamp,
     });
-    await database.insert(RentLocalSchema.tableReceipts, {
-      'payment_id': paymentId,
-      'receipt_number': 'RCT-0001',
-      'issued_at': timestamp,
-      'payment_amount_snapshot': 1000,
-      'payment_method_snapshot': 'cash',
-      'created_at': timestamp,
-      'updated_at': timestamp,
-    });
 
-    await expectLater(
-      database.insert(RentLocalSchema.tableReceipts, {
-        'payment_id': paymentId,
-        'receipt_number': 'RCT-0002',
-        'issued_at': timestamp,
-        'payment_amount_snapshot': 1000,
-        'payment_method_snapshot': 'cash',
-        'created_at': timestamp,
-        'updated_at': timestamp,
-      }),
-      throwsA(isA<DatabaseException>()),
-    );
     await expectLater(
       database.insert(RentLocalSchema.tablePayments, {
         'rent_record_id': 999,
@@ -206,29 +186,18 @@ void main() {
       'created_at': timestamp,
       'updated_at': timestamp,
     });
-    await database.insert('receipts', {
-      'id': 1,
-      'payment_id': 1,
-      'receipt_number': 'RCT-0001',
-      'issued_at': timestamp,
-      'created_at': timestamp,
-      'updated_at': timestamp,
-    });
 
     await RentLocalSchema.migrateFromVersion4(database);
 
     final stay = (await database.query('stays')).single;
     final rentRecord = (await database.query('rent_records')).single;
     final payment = (await database.query('payments')).single;
-    final receipt = (await database.query('receipts')).single;
     expect(stay['room_id'], isNull);
     expect(stay['bed_id'], isNull);
-    expect(rentRecord['billing_month'], 7);
-    expect(rentRecord['billing_year'], 2026);
-    expect(rentRecord['generated_at'], timestamp);
+    expect(rentRecord['start_date'], isNotNull);
+    expect(rentRecord['end_date'], isNotNull);
+    expect(rentRecord['generated_at'], isNotNull);
     expect(payment['payment_method'], 'unknown');
-    expect(receipt['payment_amount_snapshot'], 1000);
-    expect(receipt['payment_method_snapshot'], 'unknown');
 
     final foreignKey =
         await database.rawQuery('PRAGMA foreign_key_list(rent_records)');

@@ -189,13 +189,9 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
   }
 
   @override
-  Future<int> generateMonthlyRent({
-    required int billingMonth,
-    required int billingYear,
-    required DateTime dueDate,
-  }) async {
+  Future<int> generateNextBillingPeriods() async {
     final database = await _appDatabase.database;
-    return _perform('generate monthly rent', () async {
+    return _perform('generate next billing periods', () async {
       return await database.transaction((txn) async {
         // 1. Load all active stays.
         final stayRows = await txn.query(
@@ -204,12 +200,12 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           whereArgs: [StayStatus.active],
         );
 
-        final rentPeriod =
-            '$billingYear-${billingMonth.toString().padLeft(2, '0')}';
-        final now = DateTime.now().toIso8601String();
+        final now = DateTime.now();
+        final nowStr = now.toIso8601String();
         int created = 0;
 
         for (final stay in stayRows) {
+          final stayId = stay['id'] as int;
           final tenantId = stay['tenant_id'] as int;
           final monthlyRent = (stay['monthly_rent_snapshot'] as num?)?.toDouble() ?? 0.0;
 
@@ -228,31 +224,54 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           // 3. Verify monthly rent snapshot > 0.
           if (monthlyRent <= 0) continue;
 
-          final stayId = stay['id'] as int;
+          // 4. Find the most recent rent record for this stay.
+          final lastRows = await txn.query(
+            RentLocalSchema.tableRentRecords,
+            columns: ['end_date'],
+            where: 'stay_id = ?',
+            whereArgs: [stayId],
+            orderBy: 'end_date DESC',
+            limit: 1,
+          );
+          if (lastRows.isEmpty) continue;
 
-          // 4. Duplicate prevention: one record per stay per billing cycle.
+          final lastEndDate = DateTime.parse(lastRows.first['end_date'] as String);
+
+          // 5. Only generate if the last billing period has ended (or is ending today).
+          //    Do not generate future records more than 3 days early.
+          final generationThreshold = lastEndDate.subtract(const Duration(days: 3));
+          if (now.isBefore(generationThreshold)) continue;
+
+          // 6. New period: starts the day after the last period ended.
+          final newStartDate = lastEndDate.add(const Duration(days: 1));
+          final newEndDate = DateTime(
+            newStartDate.year,
+            newStartDate.month + 1,
+            newStartDate.day,
+          ).subtract(const Duration(days: 1));
+
+          // 7. Duplicate prevention: no two records with the same (stay_id, start_date).
           final existingRows = await txn.query(
             RentLocalSchema.tableRentRecords,
             columns: ['id'],
-            where: 'stay_id = ? AND billing_month = ? AND billing_year = ?',
-            whereArgs: [stayId, billingMonth, billingYear],
+            where: 'stay_id = ? AND start_date = ?',
+            whereArgs: [stayId, newStartDate.toIso8601String()],
             limit: 1,
           );
           if (existingRows.isNotEmpty) continue;
 
-          // 5. Insert the rent record.
+          // 8. Insert the new rent record.
           await txn.insert(RentLocalSchema.tableRentRecords, {
             'stay_id': stayId,
-            'billing_month': billingMonth,
-            'billing_year': billingYear,
-            'rent_period': rentPeriod,
-            'due_date': dueDate.toIso8601String(),
-            'generated_at': now,
+            'start_date': newStartDate.toIso8601String(),
+            'end_date': newEndDate.toIso8601String(),
+            'due_date': newStartDate.toIso8601String(),
+            'generated_at': nowStr,
             'amount_due': monthlyRent,
             'amount_paid': 0.0,
             'status': RentStatus.pending,
-            'created_at': now,
-            'updated_at': now,
+            'created_at': nowStr,
+            'updated_at': nowStr,
           });
           created++;
         }
@@ -355,8 +374,10 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         final stayId = rentRecord['stay_id'] as int;
         final amountDue = (rentRecord['amount_due'] as num).toDouble();
         final amountPaid = (rentRecord['amount_paid'] as num).toDouble();
+        final dueDate = DateTime.parse(rentRecord['due_date'] as String);
         const moneyPrecision = 0.000001;
         final outstanding = amountDue - amountPaid;
+        
         if (outstanding < -moneyPrecision) {
           throw StateError('Rent record has an invalid negative outstanding balance.');
         }
@@ -375,6 +396,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           throw StateError('Stay not found.');
         }
         final stay = stayRows.first;
+        final tenantId = stay['tenant_id'] as int;
+        
         if (stay['status'] != StayStatus.active) {
           throw StateError('Stay is not active.');
         }
@@ -383,7 +406,7 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           'tenants',
           columns: ['status'],
           where: 'id = ?',
-          whereArgs: [stay['tenant_id']],
+          whereArgs: [tenantId],
           limit: 1,
         );
         if (tenantRows.isEmpty ||
@@ -391,7 +414,16 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           throw StateError('Tenant is not active.');
         }
 
+        final nowStr = DateTime.now().toIso8601String();
+        final dateStr = nowStr.substring(0, 10).replaceAll('-', '');
+        final randomPart = DateTime.now().millisecondsSinceEpoch.toString().substring(8);
+        final receiptNumber = 'RCP-$dateStr-$randomPart';
+
         final map = payment.toMap();
+        map['stay_id'] = stayId;
+        map['tenant_id'] = tenantId;
+        map['receipt_number'] = receiptNumber;
+
         final duplicatePayments = await txn.query(
           RentLocalSchema.tablePayments,
           columns: ['id'],
@@ -413,6 +445,7 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         if (duplicatePayments.isNotEmpty) {
           throw StateError('This payment has already been allocated.');
         }
+        
         final paymentId = await txn.insert(RentLocalSchema.tablePayments, map);
 
         final rawUpdatedAmountPaid = amountPaid + payment.amount;
@@ -421,11 +454,16 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
                 ? amountDue
                 : rawUpdatedAmountPaid;
         final remaining = amountDue - updatedAmountPaid;
-        final status = remaining <= moneyPrecision
-            ? RentStatus.paid
-            : updatedAmountPaid == 0
-                ? RentStatus.pending
-                : RentStatus.partial;
+        
+        String status;
+        if (remaining <= moneyPrecision) {
+          status = RentStatus.paid;
+        } else if (updatedAmountPaid == 0) {
+          status = DateTime.now().isAfter(dueDate) ? RentStatus.overdue : RentStatus.pending;
+        } else {
+          status = DateTime.now().isAfter(dueDate) && remaining > moneyPrecision ? RentStatus.overdue : RentStatus.partial;
+        }
+
         final updatedRows = await txn.update(
           RentLocalSchema.tableRentRecords,
           {

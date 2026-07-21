@@ -92,9 +92,9 @@ void main() {
     ''');
     await db.execute('''
       INSERT OR IGNORE INTO beds
-        (id, room_id, bed_number, status, created_at, updated_at)
+        (id, room_id, bed_number, monthly_rent, status, created_at, updated_at)
       VALUES
-        ($bedId, 1, 'B$bedId', 'vacant',
+        ($bedId, 1, 'B$bedId', 1000, 'vacant',
          '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
     ''');
   }
@@ -107,6 +107,9 @@ void main() {
     repo = TenantRepositoryImpl(appDatabase);
     final db = await appDatabase.database;
     // Clear tenants table before every test; preserve schema rows.
+    await db.delete('deposits');
+    await db.delete('rent_records');
+    await db.delete('stays');
     await db.delete('tenants');
     // Seed two beds for tests that need them.
     await seedBed(1);

@@ -21,7 +21,7 @@ void main() {
     final testModel = BedModel(
       id: 1,
       roomId: 101,
-      bedNumber: 'B1',
+      bedNumber: 'B1', monthlyRent: 5000,
       status: BedStatus.vacant,
       createdAt: now,
       updatedAt: now,
@@ -33,6 +33,7 @@ void main() {
       expect(map['id'], 1);
       expect(map['room_id'], 101);
       expect(map['bed_number'], 'B1');
+      expect(map['monthly_rent'], 5000.0);
       expect(map['status'], 'vacant');
       expect(map['created_at'], now.toIso8601String());
       expect(map['updated_at'], now.toIso8601String());
@@ -42,7 +43,7 @@ void main() {
       final modelWithoutId = BedModel(
         id: null,
         roomId: 101,
-        bedNumber: 'B1',
+        bedNumber: 'B1', monthlyRent: 5000,
         status: BedStatus.vacant,
         createdAt: now,
         updatedAt: now,
@@ -57,6 +58,7 @@ void main() {
         'id': 1,
         'room_id': 101,
         'bed_number': 'B1',
+        'monthly_rent': 5000.0,
         'status': 'vacant',
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),

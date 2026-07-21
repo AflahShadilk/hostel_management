@@ -37,6 +37,7 @@ class RoomManagementRepositoryImpl implements RoomManagementRepository {
         final bedMap = {
           'room_id': roomId,
           'bed_number': 'B$i',
+          'monthly_rent': roomModel.monthlyRent,
           'status': BedStatus.vacant.databaseValue,
           'created_at': now.toIso8601String(),
           'updated_at': now.toIso8601String(),

@@ -43,4 +43,28 @@ class TenantFormCubit extends Cubit<TenantFormState> {
   void enableValidation() {
     emit(state.copyWith(showValidationErrors: true));
   }
+
+  void updateIdType(String? idType) {
+    emit(state.copyWith(selectedIdType: idType));
+  }
+
+  void updateDocument(String path, bool isImage) {
+    emit(state.copyWith(
+      idDocumentPath: path,
+      isDocumentImage: isImage,
+    ));
+  }
+
+  void clearDocument() {
+    emit(TenantFormState(
+      checkInDate: state.checkInDate,
+      checkOutDate: state.checkOutDate,
+      status: state.status,
+      selectedBed: state.selectedBed,
+      selectedIdType: state.selectedIdType,
+      idDocumentPath: null,
+      isDocumentImage: false,
+      showValidationErrors: state.showValidationErrors,
+    ));
+  }
 }

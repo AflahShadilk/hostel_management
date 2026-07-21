@@ -51,7 +51,7 @@ class _RentRecordDetailsPageState extends State<RentRecordDetailsPage> {
 
   Future<void> _sendDueReminder(RentRecordEntity record) async {
     final result = await getIt<CommunicationRepository>().shareText(
-      'Rent reminder: ${record.rentPeriod} rent for stay ${record.stayId} is due. '
+      'Rent reminder: ${record.formattedPeriod} rent for stay ${record.stayId} is due. '
       'Outstanding amount: ${(record.amountDue - record.amountPaid).toStringAsFixed(2)}.',
     );
     if (!mounted || result.isSuccess) {
@@ -121,9 +121,7 @@ class _RentRecordDetailsPageState extends State<RentRecordDetailsPage> {
                                         .textTheme
                                         .titleMedium),
                                 const Divider(),
-                                _Row('Stay ID', '${record.stayId}'),
-                                _Row('Billing Month', '${record.billingMonth}'),
-                                _Row('Billing Year', '${record.billingYear}'),
+                                _Row('Billing Period', record.formattedPeriod),
                                 _Row('Rent Amount',
                                     record.amountDue.toStringAsFixed(2)),
                                 _Row('Paid Amount',

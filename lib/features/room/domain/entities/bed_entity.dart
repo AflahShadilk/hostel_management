@@ -5,6 +5,7 @@ class BedEntity extends Equatable {
   final int? id;
   final int roomId;
   final String bedNumber;
+  final double monthlyRent;
   final BedStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,6 +14,7 @@ class BedEntity extends Equatable {
     this.id,
     required this.roomId,
     required this.bedNumber,
+    required this.monthlyRent,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -23,6 +25,7 @@ class BedEntity extends Equatable {
         id,
         roomId,
         bedNumber,
+        monthlyRent,
         status,
         createdAt,
         updatedAt,

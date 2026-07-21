@@ -96,6 +96,22 @@ class AppDatabase {
     if (oldVersion < 7) {
       await SettingsLocalSchema.createTable(db);
     }
+
+    if (oldVersion < 8) {
+      await RoomLocalSchema.migrateFromVersion7(db);
+    }
+
+    if (oldVersion < 9) {
+      await TenantLocalSchema.migrateFromVersion8(db);
+    }
+
+    if (oldVersion < 10) {
+      await RentLocalSchema.migrateFromVersion9(db);
+    }
+
+    if (oldVersion < 11) {
+      await RentLocalSchema.migrateFromVersion10(db);
+    }
   }
 
   Future<void> close() async {

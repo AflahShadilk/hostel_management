@@ -92,6 +92,7 @@ class _PaymentCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text('Amount: ${payment.amount.toStringAsFixed(2)}'),
           Text('Method: ${payment.paymentMethod}'),
+          Text('Receipt: ${payment.receiptNumber}'),
           Text('Rent record ID: ${payment.rentRecordId}'),
         ]),
       ),

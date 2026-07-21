@@ -25,6 +25,7 @@ class BedRepositoryImpl implements BedRepository {
       id: id,
       roomId: bedModel.roomId,
       bedNumber: normalizedMap['bed_number'] as String,
+      monthlyRent: bedModel.monthlyRent,
       status: bedModel.status,
       createdAt: bedModel.createdAt,
       updatedAt: bedModel.updatedAt,

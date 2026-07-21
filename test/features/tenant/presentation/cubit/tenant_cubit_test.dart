@@ -103,7 +103,7 @@ class FakeBedRepository implements BedRepository {
     return BedEntity(
       id: id,
       roomId: 1,
-      bedNumber: 'B$id',
+      bedNumber: 'B$id', monthlyRent: 5000,
       status: BedStatus.occupied,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

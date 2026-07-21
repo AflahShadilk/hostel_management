@@ -118,7 +118,7 @@ class _RentRecordCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Expanded(child: Text('${record.billingMonth}/${record.billingYear}', style: Theme.of(context).textTheme.titleMedium)),
+                Expanded(child: Text(record.formattedPeriod, style: Theme.of(context).textTheme.titleMedium)),
                 Chip(label: Text(record.status)),
               ]),
               const SizedBox(height: AppSpacing.sm),

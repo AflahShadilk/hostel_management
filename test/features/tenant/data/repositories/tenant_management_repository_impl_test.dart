@@ -66,10 +66,10 @@ void main() {
       VALUES (1, 1, '101', 'G', 'double', 2, 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
     ''');
     await db.execute('''
-      INSERT INTO beds (id, room_id, bed_number, status, created_at, updated_at)
+      INSERT INTO beds (id, room_id, bed_number, monthly_rent, status, created_at, updated_at)
       VALUES 
-        (1, 1, 'B1', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000'),
-        (2, 1, 'B2', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
+        (1, 1, 'B1', 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000'),
+        (2, 1, 'B2', 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
     ''');
   }
 
@@ -97,6 +97,9 @@ void main() {
     );
 
     final db = await appDatabase.database;
+    await db.delete('deposits');
+    await db.delete('rent_records');
+    await db.delete('stays');
     await db.delete('tenants');
     await db.delete('beds');
     await db.delete('rooms');
@@ -271,10 +274,10 @@ void main() {
         VALUES (2, 1, '102', 'G', 'double', 2, 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
       ''');
       await db.execute('''
-        INSERT INTO beds (id, room_id, bed_number, status, created_at, updated_at)
+        INSERT INTO beds (id, room_id, bed_number, monthly_rent, status, created_at, updated_at)
         VALUES 
-          (3, 2, 'B3', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000'),
-          (4, 2, 'B4', 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
+          (3, 2, 'B3', 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000'),
+          (4, 2, 'B4', 1000, 'vacant', '2024-01-01T00:00:00.000', '2024-01-01T00:00:00.000')
       ''');
 
       final t1 = await managementRepo.assignTenant(buildTenant(bedId: 1));

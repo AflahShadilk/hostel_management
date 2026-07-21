@@ -25,11 +25,7 @@ abstract class RentLocalDataSource {
     required double depositAmount,
   });
 
-  Future<int> generateMonthlyRent({
-    required int billingMonth,
-    required int billingYear,
-    required DateTime dueDate,
-  });
+  Future<int> generateNextBillingPeriods();
 
   Future<RentRecordModel> createRentRecord(RentRecordModel rentRecord);
   Future<RentRecordModel?> getRentRecordById(int id);

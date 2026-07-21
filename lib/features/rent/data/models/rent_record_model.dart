@@ -3,9 +3,8 @@ import '../../domain/entities/rent_record_entity.dart';
 class RentRecordModel {
   final int? id;
   final int stayId;
-  final int billingMonth;
-  final int billingYear;
-  final String rentPeriod;
+  final DateTime startDate;
+  final DateTime endDate;
   final DateTime dueDate;
   final DateTime generatedAt;
   final double amountDue;
@@ -17,9 +16,8 @@ class RentRecordModel {
   const RentRecordModel({
     this.id,
     required this.stayId,
-    required this.billingMonth,
-    required this.billingYear,
-    required this.rentPeriod,
+    required this.startDate,
+    required this.endDate,
     required this.dueDate,
     required this.generatedAt,
     required this.amountDue,
@@ -33,9 +31,8 @@ class RentRecordModel {
     return RentRecordModel(
       id: map['id'] as int?,
       stayId: map['stay_id'] as int,
-      billingMonth: map['billing_month'] as int,
-      billingYear: map['billing_year'] as int,
-      rentPeriod: map['rent_period'] as String,
+      startDate: DateTime.parse(map['start_date'] as String),
+      endDate: DateTime.parse(map['end_date'] as String),
       dueDate: DateTime.parse(map['due_date'] as String),
       generatedAt: DateTime.parse(map['generated_at'] as String),
       amountDue: (map['amount_due'] as num).toDouble(),
@@ -50,9 +47,8 @@ class RentRecordModel {
     return RentRecordModel(
       id: entity.id,
       stayId: entity.stayId,
-      billingMonth: entity.billingMonth,
-      billingYear: entity.billingYear,
-      rentPeriod: entity.rentPeriod,
+      startDate: entity.startDate,
+      endDate: entity.endDate,
       dueDate: entity.dueDate,
       generatedAt: entity.generatedAt,
       amountDue: entity.amountDue,
@@ -66,9 +62,8 @@ class RentRecordModel {
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
       'stay_id': stayId,
-      'billing_month': billingMonth,
-      'billing_year': billingYear,
-      'rent_period': rentPeriod,
+      'start_date': startDate.toIso8601String(),
+      'end_date': endDate.toIso8601String(),
       'due_date': dueDate.toIso8601String(),
       'generated_at': generatedAt.toIso8601String(),
       'amount_due': amountDue,
@@ -85,9 +80,8 @@ class RentRecordModel {
     return RentRecordEntity(
       id: id,
       stayId: stayId,
-      billingMonth: billingMonth,
-      billingYear: billingYear,
-      rentPeriod: rentPeriod,
+      startDate: startDate,
+      endDate: endDate,
       dueDate: dueDate,
       generatedAt: generatedAt,
       amountDue: amountDue,

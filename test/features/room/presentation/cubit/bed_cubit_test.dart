@@ -117,7 +117,7 @@ void main() {
       final bed = BedEntity(
           id: 1,
           roomId: 1,
-          bedNumber: 'B1',
+          bedNumber: 'B1', monthlyRent: 5000,
           status: BedStatus.vacant,
           createdAt: now,
           updatedAt: now);
@@ -141,14 +141,14 @@ void main() {
       final bed1 = BedEntity(
           id: 1,
           roomId: 1,
-          bedNumber: 'B1',
+          bedNumber: 'B1', monthlyRent: 5000,
           status: BedStatus.vacant,
           createdAt: now,
           updatedAt: now);
       final bed2 = BedEntity(
           id: 2,
           roomId: 1,
-          bedNumber: 'B2',
+          bedNumber: 'B2', monthlyRent: 5000,
           status: BedStatus.occupied,
           createdAt: now,
           updatedAt: now);
@@ -166,7 +166,7 @@ void main() {
       final bed1 = BedEntity(
           id: 1,
           roomId: 1,
-          bedNumber: 'B1',
+          bedNumber: 'B1', monthlyRent: 5000,
           status: BedStatus.vacant,
           createdAt: now,
           updatedAt: now);

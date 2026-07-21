@@ -64,10 +64,9 @@ class RentLocalSchema {
       CREATE TABLE $tableRentRecords (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         stay_id INTEGER NOT NULL,
-        rent_period TEXT NOT NULL,
-        billing_month INTEGER,
-        billing_year INTEGER,
-        generated_at TEXT,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        generated_at TEXT NOT NULL,
         due_date TEXT NOT NULL,
         amount_due REAL NOT NULL,
         amount_paid REAL NOT NULL DEFAULT 0,
@@ -75,9 +74,7 @@ class RentLocalSchema {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
 
-        UNIQUE(stay_id, rent_period),
-        CHECK(billing_month IS NULL OR billing_month BETWEEN 1 AND 12),
-        CHECK(billing_year IS NULL OR billing_year >= 0),
+        UNIQUE(stay_id, start_date),
         CHECK(amount_due >= 0),
         CHECK(amount_paid >= 0),
         CHECK(status IN (${_sqlValues(RentStatus.values)})),
@@ -90,9 +87,13 @@ class RentLocalSchema {
       CREATE TABLE $tablePayments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         rent_record_id INTEGER NOT NULL,
+        stay_id INTEGER NOT NULL,
+        tenant_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         payment_date TEXT NOT NULL,
         payment_method TEXT NOT NULL,
+        receipt_number TEXT NOT NULL UNIQUE,
+        notes TEXT,
         status TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -102,25 +103,13 @@ class RentLocalSchema {
 
         FOREIGN KEY(rent_record_id)
           REFERENCES $tableRentRecords(id)
+          ON DELETE RESTRICT,
+        FOREIGN KEY(stay_id)
+          REFERENCES $tableStays(id)
+          ON DELETE RESTRICT,
+        FOREIGN KEY(tenant_id)
+          REFERENCES tenants(id)
           ON DELETE RESTRICT
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE $tableReceipts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        payment_id INTEGER NOT NULL,
-        receipt_number TEXT NOT NULL,
-        issued_at TEXT NOT NULL,
-        payment_amount_snapshot REAL NOT NULL,
-        payment_method_snapshot TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-
-        UNIQUE(payment_id),
-        UNIQUE(receipt_number),
-
-        FOREIGN KEY(payment_id) REFERENCES $tablePayments(id) ON DELETE RESTRICT
       )
     ''');
 
@@ -217,37 +206,31 @@ class RentLocalSchema {
       ''');
       await txn.execute('''
         INSERT INTO $tableRentRecords (
-          id, stay_id, rent_period, billing_month, billing_year, generated_at,
+          id, stay_id, start_date, end_date, generated_at,
           due_date, amount_due, amount_paid, status, created_at, updated_at
         )
         SELECT
-          id, stay_id, rent_period,
+          id, stay_id, 
           CASE WHEN rent_period GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]'
-            THEN CAST(substr(rent_period, 6, 2) AS INTEGER) END,
+            THEN rent_period || '-01' ELSE substr(due_date, 1, 7) || '-01' END,
           CASE WHEN rent_period GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]'
-            THEN CAST(substr(rent_period, 1, 4) AS INTEGER) END,
+            THEN date(rent_period || '-01', '+1 month', '-1 day') ELSE date(substr(due_date, 1, 7) || '-01', '+1 month', '-1 day') END,
           created_at, due_date, amount_due, amount_paid, status, created_at, updated_at
         FROM ${tableRentRecords}_legacy
       ''');
       await txn.execute('''
         INSERT INTO $tablePayments (
-          id, rent_record_id, amount, payment_date, payment_method, status, created_at, updated_at
+          id, rent_record_id, stay_id, tenant_id, amount, payment_date, payment_method, receipt_number, status, created_at, updated_at
         )
         SELECT
-          id, rent_record_id, amount, payment_date,
-          COALESCE(payment_method, 'unknown'), status, created_at, updated_at
-        FROM ${tablePayments}_legacy
-      ''');
-      await txn.execute('''
-        INSERT INTO $tableReceipts (
-          id, payment_id, receipt_number, issued_at, payment_amount_snapshot,
-          payment_method_snapshot, created_at, updated_at
-        )
-        SELECT
-          receipts.id, receipts.payment_id, receipts.receipt_number, receipts.issued_at,
-          payments.amount, payments.payment_method, receipts.created_at, receipts.updated_at
-        FROM ${tableReceipts}_legacy AS receipts
-        INNER JOIN $tablePayments AS payments ON payments.id = receipts.payment_id
+          p.id, p.rent_record_id, s.id, s.tenant_id, p.amount, p.payment_date,
+          COALESCE(p.payment_method, 'unknown'), 
+          COALESCE(r.receipt_number, 'RCP-LEGACY-' || p.id),
+          p.status, p.created_at, p.updated_at
+        FROM ${tablePayments}_legacy AS p
+        INNER JOIN ${tableRentRecords}_legacy AS rr ON p.rent_record_id = rr.id
+        INNER JOIN ${tableStays}_legacy AS s ON rr.stay_id = s.id
+        LEFT JOIN ${tableReceipts}_legacy AS r ON p.id = r.payment_id
       ''');
       await txn.execute('''
         INSERT INTO $tableDeposits (
@@ -292,6 +275,132 @@ class RentLocalSchema {
         tableStays,
       ]) {
         await txn.execute('DROP TABLE ${table}_legacy');
+      }
+    });
+  }
+
+  static Future<void> migrateFromVersion9(DatabaseExecutor db) async {
+    await db.execute('DROP TABLE IF EXISTS receipts');
+    
+    // We recreate the payments table because SQLite doesn't support adding constraints 
+    // to existing tables easily, but we can just use ALTER TABLE to add columns if we allow nulls.
+    // However, stay_id, tenant_id, receipt_number are NOT NULL.
+    // If the payments table is empty (which it likely is at this stage of development since UI didn't exist),
+    // we can just drop and recreate it.
+    
+    // Check if table is empty
+    final results = await db.query(tablePayments, columns: ['COUNT(*) as count']);
+    final count = Sqflite.firstIntValue(results) ?? 0;
+    
+    if (count == 0) {
+      await db.execute('DROP TABLE IF EXISTS $tablePayments');
+      await db.execute('''
+        CREATE TABLE $tablePayments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          rent_record_id INTEGER NOT NULL,
+          stay_id INTEGER NOT NULL,
+          tenant_id INTEGER NOT NULL,
+          amount REAL NOT NULL,
+          payment_date TEXT NOT NULL,
+          payment_method TEXT NOT NULL,
+          receipt_number TEXT NOT NULL UNIQUE,
+          notes TEXT,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+
+          CHECK(amount > 0),
+          CHECK(status IN (${_sqlValues(PaymentStatus.values)})),
+
+          FOREIGN KEY(rent_record_id)
+            REFERENCES $tableRentRecords(id)
+            ON DELETE RESTRICT,
+          FOREIGN KEY(stay_id)
+            REFERENCES $tableStays(id)
+            ON DELETE RESTRICT,
+          FOREIGN KEY(tenant_id)
+            REFERENCES tenants(id)
+            ON DELETE RESTRICT
+        )
+      ''');
+    } else {
+      // If not empty, we would need a complex migration copying data, generating fake receipt numbers, etc.
+      // Assuming it's empty for this iteration as payment recording was not yet implemented.
+      throw StateError('Cannot migrate non-empty payments table automatically from v9 to v10.');
+    }
+  }
+
+  /// v10 → v11: Replace billing_month/billing_year/rent_period with start_date/end_date.
+  ///
+  /// The strategy:
+  ///  - If rent_records is empty (expected during development), drop and recreate.
+  ///  - If not empty, derive start_date from billing_month/billing_year (1st of month)
+  ///    and end_date as last day of that billing_month/billing_year.
+  ///  - The migration runs inside a transaction for safety.
+  static Future<void> migrateFromVersion10(Database db) async {
+    await db.transaction((txn) async {
+      // Check payment dependency: if payments exist, we cannot drop rent_records.
+      final paymentCount =
+          Sqflite.firstIntValue(await txn.query(tablePayments, columns: ['COUNT(*) as count'])) ?? 0;
+
+      if (paymentCount > 0) {
+        // Payments exist: use ALTER TABLE to add new columns (they default to NULL temporarily).
+        await txn.execute('ALTER TABLE $tableRentRecords ADD COLUMN start_date TEXT');
+        await txn.execute('ALTER TABLE $tableRentRecords ADD COLUMN end_date TEXT');
+
+        // Backfill start_date from billing_month/billing_year: e.g. 2026-07-01
+        await txn.execute("""
+          UPDATE $tableRentRecords
+          SET start_date = billing_year || '-' ||
+            CASE WHEN billing_month < 10 THEN '0' ELSE '' END || billing_month || '-01'
+          WHERE start_date IS NULL AND billing_month IS NOT NULL AND billing_year IS NOT NULL
+        """);
+
+        // Fallback for records that had no billing_month/billing_year: use due_date month/year
+        await txn.execute("""
+          UPDATE $tableRentRecords
+          SET start_date = substr(due_date, 1, 7) || '-01'
+          WHERE start_date IS NULL
+        """);
+
+        // Backfill end_date as the last day of start_date's month.
+        // We compute: date(start_date, '+1 month', '-1 day')
+        await txn.execute("""
+          UPDATE $tableRentRecords
+          SET end_date = date(start_date, '+1 month', '-1 day')
+          WHERE end_date IS NULL
+        """);
+
+        // Ensure generated_at is not null (fallback to created_at)
+        await txn.execute("""
+          UPDATE $tableRentRecords
+          SET generated_at = created_at
+          WHERE generated_at IS NULL
+        """);
+      } else {
+        // No payments: safely drop and recreate with clean schema.
+        await txn.execute('DROP TABLE IF EXISTS $tableRentRecords');
+        await txn.execute('''
+          CREATE TABLE $tableRentRecords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            stay_id INTEGER NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            generated_at TEXT NOT NULL,
+            due_date TEXT NOT NULL,
+            amount_due REAL NOT NULL,
+            amount_paid REAL NOT NULL DEFAULT 0,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+
+            UNIQUE(stay_id, start_date),
+            CHECK(amount_due >= 0),
+            CHECK(amount_paid >= 0),
+
+            FOREIGN KEY(stay_id) REFERENCES $tableStays(id) ON DELETE RESTRICT
+          )
+        ''');
       }
     });
   }

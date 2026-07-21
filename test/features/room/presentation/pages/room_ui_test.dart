@@ -315,7 +315,7 @@ void main() {
       expect(find.text('Floor'), findsOneWidget);
       expect(find.text('Room Type'), findsOneWidget);
       expect(find.text('Number of Beds'), findsOneWidget);
-      expect(find.text('Monthly Rent (₹)'), findsOneWidget);
+      expect(find.text('Monthly Rent Per Bed (₹)'), findsOneWidget);
     });
 
     testWidgets('shows validation error on empty Room Number', (tester) async {

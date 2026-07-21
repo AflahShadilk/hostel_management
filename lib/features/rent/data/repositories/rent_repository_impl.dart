@@ -68,16 +68,8 @@ class RentRepositoryImpl implements RentRepository {
   }
 
   @override
-  Future<int> generateMonthlyRent({
-    required int billingMonth,
-    required int billingYear,
-    required DateTime dueDate,
-  }) =>
-      _localDataSource.generateMonthlyRent(
-        billingMonth: billingMonth,
-        billingYear: billingYear,
-        dueDate: dueDate,
-      );
+  Future<int> generateNextBillingPeriods() =>
+      _localDataSource.generateNextBillingPeriods();
 
   @override
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord) async =>

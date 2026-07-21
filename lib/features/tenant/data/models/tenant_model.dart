@@ -18,6 +18,8 @@ class TenantModel extends TenantEntity {
     super.checkOutDate,
     super.emergencyContactName,
     super.emergencyContactPhone,
+    super.idType,
+    super.idDocumentPath,
     required super.status,
     required super.createdAt,
     required super.updatedAt,
@@ -40,6 +42,8 @@ class TenantModel extends TenantEntity {
       checkOutDate: entity.checkOutDate,
       emergencyContactName: entity.emergencyContactName,
       emergencyContactPhone: entity.emergencyContactPhone,
+      idType: entity.idType,
+      idDocumentPath: entity.idDocumentPath,
       status: entity.status,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -65,6 +69,8 @@ class TenantModel extends TenantEntity {
           map[TenantLocalSchema.colEmergencyContactName] as String?,
       emergencyContactPhone:
           map[TenantLocalSchema.colEmergencyContactPhone] as String?,
+      idType: map[TenantLocalSchema.colIdType] as String?,
+      idDocumentPath: map[TenantLocalSchema.colIdDocumentPath] as String?,
       status: TenantStatus.fromDatabaseValue(
             map[TenantLocalSchema.colStatus] as String,
           ) ??
@@ -92,6 +98,8 @@ class TenantModel extends TenantEntity {
       TenantLocalSchema.colCheckOutDate: checkOutDate?.toIso8601String(),
       TenantLocalSchema.colEmergencyContactName: emergencyContactName,
       TenantLocalSchema.colEmergencyContactPhone: emergencyContactPhone,
+      TenantLocalSchema.colIdType: idType,
+      TenantLocalSchema.colIdDocumentPath: idDocumentPath,
       TenantLocalSchema.colStatus: status.databaseValue,
       TenantLocalSchema.colCreatedAt: createdAt.toIso8601String(),
       TenantLocalSchema.colUpdatedAt: updatedAt.toIso8601String(),
@@ -117,6 +125,8 @@ class TenantModel extends TenantEntity {
     Object? checkOutDate = _sentinel,
     Object? emergencyContactName = _sentinel,
     Object? emergencyContactPhone = _sentinel,
+    Object? idType = _sentinel,
+    Object? idDocumentPath = _sentinel,
     TenantStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -139,6 +149,10 @@ class TenantModel extends TenantEntity {
       emergencyContactPhone: identical(emergencyContactPhone, _sentinel)
           ? this.emergencyContactPhone
           : emergencyContactPhone as String?,
+      idType: identical(idType, _sentinel) ? this.idType : idType as String?,
+      idDocumentPath: identical(idDocumentPath, _sentinel)
+          ? this.idDocumentPath
+          : idDocumentPath as String?,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -27,6 +27,7 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
   late final TextEditingController _rentRecordId;
   late final TextEditingController _amount;
   late final TextEditingController _paymentMethod;
+  late final TextEditingController _notes;
   bool get _editing => widget.payment != null;
 
   @override
@@ -38,6 +39,7 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
     _amount = TextEditingController(text: payment?.amount.toString() ?? '');
     _paymentMethod =
         TextEditingController(text: payment?.paymentMethod ?? '');
+    _notes = TextEditingController(text: payment?.notes ?? '');
   }
 
   @override
@@ -45,6 +47,7 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
     _rentRecordId.dispose();
     _amount.dispose();
     _paymentMethod.dispose();
+    _notes.dispose();
     super.dispose();
   }
 
@@ -86,9 +89,13 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
     final payment = PaymentEntity(
       id: widget.payment?.id,
       rentRecordId: int.parse(_rentRecordId.text.trim()),
+      stayId: widget.payment?.stayId ?? 0,
+      tenantId: widget.payment?.tenantId ?? 0,
       amount: double.parse(_amount.text.trim()),
       paymentDate: paymentDate,
       paymentMethod: _paymentMethod.text.trim(),
+      receiptNumber: widget.payment?.receiptNumber ?? '',
+      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       status: status,
       createdAt: widget.payment?.createdAt ?? now,
       updatedAt: now,
@@ -180,6 +187,11 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
                                   value == null || value.trim().isEmpty
                                       ? 'Payment method is required.'
                                       : null),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                              controller: _notes,
+                              label: 'Notes (Optional)',
+                              maxLines: 2),
                           const SizedBox(height: AppSpacing.md),
                           BlocBuilder<SelectedStatusCubit, String>(
                             builder: (context, status) =>

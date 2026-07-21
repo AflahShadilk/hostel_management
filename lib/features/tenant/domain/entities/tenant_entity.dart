@@ -17,6 +17,8 @@ class TenantEntity extends Equatable {
   final DateTime? checkOutDate;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
+  final String? idType;
+  final String? idDocumentPath;
   final TenantStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -32,6 +34,8 @@ class TenantEntity extends Equatable {
     this.checkOutDate,
     this.emergencyContactName,
     this.emergencyContactPhone,
+    this.idType,
+    this.idDocumentPath,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -49,6 +53,8 @@ class TenantEntity extends Equatable {
         checkOutDate,
         emergencyContactName,
         emergencyContactPhone,
+        idType,
+        idDocumentPath,
         status,
         createdAt,
         updatedAt,

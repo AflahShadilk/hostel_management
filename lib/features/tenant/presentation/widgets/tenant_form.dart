@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dropdown_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/utils/tenant_validators.dart';
 import '../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../../domain/entities/tenant_entity.dart';
 import '../../domain/entities/tenant_status.dart';
@@ -15,6 +16,7 @@ import '../cubit/tenant_form_cubit.dart';
 import '../cubit/tenant_form_state.dart';
 import '../cubit/tenant_state.dart';
 import 'bed_selection_widget.dart';
+import 'identity_document_picker.dart';
 
 /// Shared form widget used by both [AddTenantPage] and [EditTenantPage].
 ///
@@ -184,6 +186,8 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
       emergencyContactPhone: _emergencyPhoneController.text.trim().isEmpty
           ? null
           : _emergencyPhoneController.text.trim(),
+      idType: formState.selectedIdType,
+      idDocumentPath: formState.idDocumentPath,
       checkInDate: formState.checkInDate!,
       checkOutDate: formState.checkOutDate,
       status: formState.status,
@@ -229,15 +233,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                     label: 'Full Name',
                     prefixIcon: const Icon(Icons.person_outline),
                     textInputAction: TextInputAction.next,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Full name is required.';
-                      }
-                      if (v.trim().length < 2) {
-                        return 'Name must be at least 2 characters.';
-                      }
-                      return null;
-                    },
+                    validator: TenantValidators.validateName,
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -248,14 +244,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) {
-                      final text = v?.trim() ?? '';
-                      if (text.isEmpty) return 'Phone number is required.';
-                      if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
-                        return 'Enter a valid phone number (7–15 digits).';
-                      }
-                      return null;
-                    },
+                    validator: TenantValidators.validatePhone,
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -265,16 +254,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                     prefixIcon: const Icon(Icons.email_outlined),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    validator: (v) {
-                      final text = v?.trim() ?? '';
-                      if (text.isEmpty) return null;
-                      if (!RegExp(
-                              r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
-                          .hasMatch(text)) {
-                        return 'Enter a valid email address.';
-                      }
-                      return null;
-                    },
+                    validator: TenantValidators.validateEmail,
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -284,6 +264,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                     prefixIcon: const Icon(Icons.home_outlined),
                     maxLines: 2,
                     textInputAction: TextInputAction.next,
+                    validator: TenantValidators.validateAddress,
                   ),
 
                   const SizedBox(height: AppSpacing.lg),
@@ -307,15 +288,15 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) {
-                      final text = v?.trim() ?? '';
-                      if (text.isEmpty) return null;
-                      if (!RegExp(r'^\d{7,15}$').hasMatch(text)) {
-                        return 'Enter a valid phone number (7–15 digits).';
-                      }
-                      return null;
-                    },
+                    validator: TenantValidators.validateEmergencyPhone,
                   ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // ── Identity Proof ─────────────────────────────────────────
+                  _SectionHeader(label: 'Identity Proof (optional)'),
+                  const SizedBox(height: AppSpacing.md),
+                  const IdentityDocumentPicker(),
 
                   const SizedBox(height: AppSpacing.lg),
 
@@ -425,11 +406,14 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
 
                   const SizedBox(height: AppSpacing.xl),
 
-                  AppButton(
-                    label: widget.isEdit ? 'Save Changes' : 'Assign Tenant',
-                    isLoading: isSubmitting,
-                    isFullWidth: true,
-                    onPressed: isSubmitting ? null : () => _submit(context),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 80.0),
+                    child: AppButton(
+                      label: widget.isEdit ? 'Save Changes' : 'Assign Tenant',
+                      isLoading: isSubmitting,
+                      isFullWidth: true,
+                      onPressed: isSubmitting ? null : () => _submit(context),
+                    ),
                   ),
                 ],
               ),

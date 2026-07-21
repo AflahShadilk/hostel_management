@@ -97,6 +97,7 @@ class BedCubit extends Cubit<BedState> {
         id: bed.id,
         roomId: bed.roomId,
         bedNumber: bed.bedNumber,
+        monthlyRent: bed.monthlyRent,
         status: status,
         createdAt: bed.createdAt,
         updatedAt: DateTime.now(),

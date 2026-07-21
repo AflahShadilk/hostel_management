@@ -107,7 +107,7 @@ BedEntity _makeBed(
   return BedEntity(
     id: id,
     roomId: 1,
-    bedNumber: number,
+    bedNumber: number, monthlyRent: 5000,
     status: status,
     createdAt: now,
     updatedAt: now,

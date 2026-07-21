@@ -15,6 +15,16 @@ import '../../cubit/ui/selected_date_cubit.dart';
 import '../../cubit/ui/selected_status_cubit.dart';
 import '../../cubit/ui/submitting_cubit.dart';
 
+/// Two cubits: one for startDate, one for endDate.
+/// Using separate named keys to distinguish them via context.
+class _StartDateCubit extends SelectedDateCubit {
+  _StartDateCubit(super.initial);
+}
+
+class _EndDateCubit extends SelectedDateCubit {
+  _EndDateCubit(super.initial);
+}
+
 class AddEditRentRecordPage extends StatefulWidget {
   final RentRecordEntity? record;
   const AddEditRentRecordPage({super.key, this.record});
@@ -26,9 +36,6 @@ class AddEditRentRecordPage extends StatefulWidget {
 class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _stayId;
-  late final TextEditingController _month;
-  late final TextEditingController _year;
-  late final TextEditingController _rentPeriod;
   late final TextEditingController _amountDue;
   late final TextEditingController _amountPaid;
 
@@ -39,20 +46,15 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
     super.initState();
     final record = widget.record;
     _stayId = TextEditingController(text: record?.stayId.toString() ?? '');
-    _month = TextEditingController(text: record?.billingMonth.toString() ?? '');
-    _year = TextEditingController(text: record?.billingYear.toString() ?? '');
-    _rentPeriod = TextEditingController(text: record?.rentPeriod ?? '');
-    _amountDue = TextEditingController(text: record?.amountDue.toString() ?? '');
-    _amountPaid = TextEditingController(
-        text: record?.amountPaid.toString() ?? '0');
+    _amountDue =
+        TextEditingController(text: record?.amountDue.toString() ?? '');
+    _amountPaid =
+        TextEditingController(text: record?.amountPaid.toString() ?? '0');
   }
 
   @override
   void dispose() {
     _stayId.dispose();
-    _month.dispose();
-    _year.dispose();
-    _rentPeriod.dispose();
     _amountDue.dispose();
     _amountPaid.dispose();
     super.dispose();
@@ -62,8 +64,10 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
       '${value.day.toString().padLeft(2, '0')}/'
       '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
-  Future<void> _pickDueDate(BuildContext context) async {
-    final cubit = context.read<SelectedDateCubit>();
+  Future<void> _pickDate(
+    BuildContext context,
+    SelectedDateCubit cubit,
+  ) async {
     final picked = await showDatePicker(
         context: context,
         initialDate: cubit.state ?? DateTime.now(),
@@ -72,20 +76,10 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
     if (picked != null && mounted) cubit.pick(picked);
   }
 
-  String? _integer(String? value, String label, {bool month = false}) {
-    if (value == null || value.trim().isEmpty) return '$label is required.';
-    final number = int.tryParse(value.trim());
-    if (number == null) return 'Enter a valid $label.';
-    if (month && (number < 1 || number > 12)) {
-      return 'Month must be between 1 and 12.';
-    }
-    return null;
-  }
-
   String? _amount(String? value, String label) {
     if (value == null || value.trim().isEmpty) return '$label is required.';
     final amount = double.tryParse(value.trim());
-    if (amount == null || amount <= 0) return 'Enter a valid $label.';
+    if (amount == null || amount < 0) return 'Enter a valid $label.';
     return null;
   }
 
@@ -97,16 +91,19 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
 
   void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final now = DateTime.now();
-    final dueDate = context.read<SelectedDateCubit>().state ?? DateTime.now();
+    final startDate = context.read<_StartDateCubit>().state ?? DateTime.now();
+    final endDate = context.read<_EndDateCubit>().state ??
+        DateTime(startDate.year, startDate.month + 1, startDate.day)
+            .subtract(const Duration(days: 1));
     final status = context.read<SelectedStatusCubit>().state;
+    final now = DateTime.now();
+
     final record = RentRecordEntity(
       id: widget.record?.id,
       stayId: int.parse(_stayId.text.trim()),
-      billingMonth: int.parse(_month.text.trim()),
-      billingYear: int.parse(_year.text.trim()),
-      rentPeriod: _rentPeriod.text.trim(),
-      dueDate: dueDate,
+      startDate: startDate,
+      endDate: endDate,
+      dueDate: startDate,
       generatedAt: widget.record?.generatedAt ?? now,
       amountDue: double.parse(_amountDue.text.trim()),
       amountPaid: double.parse(_amountPaid.text.trim()),
@@ -127,12 +124,18 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
     final record = widget.record;
     final initialBalance =
         (record?.amountDue ?? 0) - (record?.amountPaid ?? 0);
+    final initialStart = record?.startDate ?? DateTime.now();
+    final initialEnd = record?.endDate ??
+        DateTime(initialStart.year, initialStart.month + 1, initialStart.day)
+            .subtract(const Duration(days: 1));
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
-        BlocProvider<SelectedDateCubit>(
-            create: (_) =>
-                SelectedDateCubit(record?.dueDate ?? DateTime.now())),
+        BlocProvider<_StartDateCubit>(
+            create: (_) => _StartDateCubit(initialStart)),
+        BlocProvider<_EndDateCubit>(
+            create: (_) => _EndDateCubit(initialEnd)),
         BlocProvider<SelectedStatusCubit>(
             create: (_) =>
                 SelectedStatusCubit(record?.status ?? RentStatus.pending)),
@@ -173,45 +176,43 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly
                               ],
-                              validator: (v) => _integer(v, 'Stay ID')),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Stay ID is required.';
+                                }
+                                return int.tryParse(v.trim()) == null
+                                    ? 'Enter a valid Stay ID.'
+                                    : null;
+                              }),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(
-                              controller: _month,
-                              label: 'Billing Month',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              validator: (v) => _integer(v, 'Billing month',
-                                  month: true)),
-                          const SizedBox(height: AppSpacing.md),
-                          AppTextField(
-                              controller: _year,
-                              label: 'Billing Year',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              validator: (v) =>
-                                  _integer(v, 'Billing year')),
-                          const SizedBox(height: AppSpacing.md),
-                          AppTextField(
-                              controller: _rentPeriod,
-                              label: 'Rent Period',
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Rent period is required.'
-                                  : null),
-                          const SizedBox(height: AppSpacing.md),
-                          BlocBuilder<SelectedDateCubit, DateTime?>(
-                            builder: (context, dueDate) => InkWell(
-                              onTap: () => _pickDueDate(context),
+                          // Start Date picker
+                          BlocBuilder<_StartDateCubit, DateTime?>(
+                            builder: (context, startDate) => InkWell(
+                              onTap: () => _pickDate(
+                                  context, context.read<_StartDateCubit>()),
                               child: InputDecorator(
                                 decoration: const InputDecoration(
-                                    labelText: 'Due Date',
+                                    labelText: 'Billing Start Date',
                                     suffixIcon: Icon(
                                         Icons.calendar_today_outlined)),
                                 child: Text(
-                                    _date(dueDate ?? DateTime.now())),
+                                    _date(startDate ?? DateTime.now())),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          // End Date picker
+                          BlocBuilder<_EndDateCubit, DateTime?>(
+                            builder: (context, endDate) => InkWell(
+                              onTap: () => _pickDate(
+                                  context, context.read<_EndDateCubit>()),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                    labelText: 'Billing End Date',
+                                    suffixIcon: Icon(
+                                        Icons.calendar_today_outlined)),
+                                child: Text(
+                                    _date(endDate ?? DateTime.now())),
                               ),
                             ),
                           ),

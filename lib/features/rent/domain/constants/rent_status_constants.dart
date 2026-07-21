@@ -58,3 +58,17 @@ abstract final class PaymentMethod {
     other,
   ];
 }
+
+abstract final class DepositStatus {
+  static const String pending = 'pending';
+  static const String held = 'held';
+  static const String refunded = 'refunded';
+  static const String forfeited = 'forfeited';
+
+  static const List<String> values = <String>[
+    pending,
+    held,
+    refunded,
+    forfeited,
+  ];
+}

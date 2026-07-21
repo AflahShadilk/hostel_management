@@ -204,7 +204,7 @@ class _AddRoomPageState extends State<AddRoomPage> {
                         const SizedBox(height: AppSpacing.md),
                         AppTextField(
                           controller: _rentController,
-                          label: 'Monthly Rent (₹)',
+                          label: 'Monthly Rent Per Bed (₹)',
                           hint: 'e.g. 5000',
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),

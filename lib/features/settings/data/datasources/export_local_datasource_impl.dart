@@ -135,7 +135,7 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
           .map((record) => [
                 '${record.id ?? ''}',
                 '${record.stayId}',
-                '${record.billingMonth}/${record.billingYear}',
+                record.formattedPeriod,
                 _date(record.dueDate),
                 record.amountDue.toStringAsFixed(2),
                 record.amountPaid.toStringAsFixed(2),

@@ -1,11 +1,19 @@
 import 'package:equatable/equatable.dart';
 
+// Month name lookup — avoids adding the intl package.
+const _monthNames = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+String _fmtDate(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')} ${_monthNames[d.month - 1]} ${d.year}';
+
 class RentRecordEntity extends Equatable {
   final int? id;
   final int stayId;
-  final int billingMonth;
-  final int billingYear;
-  final String rentPeriod;
+  final DateTime startDate;
+  final DateTime endDate;
   final DateTime dueDate;
   final DateTime generatedAt;
   final double amountDue;
@@ -17,9 +25,8 @@ class RentRecordEntity extends Equatable {
   const RentRecordEntity({
     this.id,
     required this.stayId,
-    required this.billingMonth,
-    required this.billingYear,
-    required this.rentPeriod,
+    required this.startDate,
+    required this.endDate,
     required this.dueDate,
     required this.generatedAt,
     required this.amountDue,
@@ -29,13 +36,18 @@ class RentRecordEntity extends Equatable {
     required this.updatedAt,
   });
 
+  /// Calculated outstanding balance.
+  double get outstanding => amountDue - amountPaid;
+
+  /// Human-readable billing period, e.g. "10 Jul 2026 – 09 Aug 2026".
+  String get formattedPeriod => '${_fmtDate(startDate)} – ${_fmtDate(endDate)}';
+
   @override
   List<Object?> get props => [
         id,
         stayId,
-        billingMonth,
-        billingYear,
-        rentPeriod,
+        startDate,
+        endDate,
         dueDate,
         generatedAt,
         amountDue,

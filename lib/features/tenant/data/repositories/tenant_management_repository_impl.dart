@@ -7,6 +7,8 @@ import '../../domain/entities/tenant_entity.dart';
 import '../../domain/entities/tenant_status.dart';
 import '../../domain/repositories/tenant_management_repository.dart';
 import '../../domain/repositories/tenant_repository.dart';
+import '../../../rent/data/datasources/rent_local_schema.dart';
+import '../../../rent/domain/constants/rent_status_constants.dart';
 import '../datasources/tenant_local_schema.dart';
 import '../models/tenant_model.dart';
 
@@ -72,11 +74,60 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
       final tenantId = await txn.insert(TenantLocalSchema.tableTenants, map);
 
+      // Create initial stay automatically
+      final monthlyRent = bed.monthlyRent;
+      final dailyRate = (monthlyRent / 30).roundToDouble();
+      final now = DateTime.now().toIso8601String();
+      
+      final stayMap = {
+        'tenant_id': tenantId,
+        'room_id': bed.roomId,
+        'bed_id': tenant.bedId,
+        'check_in_date': tenant.checkInDate.toIso8601String(),
+        'expected_checkout_date': tenant.checkOutDate?.toIso8601String(),
+        'monthly_rent_snapshot': monthlyRent,
+        'daily_rate': dailyRate,
+        'status': StayStatus.active,
+        'created_at': now,
+        'updated_at': now,
+      };
+      final stayId = await txn.insert(RentLocalSchema.tableStays, stayMap);
+
+      // Create initial rent record (billing period: checkInDate to checkInDate + 1 month - 1 day)
+      final checkIn = tenant.checkInDate;
+      final periodEndDate = DateTime(checkIn.year, checkIn.month + 1, checkIn.day)
+          .subtract(const Duration(days: 1));
+      final rentRecordMap = {
+        'stay_id': stayId,
+        'start_date': checkIn.toIso8601String(),
+        'end_date': periodEndDate.toIso8601String(),
+        'generated_at': now,
+        'due_date': checkIn.toIso8601String(),
+        'amount_due': monthlyRent,
+        'amount_paid': 0.0,
+        'status': RentStatus.pending,
+        'created_at': now,
+        'updated_at': now,
+      };
+      await txn.insert(RentLocalSchema.tableRentRecords, rentRecordMap);
+
+      // Create initial deposit record (defaulting to 1x monthly rent)
+      final depositMap = {
+        'stay_id': stayId,
+        'amount': monthlyRent,
+        'received_date': now,
+        'refund_date': null,
+        'refunded_amount': 0.0,
+        'status': DepositStatus.pending,
+        'created_at': now,
+        'updated_at': now,
+      };
+      await txn.insert(RentLocalSchema.tableDeposits, depositMap);
       await txn.update(
         RoomLocalSchema.tableBeds,
         {
           'status': BedStatus.occupied.databaseValue,
-          'updated_at': DateTime.now().toIso8601String(),
+          'updated_at': now,
         },
         where: 'id = ?',
         whereArgs: [tenant.bedId],
@@ -128,6 +179,22 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     final assignedBedId = tenant.bedId;
     if (assignedBedId == null) {
       final db = await _appDatabase.database;
+      
+      // Delete child records first to satisfy ON DELETE RESTRICT
+      await db.execute(
+        'DELETE FROM ${RentLocalSchema.tableDeposits} WHERE stay_id IN (SELECT id FROM ${RentLocalSchema.tableStays} WHERE tenant_id = ?)',
+        [tenantId],
+      );
+      await db.execute(
+        'DELETE FROM ${RentLocalSchema.tableRentRecords} WHERE stay_id IN (SELECT id FROM ${RentLocalSchema.tableStays} WHERE tenant_id = ?)',
+        [tenantId],
+      );
+
+      await db.delete(
+        RentLocalSchema.tableStays,
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
       await db.delete(
         TenantLocalSchema.tableTenants,
         where: 'id = ?',
@@ -146,6 +213,22 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     final db = await _appDatabase.database;
 
     await db.transaction((txn) async {
+      // Delete child records first to satisfy ON DELETE RESTRICT
+      await txn.execute(
+        'DELETE FROM ${RentLocalSchema.tableDeposits} WHERE stay_id IN (SELECT id FROM ${RentLocalSchema.tableStays} WHERE tenant_id = ?)',
+        [tenantId],
+      );
+      await txn.execute(
+        'DELETE FROM ${RentLocalSchema.tableRentRecords} WHERE stay_id IN (SELECT id FROM ${RentLocalSchema.tableStays} WHERE tenant_id = ?)',
+        [tenantId],
+      );
+
+      await txn.delete(
+        RentLocalSchema.tableStays,
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+
       await txn.delete(
         TenantLocalSchema.tableTenants,
         where: 'id = ?',
@@ -188,6 +271,19 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
     return await db.transaction((txn) async {
       final now = DateTime.now();
+
+      // Close the active Stay
+      await txn.update(
+        RentLocalSchema.tableStays,
+        {
+          'status': StayStatus.checkedOut,
+          'check_out_date': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'tenant_id = ? AND status = ?',
+        whereArgs: [tenantId, StayStatus.active],
+      );
+
       await txn.update(
         TenantLocalSchema.tableTenants,
         {
@@ -269,6 +365,18 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         whereArgs: [oldBedId],
       );
 
+      // Close old Stay
+      await txn.update(
+        RentLocalSchema.tableStays,
+        {
+          'status': StayStatus.checkedOut,
+          'check_out_date': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'tenant_id = ? AND status = ?',
+        whereArgs: [tenantId, StayStatus.active],
+      );
+
       // Occupy new bed
       await txn.update(
         RoomLocalSchema.tableBeds,
@@ -279,6 +387,53 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         where: 'id = ?',
         whereArgs: [newBedId],
       );
+
+      // Create new Stay for the new bed
+      final monthlyRent = newBed.monthlyRent;
+      final dailyRate = (monthlyRent / 30).roundToDouble();
+      final stayMap = {
+        'tenant_id': tenantId,
+        'room_id': newBed.roomId,
+        'bed_id': newBedId,
+        'check_in_date': now.toIso8601String(),
+        'expected_checkout_date': tenant.checkOutDate?.toIso8601String(),
+        'monthly_rent_snapshot': monthlyRent,
+        'daily_rate': dailyRate,
+        'status': StayStatus.active,
+        'created_at': now.toIso8601String(),
+        'updated_at': now.toIso8601String(),
+      };
+      final stayId = await txn.insert(RentLocalSchema.tableStays, stayMap);
+
+      // Create rent record for the new stay (billing period: transfer date to transfer date + 1 month - 1 day)
+      final transferPeriodEnd = DateTime(now.year, now.month + 1, now.day)
+          .subtract(const Duration(days: 1));
+      final rentRecordMap = {
+        'stay_id': stayId,
+        'start_date': now.toIso8601String(),
+        'end_date': transferPeriodEnd.toIso8601String(),
+        'generated_at': now.toIso8601String(),
+        'due_date': now.toIso8601String(),
+        'amount_due': monthlyRent,
+        'amount_paid': 0.0,
+        'status': RentStatus.pending,
+        'created_at': now.toIso8601String(),
+        'updated_at': now.toIso8601String(),
+      };
+      await txn.insert(RentLocalSchema.tableRentRecords, rentRecordMap);
+
+      // Create deposit record for the new stay
+      final depositMap = {
+        'stay_id': stayId,
+        'amount': monthlyRent,
+        'received_date': now.toIso8601String(),
+        'refund_date': null,
+        'refunded_amount': 0.0,
+        'status': DepositStatus.pending,
+        'created_at': now.toIso8601String(),
+        'updated_at': now.toIso8601String(),
+      };
+      await txn.insert(RentLocalSchema.tableDeposits, depositMap);
 
       // Update tenant
       await txn.update(

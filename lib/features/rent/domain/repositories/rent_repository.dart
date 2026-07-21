@@ -25,11 +25,9 @@ abstract interface class RentRepository {
     required double depositAmount,
   });
 
-  Future<int> generateMonthlyRent({
-    required int billingMonth,
-    required int billingYear,
-    required DateTime dueDate,
-  });
+  /// Generates the next billing period for every active Stay that has no
+  /// open (future) Rent Record. Returns the number of new records created.
+  Future<int> generateNextBillingPeriods();
 
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord);
   Future<RentRecordEntity?> getRentRecordById(int id);

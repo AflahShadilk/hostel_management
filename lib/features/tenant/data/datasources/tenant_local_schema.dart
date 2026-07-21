@@ -24,6 +24,8 @@ class TenantLocalSchema {
   static const String colCheckOutDate = 'check_out_date';
   static const String colEmergencyContactName = 'emergency_contact_name';
   static const String colEmergencyContactPhone = 'emergency_contact_phone';
+  static const String colIdType = 'id_type';
+  static const String colIdDocumentPath = 'id_document_path';
   static const String colStatus = 'status';
   static const String colCreatedAt = 'created_at';
   static const String colUpdatedAt = 'updated_at';
@@ -50,6 +52,8 @@ class TenantLocalSchema {
         $colCheckOutDate          TEXT,
         $colEmergencyContactName  TEXT,
         $colEmergencyContactPhone TEXT,
+        $colIdType                TEXT,
+        $colIdDocumentPath        TEXT,
         $colStatus                TEXT    NOT NULL,
         $colCreatedAt             TEXT    NOT NULL,
         $colUpdatedAt             TEXT    NOT NULL,
@@ -104,5 +108,15 @@ class TenantLocalSchema {
       ''');
       await txn.execute('DROP TABLE tenants_legacy');
     });
+  }
+
+  /// Adds identity document columns to the tenants table (v8 → v9).
+  static Future<void> migrateFromVersion8(Database db) async {
+    await db.execute(
+      'ALTER TABLE $tableTenants ADD COLUMN $colIdType TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE $tableTenants ADD COLUMN $colIdDocumentPath TEXT',
+    );
   }
 }
