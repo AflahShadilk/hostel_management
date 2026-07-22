@@ -139,7 +139,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 720),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xl + MediaQuery.viewPaddingOf(context).bottom + 80,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: Column(
