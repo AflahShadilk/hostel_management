@@ -53,24 +53,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final isManager = authState.user?.role == UserRole.manager;
     final hasHostel = hostelState.hostel != null;
-    final hostelName = hostelState.hostel?.name ?? 'Dashboard';
+    final hostelName = hostelState.hostel?.name ?? 'My Hostel';
+    final ownerName = authState.user?.name.trim().isNotEmpty == true
+        ? authState.user!.name
+        : hostelState.hostel?.ownerName ?? 'there';
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: Text(hostelName),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthCubit>().logout(),
-          ),
-        ],
-      ),
-      body: Builder(
-        builder: (context) {
+      body: SafeArea(
+        child: Builder(
+          builder: (context) {
           if (isManager && !hasHostel) {
             return const AppEmptyState(
               icon: Icons.info_outline,
@@ -145,6 +137,12 @@ class _DashboardPageState extends State<DashboardPage> {
                       AppSpacing.xl,
                     ),
                     children: [
+                      _buildWelcomeCard(
+                        context,
+                        ownerName: ownerName,
+                        hostelName: hostelName,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
                       // ── 1. Occupancy KPI Grid ────────────────────────────
                       _sectionTitle(theme, 'Occupancy'),
                       const SizedBox(height: 12),
@@ -351,12 +349,95 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _buildWelcomeCard(
+    BuildContext context, {
+    required String ownerName,
+    required String hostelName,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final subtlePrimary = Color.lerp(
+      colors.primary,
+      colors.primaryContainer,
+      0.72,
+    )!;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            subtlePrimary,
+            colors.primaryContainer,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppShadows.card,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '${_greetingFor(DateTime.now())}, $ownerName',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: colors.onPrimaryContainer,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  hostelName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colors.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  "Today's overview",
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colors.onPrimaryContainer.withValues(alpha: 0.78),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          IconButton.filledTonal(
+            tooltip: 'Logout',
+            onPressed: () => context.read<AuthCubit>().logout(),
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _greetingFor(DateTime time) {
+    final hour = time.hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+  }
 
   Widget _sectionTitle(ThemeData theme, String title) {
     return Text(
