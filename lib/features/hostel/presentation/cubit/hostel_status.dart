@@ -4,6 +4,5 @@ enum HostelStatus {
   notConfigured,
   configured,
   saving,
-  success,
   failure,
 }

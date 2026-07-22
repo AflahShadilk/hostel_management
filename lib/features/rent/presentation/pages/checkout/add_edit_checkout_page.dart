@@ -104,6 +104,7 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
       stayId: int.parse(_stayId.text.trim()),
       settlementDate: checkoutDate,
       outstandingAmount: double.parse(_outstandingAmount.text.trim()),
+      currentMonthCharge: widget.settlement?.currentMonthCharge ?? 0,
       rentDue: double.parse(_rentDue.text.trim()),
       lateFee: double.parse(_lateFee.text.trim()),
       damageCharges: double.parse(_damageCharges.text.trim()),

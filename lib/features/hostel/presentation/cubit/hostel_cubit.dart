@@ -149,7 +149,7 @@ class HostelCubit extends Cubit<HostelState> {
       );
 
       final persisted = await _hostelRepository.createHostel(hostelToCreate);
-      emit(state.copyWith(status: HostelStatus.success, hostel: persisted));
+      emit(state.copyWith(status: HostelStatus.configured, hostel: persisted));
     } catch (_) {
       emit(state.copyWith(
         status: HostelStatus.failure,
@@ -249,7 +249,7 @@ class HostelCubit extends Cubit<HostelState> {
 
     try {
       await _hostelRepository.updateHostel(updatedHostel);
-      emit(state.copyWith(status: HostelStatus.success, hostel: updatedHostel));
+      emit(state.copyWith(status: HostelStatus.configured, hostel: updatedHostel));
     } catch (_) {
       emit(state.copyWith(
         status: HostelStatus.failure,

@@ -79,6 +79,13 @@ import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
+import '../../features/tenant_history/presentation/cubit/tenant_history_cubit.dart';
+import '../../features/tenant_history/presentation/cubit/tenant_history_detail_cubit.dart';
+import '../../features/tenant_history/presentation/pages/tenant_history_page.dart';
+import '../../features/tenant_history/presentation/pages/tenant_history_detail_page.dart';
+import '../../features/reports/presentation/cubit/profit_loss_cubit.dart';
+import '../../features/reports/presentation/pages/profit_loss_page.dart';
+
 abstract final class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splashPath,
@@ -152,6 +159,9 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<ExpenseCategoryCubit>()),
               BlocProvider(create: (_) => getIt<ExpenseCubit>()),
               BlocProvider(create: (_) => getIt<SearchCubit>()),
+              BlocProvider(create: (_) => getIt<TenantHistoryCubit>()),
+              BlocProvider(create: (_) => getIt<TenantHistoryDetailCubit>()),
+              BlocProvider(create: (_) => getIt<ProfitLossCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
           );
@@ -180,12 +190,7 @@ abstract final class AppRouter {
           // Branch 1: Room Management
           StatefulShellBranch(
             routes: [
-              ShellRoute(
-                builder: (context, state, child) {
-                  return child;
-                },
-                routes: [
-                  GoRoute(
+              GoRoute(
                     name: AppRoutes.roomManagementName,
                     path: AppRoutes.roomManagementPath,
                     builder: (context, state) => const RoomManagementPage(),
@@ -219,19 +224,12 @@ abstract final class AppRouter {
                       ),
                     ],
                   ),
-                ],
-              ),
             ],
           ),
           // Branch 2: Tenant Management
           StatefulShellBranch(
             routes: [
-              ShellRoute(
-                builder: (context, state, child) {
-                  return child;
-                },
-                routes: [
-                  GoRoute(
+              GoRoute(
                     name: AppRoutes.tenantManagementName,
                     path: AppRoutes.tenantManagementPath,
                     builder: (context, state) => const TenantManagementPage(),
@@ -259,8 +257,6 @@ abstract final class AppRouter {
                       ),
                     ],
                   ),
-                ],
-              ),
             ],
           ),
           // Branch 3: Stay Management
@@ -503,6 +499,35 @@ abstract final class AppRouter {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+          // Branch 12: Tenant History
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.historyName,
+                path: AppRoutes.historyPath,
+                builder: (context, state) => const TenantHistoryPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.historyDetailsName,
+                    path: AppRoutes.historyDetailsPath,
+                    builder: (context, state) => TenantHistoryDetailPage(
+                      stayIdStr: state.pathParameters['stayId'] ?? '',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 13: P&L Reports
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRoutes.profitLossName,
+                path: AppRoutes.profitLossPath,
+                builder: (context, state) => const ProfitLossPage(),
               ),
             ],
           ),

@@ -116,6 +116,8 @@ void main() {
       depositNotes: '',
       rentAmount: 0,
       rentNotes: '',
+      processDeposit: false,
+      processRent: false,
     );
 
     expect(repository.deposits, isEmpty);
@@ -124,9 +126,8 @@ void main() {
   });
 
   test('records held deposit and partial rent using existing repository calls', () async {
-    cubit.setCollectDeposit(true);
+    cubit.init(_context());
     cubit.setDepositPaymentMethod(PaymentMethod.cash);
-    cubit.setCollectRent(true);
     cubit.setRentPaymentMethod(PaymentMethod.upi);
 
     await cubit.save(
@@ -135,6 +136,8 @@ void main() {
       depositNotes: 'Cash received at check-in',
       rentAmount: 1500,
       rentNotes: 'UPI reference',
+      processDeposit: true,
+      processRent: true,
     );
 
     expect(repository.deposits.single.status, DepositStatus.held);
@@ -147,7 +150,7 @@ void main() {
   });
 
   test('rejects rent amounts above the outstanding rent', () async {
-    cubit.setCollectRent(true);
+    cubit.init(_context());
     cubit.setRentPaymentMethod(PaymentMethod.cash);
 
     await cubit.save(
@@ -156,6 +159,8 @@ void main() {
       depositNotes: '',
       rentAmount: 5000.01,
       rentNotes: '',
+      processDeposit: false,
+      processRent: true,
     );
 
     expect(repository.payments, isEmpty);

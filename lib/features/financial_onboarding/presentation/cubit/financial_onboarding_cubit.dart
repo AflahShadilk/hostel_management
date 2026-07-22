@@ -13,6 +13,24 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
 
   final RentRepository _rentRepository;
 
+  void init(TenantRegistrationContext context) {
+    // The outstanding on the initial rent record is correctly prorated by RentCalculator
+    final rent = context.initialRentRecord.outstanding;
+    emit(state.copyWith(
+      firstMonthRent: rent,
+      outstandingAmount: rent,
+    ));
+  }
+
+  void rentReceivedChanged(String value) {
+    final amount = double.tryParse(value.trim()) ?? 0.0;
+    var outstanding = state.firstMonthRent - amount;
+    if (outstanding < 0) {
+      outstanding = 0.0;
+    }
+    emit(state.copyWith(outstandingAmount: outstanding));
+  }
+
   void setCollectDeposit(bool value) {
     emit(state.copyWith(collectDeposit: value));
   }
@@ -41,11 +59,15 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
     required String depositNotes,
     required double rentAmount,
     required String rentNotes,
+    bool processDeposit = true,
+    bool processRent = true,
   }) async {
     final validationMessage = _validate(
       context: context,
       depositAmount: depositAmount,
       rentAmount: rentAmount,
+      processDeposit: processDeposit,
+      processRent: processRent,
     );
     if (validationMessage != null) {
       emit(state.copyWith(
@@ -58,14 +80,14 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
     emit(state.copyWith(status: FinancialOnboardingStatus.saving));
     try {
       final now = DateTime.now();
-      if (state.collectDeposit && depositAmount > 0) {
+      if (processDeposit && depositAmount > 0) {
         await _rentRepository.createDeposit(
           DepositEntity(
             stayId: context.stay.id!,
             amount: depositAmount,
             refundedAmount: 0,
             receivedDate: now,
-            paymentMethod: state.depositPaymentMethod!,
+            paymentMethod: state.depositPaymentMethod ?? PaymentMethod.cash,
             notes: depositNotes.trim().isEmpty ? null : depositNotes.trim(),
             status: DepositStatus.held,
             createdAt: now,
@@ -74,7 +96,7 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
         );
       }
 
-      if (state.collectRent && rentAmount > 0) {
+      if (processRent && rentAmount > 0) {
         await _rentRepository.createPayment(
           PaymentEntity(
             rentRecordId: context.initialRentRecord.id!,
@@ -82,7 +104,7 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
             tenantId: context.tenant.id!,
             amount: rentAmount,
             paymentDate: now,
-            paymentMethod: state.rentPaymentMethod!,
+            paymentMethod: state.rentPaymentMethod ?? PaymentMethod.cash,
             receiptNumber: '',
             notes: rentNotes.trim().isEmpty ? null : rentNotes.trim(),
             status: PaymentStatus.completed,
@@ -105,19 +127,24 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
     required TenantRegistrationContext context,
     required double depositAmount,
     required double rentAmount,
+    required bool processDeposit,
+    required bool processRent,
   }) {
-    if (depositAmount < 0) return 'Deposit amount cannot be negative.';
-    if (rentAmount < 0) return 'Rent amount cannot be negative.';
-    if (rentAmount > context.initialRentRecord.outstanding) {
-      return 'Rent amount cannot exceed the outstanding amount.';
+    if (processDeposit) {
+      if (depositAmount < 0) return 'Deposit amount cannot be negative.';
+      if (depositAmount > 0 && state.depositPaymentMethod == null) {
+        return 'Select a deposit payment method.';
+      }
     }
-    if (state.collectDeposit &&
-        depositAmount > 0 &&
-        state.depositPaymentMethod == null) {
-      return 'Select a deposit payment method.';
-    }
-    if (state.collectRent && rentAmount > 0 && state.rentPaymentMethod == null) {
-      return 'Select a rent payment method.';
+    
+    if (processRent) {
+      if (rentAmount < 0) return 'Rent amount cannot be negative.';
+      if (rentAmount > state.firstMonthRent) {
+        return 'Rent amount cannot exceed the outstanding amount.';
+      }
+      if (rentAmount > 0 && state.rentPaymentMethod == null) {
+        return 'Select a rent payment method.';
+      }
     }
     return null;
   }

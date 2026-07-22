@@ -23,6 +23,18 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
   final _rentNotesController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    context.read<FinancialOnboardingCubit>().init(widget.registrationContext);
+
+    _rentAmountController.addListener(() {
+      context
+          .read<FinancialOnboardingCubit>()
+          .rentReceivedChanged(_rentAmountController.text);
+    });
+  }
+
+  @override
   void dispose() {
     _depositAmountController.dispose();
     _depositNotesController.dispose();
@@ -47,7 +59,10 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Financial Onboarding')),
+        appBar: AppBar(
+          title: const Text('Financial Onboarding'),
+          centerTitle: true,
+        ),
         body: BlocBuilder<FinancialOnboardingCubit, FinancialOnboardingState>(
           builder: (context, state) {
             final saving = state.status == FinancialOnboardingStatus.saving;
@@ -63,151 +78,138 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                       children: [
                         if (saving) const LinearProgressIndicator(),
                         if (saving) const SizedBox(height: 16),
-                        _SummaryCard(registration: registration),
+                        
+                        _SummaryCard(registration: registration, state: state),
                         const SizedBox(height: 16),
+                        
                         _SectionCard(
                           title: 'Security Deposit',
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               TextFormField(
                                 controller: _depositAmountController,
-                                enabled: state.collectDeposit && !saving,
+                                enabled: !saving,
                                 keyboardType: const TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
                                 decoration: const InputDecoration(
-                                  labelText: 'Deposit amount',
-                                  prefixText: '\\u{20B9} ',
+                                  labelText: 'Deposit Amount',
+                                  prefixText: '₹ ',
+                                  border: OutlineInputBorder(),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _PaymentMethodField(
-                                value: state.depositPaymentMethod,
-                                enabled: state.collectDeposit && !saving,
+                                value: state.depositPaymentMethod ?? PaymentMethod.cash,
+                                enabled: !saving,
                                 onChanged: context
                                     .read<FinancialOnboardingCubit>()
                                     .setDepositPaymentMethod,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               TextFormField(
                                 controller: _depositNotesController,
-                                enabled: state.collectDeposit && !saving,
+                                enabled: !saving,
                                 maxLines: 2,
                                 decoration: const InputDecoration(
                                   labelText: 'Notes',
                                   helperText: 'Optional',
+                                  border: OutlineInputBorder(),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: FilledButton(
-                                      onPressed: saving
-                                          ? null
-                                          : () => context
-                                              .read<FinancialOnboardingCubit>()
-                                              .setCollectDeposit(true),
-                                      child: const Text('Collect Deposit'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: saving
-                                          ? null
-                                          : () => context
-                                              .read<FinancialOnboardingCubit>()
-                                              .setCollectDeposit(false),
-                                      child: const Text('Skip'),
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 8),
+                              FilledButton.icon(
+                                onPressed: saving ? null : () => _save(context, processDeposit: true, processRent: false),
+                                icon: const Icon(Icons.shield_outlined),
+                                label: const Text('Collect Deposit'),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 16),
+                        
                         _SectionCard(
-                          title: 'First Rent Collection',
+                          title: 'First Rent',
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _InfoRow(
-                                'Outstanding rent',
-                                '\\u{20B9} ${registration.initialRentRecord.outstanding.toStringAsFixed(2)}',
-                              ),
-                              const SizedBox(height: 12),
                               TextFormField(
                                 controller: _rentAmountController,
-                                enabled: state.collectRent && !saving,
+                                enabled: !saving,
                                 keyboardType: const TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
                                 decoration: const InputDecoration(
-                                  labelText: 'Amount received',
-                                  prefixText: '\\u{20B9} ',
+                                  labelText: 'Received Amount',
+                                  prefixText: '₹ ',
                                   helperText: 'Leave empty or enter 0 for no payment.',
+                                  border: OutlineInputBorder(),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _PaymentMethodField(
-                                value: state.rentPaymentMethod,
-                                enabled: state.collectRent && !saving,
+                                value: state.rentPaymentMethod ?? PaymentMethod.cash,
+                                enabled: !saving,
                                 onChanged: context
                                     .read<FinancialOnboardingCubit>()
                                     .setRentPaymentMethod,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               TextFormField(
                                 controller: _rentNotesController,
-                                enabled: state.collectRent && !saving,
+                                enabled: !saving,
                                 maxLines: 2,
                                 decoration: const InputDecoration(
                                   labelText: 'Notes',
                                   helperText: 'Optional',
+                                  border: OutlineInputBorder(),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: FilledButton(
-                                      onPressed: saving
-                                          ? null
-                                          : () => context
-                                              .read<FinancialOnboardingCubit>()
-                                              .setCollectRent(true),
-                                      child: const Text('Collect Rent'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: saving
-                                          ? null
-                                          : () => context
-                                              .read<FinancialOnboardingCubit>()
-                                              .setCollectRent(false),
-                                      child: const Text('Skip'),
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 8),
+                              FilledButton.icon(
+                                onPressed: saving ? null : () => _save(context, processDeposit: false, processRent: true),
+                                icon: const Icon(Icons.payments_outlined),
+                                label: const Text('Collect Rent'),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: saving ? null : () => _save(context),
-                          child: const Text('Save & Finish'),
+                        
+                        const SizedBox(height: 32),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                        
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: saving
+                                    ? null
+                                    : () => Navigator.of(context).pop(false),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Text('Skip For Now'),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: saving ? null : () => _save(context, processDeposit: true, processRent: true),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Text('Save & Finish'),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: saving
-                              ? null
-                              : () => Navigator.of(context).pop(false),
-                          child: const Text('Skip For Now'),
-                        ),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -220,7 +222,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
     );
   }
 
-  void _save(BuildContext context) {
+  void _save(BuildContext context, {required bool processDeposit, required bool processRent}) {
     final depositAmount = double.tryParse(_depositAmountController.text.trim()) ?? 0;
     final rentAmount = double.tryParse(_rentAmountController.text.trim()) ?? 0;
     context.read<FinancialOnboardingCubit>().save(
@@ -229,30 +231,53 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
           depositNotes: _depositNotesController.text,
           rentAmount: rentAmount,
           rentNotes: _rentNotesController.text,
+          processDeposit: processDeposit,
+          processRent: processRent,
         );
   }
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.registration});
+  const _SummaryCard({required this.registration, required this.state});
 
   final TenantRegistrationContext registration;
+  final FinancialOnboardingState state;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _InfoRow('Tenant', registration.tenant.fullName),
-            _InfoRow('Room', registration.room.roomNumber),
-            _InfoRow('Bed', registration.bed.bedNumber),
+            _InfoRow('👤 Tenant', registration.tenant.fullName, isBold: true),
+            const SizedBox(height: 8),
+            _InfoRow('🏠 Room', '${registration.room.roomNumber} • ${registration.bed.bedNumber}'),
+            const SizedBox(height: 8),
+            _InfoRow('📅 Check-in', _formatDate(registration.stay.checkInDate)),
+            const SizedBox(height: 8),
             _InfoRow(
-              'Monthly rent',
-              '\\u{20B9} ${registration.stay.monthlyRentSnapshot.toStringAsFixed(2)}',
+              '💰 Monthly Rent',
+              '₹${registration.stay.monthlyRentSnapshot.toStringAsFixed(0)}',
             ),
-            _InfoRow('Check-in date', _formatDate(registration.stay.checkInDate)),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            _InfoRow(
+              'First Month Rent',
+              '₹${state.firstMonthRent.toStringAsFixed(0)}',
+              isBold: true,
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              'Outstanding',
+              '₹${state.outstandingAmount.toStringAsFixed(0)}',
+              isBold: true,
+              valueColor: theme.colorScheme.error,
+            ),
           ],
         ),
       ),
@@ -268,13 +293,19 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
+        elevation: 1,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 16),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 24),
               child,
             ],
           ),
@@ -296,7 +327,10 @@ class _PaymentMethodField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DropdownButtonFormField<String>(
         value: value,
-        decoration: const InputDecoration(labelText: 'Payment method'),
+        decoration: const InputDecoration(
+          labelText: 'Payment Method',
+          border: OutlineInputBorder(),
+        ),
         items: const [
           DropdownMenuItem(value: PaymentMethod.cash, child: Text('Cash')),
           DropdownMenuItem(value: PaymentMethod.upi, child: Text('UPI')),
@@ -311,28 +345,47 @@ class _PaymentMethodField extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.label, this.value);
+  const _InfoRow(this.label, this.value, {this.isBold = false, this.valueColor});
 
   final String label;
   final String value;
+  final bool isBold;
+  final Color? valueColor;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(child: Text(label)),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.end,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textStyle = isBold
+        ? theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
+        : theme.textTheme.bodyLarge;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: textStyle?.copyWith(
+            color: isBold ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
+          ),
         ),
-      );
+        Text(
+          value,
+          style: textStyle?.copyWith(
+            color: valueColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-String _formatDate(DateTime value) =>
-    '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+String _formatDate(DateTime value) {
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  final day = value.day.toString().padLeft(2, '0');
+  final month = monthNames[value.month - 1];
+  final year = value.year;
+  return '$day $month $year';
+}

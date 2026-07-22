@@ -4,6 +4,7 @@ class CheckoutSettlementModel {
   final int? id;
   final int stayId;
   final double outstandingAmount;
+  final double currentMonthCharge;
   final double rentDue;
   final double lateFee;
   final double damageCharges;
@@ -20,6 +21,7 @@ class CheckoutSettlementModel {
     this.id,
     required this.stayId,
     required this.outstandingAmount,
+    required this.currentMonthCharge,
     required this.rentDue,
     required this.lateFee,
     required this.damageCharges,
@@ -38,6 +40,7 @@ class CheckoutSettlementModel {
       id: map['id'] as int?,
       stayId: map['stay_id'] as int,
       outstandingAmount: (map['outstanding_amount'] as num).toDouble(),
+      currentMonthCharge: (map['current_month_charge'] as num? ?? 0).toDouble(),
       rentDue: (map['rent_due'] as num).toDouble(),
       lateFee: (map['late_fee'] as num).toDouble(),
       damageCharges: (map['damage_charges'] as num).toDouble(),
@@ -61,6 +64,7 @@ class CheckoutSettlementModel {
       id: entity.id,
       stayId: entity.stayId,
       outstandingAmount: entity.outstandingAmount,
+      currentMonthCharge: entity.currentMonthCharge,
       rentDue: entity.rentDue,
       lateFee: entity.lateFee,
       damageCharges: entity.damageCharges,
@@ -79,6 +83,7 @@ class CheckoutSettlementModel {
     final map = <String, dynamic>{
       'stay_id': stayId,
       'outstanding_amount': outstandingAmount,
+      'current_month_charge': currentMonthCharge,
       'rent_due': rentDue,
       'late_fee': lateFee,
       'damage_charges': damageCharges,
@@ -100,6 +105,7 @@ class CheckoutSettlementModel {
       id: id,
       stayId: stayId,
       outstandingAmount: outstandingAmount,
+      currentMonthCharge: currentMonthCharge,
       rentDue: rentDue,
       lateFee: lateFee,
       damageCharges: damageCharges,

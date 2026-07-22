@@ -158,8 +158,7 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
               backgroundColor: AppColors.error,
             ),
           );
-        } else if (state.status == HostelStatus.success ||
-            state.status == HostelStatus.configured) {
+        } else if (state.status == HostelStatus.configured) {
           // Hostel is now configured — navigate to Home, replacing setup page.
           context.goNamed(AppRoutes.homeName);
         }

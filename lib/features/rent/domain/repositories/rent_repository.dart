@@ -33,6 +33,7 @@ abstract interface class RentRepository {
   Future<RentRecordEntity> createRentRecord(RentRecordEntity rentRecord);
   Future<RentRecordEntity?> getRentRecordById(int id);
   Future<List<RentRecordEntity>> getRentRecordsByStayId(int stayId);
+  Future<List<RentRecordEntity>> getRentRecordsByTenantId(int tenantId);
   Future<List<RentRecordEntity>> getAllRentRecords();
   Future<RentRecordEntity> updateRentRecord(RentRecordEntity rentRecord);
   Future<void> deleteRentRecord(int id);

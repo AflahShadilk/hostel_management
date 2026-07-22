@@ -32,7 +32,7 @@ class _MainShellPageState extends State<MainShellPage> {
     super.dispose();
   }
 
-  /// Maps the 12 router branches to the 5 bottom navigation tabs.
+  /// Maps the router branches to the 5 bottom navigation tabs.
   int _getSelectedIndex(int branchIndex) {
     switch (branchIndex) {
       case 1:
@@ -42,14 +42,16 @@ class _MainShellPageState extends State<MainShellPage> {
       case 3:
       case 4:
       case 5:
-        return 2; // Tenants (Tenants, Stays, Checkout)
+      case 12: // Tenant History
+        return 2; // Tenants (Tenants, Stays, Checkout, History)
       case 6:
       case 7:
       case 8:
       case 9:
       case 10:
       case 11:
-        return 3; // Finance (Damage, Deposits, Receipts, Payments, Rent, Expenses)
+      case 13: // P&L Reports
+        return 3; // Finance (Damage, Deposits, Receipts, Payments, Rent, Expenses, Reports)
       case 0:
       default:
         return 4; // More (Search, etc.)
@@ -115,6 +117,14 @@ class _MainShellPageState extends State<MainShellPage> {
           onTap: () {
             Navigator.pop(context);
             _goBranch(5);
+          },
+        ),
+        _MenuItem(
+          icon: Icons.history_rounded,
+          label: 'Tenant History',
+          onTap: () {
+            Navigator.pop(context);
+            _goBranch(12); // New branch for History
           },
         ),
       ],
@@ -192,11 +202,11 @@ class _MainShellPageState extends State<MainShellPage> {
           },
         ),
         _MenuItem(
-          icon: Icons.analytics_rounded,
-          label: 'Reports',
+          icon: Icons.bar_chart_rounded,
+          label: 'P&L Reports',
           onTap: () {
             Navigator.pop(context);
-            _showComingSoon(context);
+            _goBranch(13);
           },
         ),
         _MenuItem(

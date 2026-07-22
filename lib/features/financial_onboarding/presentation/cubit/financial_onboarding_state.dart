@@ -10,6 +10,8 @@ class FinancialOnboardingState extends Equatable {
     this.depositPaymentMethod,
     this.rentPaymentMethod,
     this.errorMessage,
+    this.firstMonthRent = 0.0,
+    this.outstandingAmount = 0.0,
   });
 
   final FinancialOnboardingStatus status;
@@ -18,6 +20,8 @@ class FinancialOnboardingState extends Equatable {
   final String? depositPaymentMethod;
   final String? rentPaymentMethod;
   final String? errorMessage;
+  final double firstMonthRent;
+  final double outstandingAmount;
 
   FinancialOnboardingState copyWith({
     FinancialOnboardingStatus? status,
@@ -28,6 +32,8 @@ class FinancialOnboardingState extends Equatable {
     String? errorMessage,
     bool clearDepositPaymentMethod = false,
     bool clearRentPaymentMethod = false,
+    double? firstMonthRent,
+    double? outstandingAmount,
   }) {
     return FinancialOnboardingState(
       status: status ?? this.status,
@@ -40,6 +46,8 @@ class FinancialOnboardingState extends Equatable {
           ? null
           : rentPaymentMethod ?? this.rentPaymentMethod,
       errorMessage: errorMessage,
+      firstMonthRent: firstMonthRent ?? this.firstMonthRent,
+      outstandingAmount: outstandingAmount ?? this.outstandingAmount,
     );
   }
 
@@ -51,5 +59,7 @@ class FinancialOnboardingState extends Equatable {
         depositPaymentMethod,
         rentPaymentMethod,
         errorMessage,
+        firstMonthRent,
+        outstandingAmount,
       ];
 }

@@ -144,7 +144,7 @@ void main() {
         ownerUserId: 2,
       );
 
-      expect(cubit.state.status, HostelStatus.success);
+      expect(cubit.state.status, HostelStatus.configured);
       expect(cubit.state.hostel, isNotNull);
       expect(cubit.state.hostel!.id, isNotNull);
       expect(cubit.state.hostel!.name, 'New Hostel');
@@ -232,7 +232,7 @@ void main() {
         ownerName: 'Alice Updated',
       );
 
-      expect(cubit.state.status, HostelStatus.success);
+      expect(cubit.state.status, HostelStatus.configured);
       expect(cubit.state.hostel!.name, 'Updated Name');
       expect(cubit.state.hostel!.ownerUserId, existing.ownerUserId);
       expect(cubit.state.hostel!.createdAt, existing.createdAt);

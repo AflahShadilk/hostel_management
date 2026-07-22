@@ -59,12 +59,24 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _monthLabel(int month, int year) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[month - 1]} $year';
   }
 
   void _submit(BuildContext context, CheckoutSummaryState summaryState) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -99,6 +111,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return MultiBlocListener(
       listeners: [
         BlocListener<CheckoutCubit, CheckoutState>(
@@ -117,7 +130,6 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                   backgroundColor: AppColors.success,
                 ),
               );
-              // Navigate back
               context.pop(true);
             }
           },
@@ -142,23 +154,24 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
         body: BlocBuilder<CheckoutCubit, CheckoutState>(
           builder: (context, checkoutState) {
             final isSubmitting = checkoutState is CheckoutLoading;
-            
+
             return BlocBuilder<CheckoutSummaryCubit, CheckoutSummaryState>(
               builder: (context, summaryState) {
                 if (summaryState.isLoading) {
                   return const Center(child: AppLoadingIndicator());
                 }
 
-                // Live calculations
-                final outstandingRent = summaryState.outstandingRent;
+                // Live settlement calculations (display only — repo re-calculates on save)
+                final pendingRent = summaryState.pendingRent;
+                final currentMonthCharge = summaryState.currentMonthCharge;
                 final depositHeld = summaryState.depositHeld;
-                
-                final totalDue = outstandingRent + _damageAmount;
-                final refund = depositHeld - totalDue;
-                final isNegativeRefund = refund < 0;
-                
-                final displayRefund = isNegativeRefund ? 0.0 : refund;
-                final remainingBalance = isNegativeRefund ? refund.abs() : 0.0;
+                final monthlyRent = summaryState.monthlyRent;
+
+                final totalDue = pendingRent + currentMonthCharge + _damageAmount;
+                final netAfterDeposit = depositHeld - totalDue;
+                final isRefund = netAfterDeposit >= 0;
+                final displayRefund = isRefund ? netAfterDeposit : 0.0;
+                final remainingBalance = isRefund ? 0.0 : netAfterDeposit.abs();
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -170,58 +183,149 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // 1. Read-only section
+                            // 1. STAY DETAILS
                             Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Stay Details', style: Theme.of(context).textTheme.titleLarge),
+                                    Text(
+                                      'Stay Details',
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
                                     const Divider(),
-                                    _InfoRow(label: 'Tenant Name', value: 'Tenant #${widget.stay.tenantId}'),
-                                    _InfoRow(label: 'Room Number', value: 'Room ${widget.stay.roomId}'),
-                                    _InfoRow(label: 'Bed Number', value: 'Bed ${widget.stay.bedId}'),
-                                    _InfoRow(label: 'Check-in Date', value: _formatDate(widget.stay.checkInDate)),
-                                    _InfoRow(label: 'Checkout Date', value: _formatDate(DateTime.now())),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            
-                            // 2. FINANCIAL SUMMARY
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.md),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Financial Summary', style: Theme.of(context).textTheme.titleLarge),
-                                    const Divider(),
-                                    _InfoRow(label: 'Outstanding Rent', value: outstandingRent.toStringAsFixed(2)),
-                                    _InfoRow(label: 'Deposit Held', value: depositHeld.toStringAsFixed(2)),
-                                    _InfoRow(label: 'Already Paid', value: summaryState.alreadyPaid.toStringAsFixed(2)),
-                                    _InfoRow(label: 'Current Balance', value: (outstandingRent - depositHeld).toStringAsFixed(2)),
+                                    _InfoRow(
+                                      label: 'Tenant',
+                                      value: 'Tenant #${widget.stay.tenantId}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Room',
+                                      value: 'Room ${widget.stay.roomId}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Bed',
+                                      value: 'Bed ${widget.stay.bedId}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Check-in',
+                                      value: _formatDate(widget.stay.checkInDate),
+                                    ),
+                                    _InfoRow(
+                                      label: 'Checkout',
+                                      value: _formatDate(now),
+                                    ),
+                                    _InfoRow(
+                                      label: 'Monthly Rent',
+                                      value: '₹${monthlyRent.toStringAsFixed(0)}',
+                                    ),
                                   ],
                                 ),
                               ),
                             ),
                             const SizedBox(height: AppSpacing.md),
 
-                            // 3. DAMAGE CHARGES
+                            // 2. CURRENT MONTH RENT CARD
+                            Card(
+                              color: Theme.of(context).colorScheme.secondaryContainer,
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.md),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Current Month Rent',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSecondaryContainer,
+                                          ),
+                                    ),
+                                    const Divider(),
+                                    _InfoRow(
+                                      label:
+                                          '1 ${_monthLabel(now.month, now.year)} → ${now.day} ${_monthLabel(now.month, now.year)}',
+                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                      isBold: true,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Prorated for ${now.day} day${now.day == 1 ? "" : "s"} of ${_monthLabel(now.month, now.year)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSecondaryContainer
+                                                .withValues(alpha: 0.7),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // 3. FINANCIAL SUMMARY
                             Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Damage Charges', style: Theme.of(context).textTheme.titleLarge),
+                                    Text(
+                                      'Financial Summary',
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
+                                    const Divider(),
+                                    _InfoRow(
+                                      label: 'Monthly Rent',
+                                      value: '₹${monthlyRent.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Current Month Charge',
+                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Pending Rent (prev. months)',
+                                      value: '₹${pendingRent.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Already Paid',
+                                      value: '₹${summaryState.alreadyPaid.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Deposit Held',
+                                      value: '₹${depositHeld.toStringAsFixed(0)}',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // 4. DAMAGE CHARGES
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.md),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Damage Charges',
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
                                     const Divider(),
                                     AppTextField(
                                       controller: _damageController,
                                       label: 'Damage Amount',
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType: const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                       enabled: !isSubmitting,
                                       validator: (value) {
                                         if (value == null || value.isEmpty) return 'Required';
@@ -244,7 +348,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                             ),
                             const SizedBox(height: AppSpacing.md),
 
-                            // 4. SUMMARY CARD (Live Calculation)
+                            // 5. SETTLEMENT OVERVIEW (live)
                             Card(
                               color: Theme.of(context).colorScheme.primaryContainer,
                               child: Padding(
@@ -252,27 +356,64 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Settlement Overview', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                                    Text(
+                                      'Settlement Overview',
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                          ),
+                                    ),
                                     const Divider(),
-                                    _InfoRow(label: 'Outstanding Rent', value: outstandingRent.toStringAsFixed(2)),
-                                    _InfoRow(label: '+ Damage Charges', value: _damageAmount.toStringAsFixed(2)),
+                                    _InfoRow(
+                                      label: 'Pending Rent',
+                                      value: '₹${pendingRent.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: '+ Current Month Charge',
+                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: '+ Damage Charges',
+                                      value: '₹${_damageAmount.toStringAsFixed(0)}',
+                                    ),
                                     const Divider(),
-                                    _InfoRow(label: '= Total Due', value: totalDue.toStringAsFixed(2), isBold: true),
+                                    _InfoRow(
+                                      label: '= Total Due',
+                                      value: '₹${totalDue.toStringAsFixed(0)}',
+                                      isBold: true,
+                                    ),
                                     const SizedBox(height: AppSpacing.sm),
-                                    _InfoRow(label: 'Deposit Held', value: depositHeld.toStringAsFixed(2)),
-                                    _InfoRow(label: '- Total Due', value: totalDue.toStringAsFixed(2)),
+                                    _InfoRow(
+                                      label: 'Deposit Held',
+                                      value: '₹${depositHeld.toStringAsFixed(0)}',
+                                    ),
+                                    _InfoRow(
+                                      label: '- Total Due',
+                                      value: '₹${totalDue.toStringAsFixed(0)}',
+                                    ),
                                     const Divider(),
-                                    if (isNegativeRefund)
-                                      _InfoRow(label: 'Remaining Balance', value: remainingBalance.toStringAsFixed(2), isBold: true, color: AppColors.error)
+                                    if (isRefund)
+                                      _InfoRow(
+                                        label: 'Deposit Refund',
+                                        value: '₹${displayRefund.toStringAsFixed(0)}',
+                                        isBold: true,
+                                        color: AppColors.success,
+                                      )
                                     else
-                                      _InfoRow(label: 'Refund', value: displayRefund.toStringAsFixed(2), isBold: true, color: AppColors.success),
+                                      _InfoRow(
+                                        label: 'Remaining Balance (tenant owes)',
+                                        value: '₹${remainingBalance.toStringAsFixed(0)}',
+                                        isBold: true,
+                                        color: AppColors.error,
+                                      ),
                                   ],
                                 ),
                               ),
                             ),
                             const SizedBox(height: AppSpacing.xl),
 
-                            // 5. BUTTONS
+                            // 6. BUTTONS
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -284,7 +425,9 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                 AppButton(
                                   label: 'Complete Checkout',
                                   isLoading: isSubmitting,
-                                  onPressed: isSubmitting ? null : () => _submit(context, summaryState),
+                                  onPressed: isSubmitting
+                                      ? null
+                                      : () => _submit(context, summaryState),
                                 ),
                               ],
                             ),
@@ -294,7 +437,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                     ),
                   ),
                 );
-              }
+              },
             );
           },
         ),
@@ -323,19 +466,21 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: isBold ? FontWeight.bold : null,
-              color: color,
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isBold ? FontWeight.bold : null,
+                    color: color,
+                  ),
             ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: isBold ? FontWeight.bold : null,
-              color: color,
-            ),
+                  fontWeight: isBold ? FontWeight.bold : null,
+                  color: color,
+                ),
           ),
         ],
       ),
