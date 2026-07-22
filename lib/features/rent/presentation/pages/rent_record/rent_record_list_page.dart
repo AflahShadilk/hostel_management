@@ -7,6 +7,7 @@ import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../domain/entities/rent_record_entity.dart';
 import '../../cubit/rent_record/rent_record_cubit.dart';
 import '../../cubit/rent_record/rent_record_state.dart';
@@ -104,9 +105,10 @@ class _RentRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final balance = record.amountDue - record.amountPaid;
-    return Card(
+    return AppDashboardCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => context.pushNamed(
           AppRoutes.rentRecordDetailsName,
           pathParameters: {'rentRecordId': record.id!.toString()},

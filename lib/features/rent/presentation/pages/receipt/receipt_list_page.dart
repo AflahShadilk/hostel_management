@@ -7,6 +7,7 @@ import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../../core/widgets/app_safe_area_fab.dart';
 import '../../../domain/entities/receipt_entity.dart';
 import '../../cubit/receipt/receipt_cubit.dart';
 import '../../cubit/receipt/receipt_state.dart';
@@ -39,7 +40,7 @@ class _ReceiptListPageState extends State<ReceiptListPage> {
     child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Receipts')),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.pushNamed(AppRoutes.addReceiptName), icon: const Icon(Icons.add), label: const Text('Add Receipt')),
+      floatingActionButton: AppSafeAreaFab(child: FloatingActionButton.extended(onPressed: () => context.pushNamed(AppRoutes.addReceiptName), icon: const Icon(Icons.add), label: const Text('Add Receipt'))),
       body: BlocBuilder<ReceiptCubit, ReceiptState>(builder: (context, state) {
         if (state is ReceiptInitial || state is ReceiptLoading) { return const Center(child: AppLoadingIndicator()); }
         if (state is ReceiptEmpty) { return const AppEmptyState(icon: Icons.receipt_long_outlined, title: 'No receipts found'); }

@@ -119,17 +119,12 @@ flutter:
 # Run: dart run flutter_native_splash:create
 # -----------------------------------------------------------------------
 flutter_native_splash:
-  # Brand background — matches AppColors.background (#F8FAFC)
+  # Brand background
   color: "#F8FAFC"
 
-  # Centered logo on the splash screen (512x512 PNG, blue icon on transparent bg)
-  image: assets/splash/splash_logo.png
-
-  # Android 12+ splash screen API (SplashScreen API)
+  # Android 12+
   android_12:
-    image: assets/splash/splash_logo.png
     color: "#F8FAFC"
-    # Icon background is the same as the main background
     icon_background_color: "#F8FAFC"
 
   # Platform targets

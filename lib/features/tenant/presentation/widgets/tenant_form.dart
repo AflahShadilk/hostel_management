@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../../core/widgets/app_dropdown_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/utils/tenant_validators.dart';
@@ -437,13 +438,7 @@ class _CurrentBedInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return AppDashboardCard(
       child: Row(
         children: [
           const Icon(Icons.bed_outlined,

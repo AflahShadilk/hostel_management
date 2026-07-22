@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../room/domain/entities/bed_entity.dart';
 import '../cubit/bed_selection_cubit.dart';
 import '../cubit/bed_selection_state.dart';
@@ -55,13 +56,7 @@ class BedSelectionWidget extends StatelessWidget {
             final groups = state.roomWithBeds;
 
             if (groups.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.border),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              return AppDashboardCard(
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline,
@@ -80,11 +75,8 @@ class BedSelectionWidget extends StatelessWidget {
               );
             }
 
-            return Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(8),
-              ),
+            return AppDashboardCard(
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

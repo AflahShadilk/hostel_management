@@ -7,6 +7,7 @@ import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../../core/widgets/app_safe_area_fab.dart';
 import '../../../domain/entities/payment_entity.dart';
 import '../../cubit/payment/payment_cubit.dart';
 import '../../cubit/payment/payment_state.dart';
@@ -42,10 +43,12 @@ class _PaymentListPageState extends State<PaymentListPage> {
     child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Payments')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed(AppRoutes.addPaymentName),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Payment'),
+      floatingActionButton: AppSafeAreaFab(
+        child: FloatingActionButton.extended(
+          onPressed: () => context.pushNamed(AppRoutes.addPaymentName),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Payment'),
+        ),
       ),
       body: BlocBuilder<PaymentCubit, PaymentState>(
         builder: (context, state) {

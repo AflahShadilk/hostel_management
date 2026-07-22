@@ -6,6 +6,7 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/di/injection.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../domain/entities/rent_record_entity.dart';
 import '../../../../communication/domain/repositories/communication_repository.dart';
 import '../../cubit/rent_record/rent_record_cubit.dart';
@@ -110,12 +111,10 @@ class _RentRecordDetailsPageState extends State<RentRecordDetailsPage> {
             body: ListView(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 children: [
-                  Card(
-                      child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                  AppDashboardCard(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                                 Text('Status: ${record.status}',
                                     style: Theme.of(context)
                                         .textTheme
@@ -131,7 +130,7 @@ class _RentRecordDetailsPageState extends State<RentRecordDetailsPage> {
                                 _Row('Due Date', _date(record.dueDate)),
                                 _Row('Created Date', _date(record.createdAt)),
                                 _Row('Updated Date', _date(record.updatedAt)),
-                              ]))),
+                              ])),
                 ]),
           ),
         );

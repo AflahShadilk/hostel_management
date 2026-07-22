@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
+import '../../../../../core/widgets/app_safe_area_fab.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../domain/entities/expense_category_entity.dart';
 import '../../../domain/entities/expense_entity.dart';
@@ -89,10 +90,12 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _openExpensePage(AppRoutes.addExpenseName),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Expense'),
+          floatingActionButton: AppSafeAreaFab(
+            child: FloatingActionButton.extended(
+              onPressed: () => _openExpensePage(AppRoutes.addExpenseName),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Expense'),
+            ),
           ),
           body: Column(
             children: [

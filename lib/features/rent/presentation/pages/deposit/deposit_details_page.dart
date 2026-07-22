@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../domain/entities/deposit_entity.dart';
 import '../../cubit/deposit/deposit_cubit.dart';
 import '../../cubit/deposit/deposit_state.dart';
@@ -90,9 +91,7 @@ class _DepositDetailsPageState extends State<DepositDetailsPage> {
                 body: ListView(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     children: [
-                      Card(
-                          child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.md),
+                      AppDashboardCard(
                               child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -114,7 +113,7 @@ class _DepositDetailsPageState extends State<DepositDetailsPage> {
                                         _date(deposit.createdAt)),
                                     _Row('Updated Date',
                                         _date(deposit.updatedAt))
-                                  ])))
+                                  ]))
                     ])));
       }),
     );

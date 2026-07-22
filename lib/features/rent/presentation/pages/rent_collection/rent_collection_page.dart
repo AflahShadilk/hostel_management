@@ -7,6 +7,7 @@ import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/payment_entity.dart';
 import '../../../domain/entities/rent_collection_item_entity.dart';
@@ -160,15 +161,7 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Card(
-                elevation: 0,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+              child: AppDashboardCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -195,7 +188,6 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
                       ),
                     ],
                   ),
-                ),
               ),
             ),
           ],
@@ -269,12 +261,10 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
   Widget _buildFilterChip(BuildContext context, RentCollectionLoaded state,
       String label, String value) {
     final isSelected = state.activeFilter == value;
-    return FilterChip(
-      label: Text(label),
+    return AppFilterChip(
+      label: label,
       selected: isSelected,
       onSelected: (_) => context.read<RentCollectionCubit>().setFilter(value),
-      selectedColor: AppColors.primary.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.primary,
     );
   }
 
@@ -283,10 +273,9 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
     final r = item.rentRecord;
     final isFullyPaid = r.outstanding <= 0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: AppDashboardCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -545,16 +534,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
+    return AppDashboardCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -578,7 +559,6 @@ class _SummaryCard extends StatelessWidget {
                   ),
             ),
           ],
-        ),
       ),
     );
   }
@@ -659,14 +639,7 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
                   separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final payment = history[index];
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                    return AppDashboardCard(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -713,9 +686,7 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
                               ),
                             ]
                           ],
-                        ),
-                      ),
-                    );
+                    ));
                   },
                 ),
               ),
