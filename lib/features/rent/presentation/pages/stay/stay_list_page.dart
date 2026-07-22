@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,11 +8,16 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../cubit/stay/stay_cubit.dart';
 import '../../cubit/stay/stay_state.dart';
+import '../../cubit/checkout/checkout_cubit.dart';
+import '../../cubit/checkout/checkout_state.dart';
+import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
+import '../../../../tenant/presentation/cubit/tenant_state.dart';
 
 class StayListPage extends StatefulWidget {
   const StayListPage({super.key});
@@ -26,9 +33,15 @@ class _StayListPageState extends State<StayListPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<StayCubit>().loadAllStays();
+      if (mounted) {
+        context.read<StayCubit>().loadAllStays();
+        context.read<CheckoutCubit>().loadAllCheckoutSettlements();
+        if (context.read<TenantCubit>().state.tenants.isEmpty) {
+          context.read<TenantCubit>().loadTenants();
+        }
+      }
     });
   }
 
@@ -46,6 +59,7 @@ class _StayListPageState extends State<StayListPage>
 
   @override
   Widget build(BuildContext context) {
+    final tenantState = context.watch<TenantCubit>().state;
     return BlocListener<StayCubit, StayState>(
       listener: (context, state) {
         if (state is StayError) {
@@ -63,9 +77,8 @@ class _StayListPageState extends State<StayListPage>
           bottom: TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(text: 'All'),
-              Tab(text: 'Active'),
-              Tab(text: 'Checked Out'),
+              Tab(text: 'All Stays'),
+              Tab(text: 'Checkout History'),
             ],
           ),
         ),
@@ -85,28 +98,20 @@ class _StayListPageState extends State<StayListPage>
             }
             if (state is StayLoaded) {
               final allStays = state.stays;
-              final activeStays = allStays
-                  .where((s) => s.status == StayStatus.active)
-                  .toList();
-              final checkedOutStays = allStays
-                  .where((s) => s.status == StayStatus.checkedOut)
-                  .toList();
-
               return RefreshIndicator(
-                onRefresh: () => context.read<StayCubit>().loadAllStays(),
+                onRefresh: () async {
+                  await context.read<StayCubit>().loadAllStays();
+                  await context.read<CheckoutCubit>().loadAllCheckoutSettlements();
+                },
                 child: TabBarView(
                   controller: _tabController,
                   children: [
                     _StayList(
-                        stays: allStays, date: _date, emptyMessage: 'No stay records.'),
-                    _StayList(
-                        stays: activeStays,
+                        stays: allStays,
                         date: _date,
-                        emptyMessage: 'No active stays.'),
-                    _StayList(
-                        stays: checkedOutStays,
-                        date: _date,
-                        emptyMessage: 'No checked-out stays.'),
+                        tenantState: tenantState,
+                        emptyMessage: 'No stay records.'),
+                    _CheckoutHistory(tenantState: tenantState),
                   ],
                 ),
               );
@@ -123,9 +128,10 @@ class _StayList extends StatelessWidget {
   final List<StayEntity> stays;
   final String Function(DateTime?) date;
   final String emptyMessage;
+  final TenantState tenantState;
 
   const _StayList(
-      {required this.stays, required this.date, required this.emptyMessage});
+      {required this.stays, required this.date, required this.emptyMessage, required this.tenantState});
 
   @override
   Widget build(BuildContext context) {
@@ -142,16 +148,93 @@ class _StayList extends StatelessWidget {
       itemCount: stays.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) =>
-          _StayCard(stay: stays[index], date: date),
+          _StayCard(
+            stay: stays[index],
+            date: date,
+            tenantName: _tenantName(tenantState, stays[index].tenantId),
+            phoneNumber: _tenantPhone(tenantState, stays[index].tenantId),
+          ),
     );
   }
+
+  String _tenantName(TenantState tenantState, int tenantId) {
+    final matches = tenantState.tenants
+        .where((tenant) => tenant.id == tenantId)
+        .toList();
+    return matches.isEmpty ? 'Tenant information unavailable' : matches.first.fullName;
+  }
+
+  String? _tenantPhone(TenantState tenantState, int tenantId) {
+    final matches = tenantState.tenants
+        .where((tenant) => tenant.id == tenantId)
+        .toList();
+    return matches.isEmpty ? null : matches.first.phoneNumber;
+  }
+}
+
+class _CheckoutHistory extends StatelessWidget {
+  const _CheckoutHistory({required this.tenantState});
+
+  final TenantState tenantState;
+
+  @override
+  Widget build(BuildContext context) => BlocBuilder<CheckoutCubit, CheckoutState>(
+        builder: (context, state) {
+          if (state is CheckoutLoading || state is CheckoutInitial) {
+            return const Center(child: AppLoadingIndicator());
+          }
+          if (state is CheckoutEmpty) {
+            return const AppEmptyState(
+              icon: Icons.history_outlined,
+              title: 'No checkout history',
+            );
+          }
+          if (state is CheckoutLoaded) {
+            return ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              itemCount: state.settlements.length,
+              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (context, index) {
+                final settlement = state.settlements[index];
+                final matchingStays = context.read<StayCubit>().state is StayLoaded
+                    ? (context.read<StayCubit>().state as StayLoaded).stays.where((stay) => stay.id == settlement.stayId).toList()
+                    : const <StayEntity>[];
+                final tenantId = matchingStays.isEmpty ? null : matchingStays.first.tenantId;
+                final tenants = tenantId == null ? const [] : tenantState.tenants.where((tenant) => tenant.id == tenantId).toList();
+                final tenant = tenants.isEmpty ? null : tenants.first;
+                return AppDashboardCard(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(tenant?.fullName ?? 'Tenant unavailable'),
+                    subtitle: Text('Refund: ₹${settlement.refundAmount.toStringAsFixed(2)}'),
+                    trailing: Text('₹${settlement.finalAmount.toStringAsFixed(2)}'),
+                    onTap: () => context.pushNamed(
+                      AppRoutes.checkoutDetailsName,
+                      pathParameters: {'checkoutId': settlement.id!.toString()},
+                      extra: settlement,
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      );
 }
 
 class _StayCard extends StatelessWidget {
   final StayEntity stay;
   final String Function(DateTime?) date;
+  final String tenantName;
+  final String? phoneNumber;
 
-  const _StayCard({required this.stay, required this.date});
+  const _StayCard({
+    required this.stay,
+    required this.date,
+    required this.tenantName,
+    required this.phoneNumber,
+  });
 
   Color _statusColor(String status) {
     switch (status) {
@@ -182,9 +265,10 @@ class _StayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(stay.status);
-    return Card(
+    return AppDashboardCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => context.pushNamed(
           AppRoutes.stayDetailsName,
           pathParameters: {'stayId': stay.id!.toString()},
@@ -199,7 +283,7 @@ class _StayCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Tenant #${stay.tenantId}',
+                      tenantName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -225,6 +309,15 @@ class _StayCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
+              if (phoneNumber != null) ...[
+                Text(
+                  phoneNumber!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+              ],
               Row(
                 children: [
                   const Icon(Icons.meeting_room_outlined,

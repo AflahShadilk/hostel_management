@@ -10,6 +10,7 @@ import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
@@ -40,7 +41,12 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<StayCubit>().loadAllStays();
+      if (mounted) {
+        context.read<StayCubit>().loadAllStays();
+        if (context.read<TenantCubit>().state.tenants.isEmpty) {
+          context.read<TenantCubit>().loadTenants();
+        }
+      }
     });
   }
 
@@ -127,6 +133,7 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
               final isMutating =
                   context.watch<TenantCubit>().state.status ==
                       TenantOperationStatus.checkingOut;
+              final tenantState = context.watch<TenantCubit>().state;
 
               return RefreshIndicator(
                 onRefresh: () =>
@@ -138,8 +145,25 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
                       const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final stay = activeStays[index];
+                    final tenantMatches = tenantState.tenants
+                        .where((tenant) => tenant.id == stay.tenantId)
+                        .toList();
+                    final tenant = tenantMatches.isEmpty
+                        ? null
+                        : tenantMatches.first;
+                    final tenantViewMatches = tenantState.viewModels
+                        .where((viewModel) =>
+                            viewModel.tenant.id == stay.tenantId)
+                        .toList();
+                    final tenantView = tenantViewMatches.isEmpty
+                        ? null
+                        : tenantViewMatches.first;
                     return _ActiveStayCard(
                       stay: stay,
+                      tenantName: tenant?.fullName ?? 'Tenant information unavailable',
+                      phoneNumber: tenant?.phoneNumber ?? 'Phone not available',
+                      roomName: tenantView?.roomName ?? 'Room ${stay.roomId}',
+                      bedName: tenantView?.bedName ?? 'Bed ${stay.bedId}',
                       isMutating: isMutating,
                       onDetails: () => context.pushNamed(
                         AppRoutes.stayDetailsName,
@@ -166,12 +190,20 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
 
 class _ActiveStayCard extends StatelessWidget {
   final StayEntity stay;
+  final String tenantName;
+  final String phoneNumber;
+  final String roomName;
+  final String bedName;
   final bool isMutating;
   final VoidCallback onDetails;
   final VoidCallback onCheckout;
 
   const _ActiveStayCard({
     required this.stay,
+    required this.tenantName,
+    required this.phoneNumber,
+    required this.roomName,
+    required this.bedName,
     required this.isMutating,
     required this.onDetails,
     required this.onCheckout,
@@ -185,17 +217,15 @@ class _ActiveStayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
+    return AppDashboardCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    'Tenant #${stay.tenantId}',
+                    tenantName,
                     style:
                         Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
@@ -225,6 +255,20 @@ class _ActiveStayCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
+            Text(
+              '$roomName / $bedName',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              phoneNumber,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             Row(
               children: [
                 const Icon(Icons.meeting_room_outlined,
@@ -281,7 +325,6 @@ class _ActiveStayCard extends StatelessWidget {
               ],
             ),
           ],
-        ),
       ),
     );
   }

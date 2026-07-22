@@ -7,6 +7,7 @@ class CheckoutSettlementEntity extends Equatable {
   final double currentMonthCharge;
   final double rentDue;
   final double lateFee;
+  final double otherCharges;
   final double damageCharges;
   final double depositAdjustment;
   final double refundAmount;
@@ -24,6 +25,7 @@ class CheckoutSettlementEntity extends Equatable {
     required this.currentMonthCharge,
     required this.rentDue,
     required this.lateFee,
+    this.otherCharges = 0,
     required this.damageCharges,
     required this.depositAdjustment,
     required this.refundAmount,
@@ -43,6 +45,7 @@ class CheckoutSettlementEntity extends Equatable {
         currentMonthCharge,
         rentDue,
         lateFee,
+        otherCharges,
         damageCharges,
         depositAdjustment,
         refundAmount,

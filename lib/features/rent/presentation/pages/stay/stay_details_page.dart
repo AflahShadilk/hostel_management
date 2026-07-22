@@ -1,215 +1,167 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
-import '../../cubit/stay/stay_cubit.dart';
 import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
-import '../../../../tenant/presentation/cubit/tenant_state.dart';
 
-class StayDetailsPage extends StatefulWidget {
+class StayDetailsPage extends StatelessWidget {
   final StayEntity? stay;
+
   const StayDetailsPage({super.key, required this.stay});
 
-  @override
-  State<StayDetailsPage> createState() => _StayDetailsPageState();
-}
-
-class _StayDetailsPageState extends State<StayDetailsPage> {
-  bool _checkingOut = false;
-
   String _date(DateTime? value) {
-    if (value == null) return '—';
+    if (value == null) return 'Not checked out';
     return '${value.day.toString().padLeft(2, '0')}/'
         '${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 
-  Future<void> _confirmCheckout(
-      BuildContext context, StayEntity stay) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Confirm Checkout'),
-        content: Text(
-          'Checking out Tenant #${stay.tenantId} from Room ${stay.roomId} / Bed ${stay.bedId}.\n\n'
-          'This will:\n'
-          '• Mark the stay as Checked Out\n'
-          '• Release the bed\n'
-          '• Update room occupancy\n\n'
-          'Financial history will be preserved.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Checkout'),
-          ),
-        ],
-      ),
-    );
+  String _duration(StayEntity value) {
+    final end = value.checkOutDate ?? DateTime.now();
+    final days = end.difference(value.checkInDate).inDays + 1;
+    return '$days day${days == 1 ? '' : 's'}';
+  }
 
-    if (confirmed == true && mounted) {
-      setState(() => _checkingOut = true);
-      try {
-        await context
-            .read<TenantCubit>()
-            .checkOutTenant(stay.tenantId, bedId: stay.bedId);
-        if (mounted) {
-          // Reload stay list and pop back
-          context.read<StayCubit>().loadAllStays();
-          Navigator.of(context).pop(true);
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() => _checkingOut = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Checkout failed: $e'),
-                backgroundColor: AppColors.error),
-          );
-        }
-      }
+  String _statusLabel(String status) {
+    switch (status) {
+      case StayStatus.active:
+        return 'Active';
+      case StayStatus.checkedOut:
+        return 'Checked Out';
+      case StayStatus.checkoutPending:
+        return 'Pending Settlement';
+      default:
+        return status;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case StayStatus.active:
+        return AppColors.success;
+      case StayStatus.checkedOut:
+        return AppColors.textSecondary;
+      case StayStatus.checkoutPending:
+        return AppColors.warning;
+      default:
+        return AppColors.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final stay = widget.stay;
-    if (stay == null) {
+    final currentStay = stay;
+    if (currentStay == null) {
       return const Scaffold(
-          body: Center(child: Text('Stay record not found.')));
+        body: Center(child: Text('Stay record not found.')),
+      );
     }
 
-    final isActive = stay.status == StayStatus.active;
+    final tenantState = context.watch<TenantCubit>().state;
+    final tenants = tenantState.tenants
+        .where((tenant) => tenant.id == currentStay.tenantId)
+        .toList();
+    final tenant = tenants.isEmpty ? null : tenants.first;
+    final viewModels = tenantState.viewModels
+        .where((viewModel) => viewModel.tenant.id == currentStay.tenantId)
+        .toList();
+    final viewModel = viewModels.isEmpty ? null : viewModels.first;
+    final statusColor = _statusColor(currentStay.status);
+    final isActive = currentStay.status == StayStatus.active;
 
-    return BlocListener<TenantCubit, TenantState>(
-      listenWhen: (prev, curr) => prev.status != curr.status,
-      listener: (context, state) {
-        if (state.status == TenantOperationStatus.failure &&
-            state.errorMessage != null &&
-            _checkingOut) {
-          setState(() => _checkingOut = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: AppColors.error),
-          );
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Stay Details'),
-        ),
-        body: ListView(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Stay Details')),
+      body: SafeArea(
+        child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
-            // Status banner
-            _buildStatusBanner(context, stay.status),
-            const SizedBox(height: AppSpacing.md),
-            // Details card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Stay Information',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
-                    const Divider(),
-                    _DetailRow('Tenant', 'Tenant #${stay.tenantId}'),
-                    _DetailRow('Room', 'Room #${stay.roomId}'),
-                    _DetailRow('Bed', 'Bed #${stay.bedId}'),
-                    _DetailRow('Check-in Date', _date(stay.checkInDate)),
-                    if (stay.checkOutDate != null)
-                      _DetailRow('Check-out Date', _date(stay.checkOutDate)),
-                    if (stay.expectedCheckoutDate != null)
-                      _DetailRow(
-                          'Expected Checkout', _date(stay.expectedCheckoutDate)),
-                    _DetailRow('Monthly Rent',
-                        '₹${stay.monthlyRentSnapshot.toStringAsFixed(2)}'),
-                    _DetailRow('Daily Rate',
-                        '₹${stay.dailyRate.toStringAsFixed(2)}'),
-                  ],
-                ),
+            AppDashboardCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: statusColor.withValues(alpha: .12),
+                    foregroundColor: statusColor,
+                    child: Text(
+                      (tenant?.fullName.isNotEmpty ?? false)
+                          ? tenant!.fullName.characters.first.toUpperCase()
+                          : '?',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tenant?.fullName ?? 'Tenant information unavailable',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        Text(
+                          tenant?.phoneNumber ?? 'Phone not available',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Chip(
+                    label: Text(_statusLabel(currentStay.status)),
+                    backgroundColor: statusColor.withValues(alpha: .12),
+                    labelStyle: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
-            // Checkout button — only for active stays
+            const SizedBox(height: AppSpacing.md),
+            AppSectionCard(
+              title: 'Stay Timeline',
+              icon: Icons.calendar_month_outlined,
+              child: Column(
+                children: [
+                  _DetailRow('Room', viewModel?.roomName ?? 'Room ${currentStay.roomId}'),
+                  _DetailRow('Bed', viewModel?.bedName ?? 'Bed ${currentStay.bedId}'),
+                  _DetailRow('Check-in', _date(currentStay.checkInDate)),
+                  _DetailRow('Checkout', _date(currentStay.checkOutDate)),
+                  _DetailRow('Stay duration', _duration(currentStay)),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppSectionCard(
+              title: 'Stay Information',
+              icon: Icons.hotel_outlined,
+              child: Column(
+                children: [
+                  _DetailRow('Monthly rent', '₹${currentStay.monthlyRentSnapshot.toStringAsFixed(2)}'),
+                  _DetailRow('Expected checkout', _date(currentStay.expectedCheckoutDate)),
+                  _DetailRow('Status', _statusLabel(currentStay.status)),
+                ],
+              ),
+            ),
             if (isActive) ...[
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xl),
               FilledButton.icon(
-                onPressed: _checkingOut
-                    ? null
-                    : () => _confirmCheckout(context, stay),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  minimumSize: const Size.fromHeight(48),
+                onPressed: () => context.pushNamed(
+                  AppRoutes.checkoutSettlementFormName,
+                  extra: currentStay,
                 ),
-                icon: _checkingOut
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.logout_rounded),
-                label: Text(_checkingOut ? 'Processing…' : 'Checkout Tenant'),
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text('Open Checkout Settlement'),
               ),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBanner(BuildContext context, String status) {
-    Color color;
-    IconData icon;
-    String label;
-    switch (status) {
-      case StayStatus.active:
-        color = AppColors.success;
-        icon = Icons.check_circle_outline;
-        label = 'Active Stay';
-        break;
-      case StayStatus.checkedOut:
-        color = AppColors.textSecondary;
-        icon = Icons.logout_rounded;
-        label = 'Checked Out';
-        break;
-      default:
-        color = AppColors.warning;
-        icon = Icons.info_outline;
-        label = status;
-    }
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
       ),
     );
   }
@@ -218,6 +170,7 @@ class _StayDetailsPageState extends State<StayDetailsPage> {
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
+
   const _DetailRow(this.label, this.value);
 
   @override
@@ -226,12 +179,22 @@ class _DetailRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-                width: 160,
-                child: Text(label,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.w600))),
-            Expanded(child: Text(value)),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
           ],
         ),
       );

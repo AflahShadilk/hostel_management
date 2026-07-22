@@ -77,10 +77,6 @@ import '../../features/settings/data/repositories/settings_repository_impl.dart'
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
 import '../../features/financial_onboarding/presentation/cubit/financial_onboarding_cubit.dart';
-import '../../features/tenant_history/domain/repositories/tenant_history_repository.dart';
-import '../../features/tenant_history/data/repositories/tenant_history_repository_impl.dart';
-import '../../features/tenant_history/presentation/cubit/tenant_history_cubit.dart';
-import '../../features/tenant_history/presentation/cubit/tenant_history_detail_cubit.dart';
 import '../../features/reports/domain/repositories/reports_repository.dart';
 import '../../features/reports/data/repositories/reports_repository_impl.dart';
 import '../../features/reports/presentation/cubit/profit_loss_cubit.dart';
@@ -292,21 +288,6 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<SelectedStatusCubit>(() => SelectedStatusCubit(''));
   getIt.registerFactory<BalanceCubit>(() => BalanceCubit(0.0));
   getIt.registerFactory<CheckoutSummaryCubit>(() => CheckoutSummaryCubit(getIt<RentRepository>()));
-
-  // Tenant History
-  getIt.registerLazySingleton<TenantHistoryRepository>(
-    () => TenantHistoryRepositoryImpl(
-      getIt<AppDatabase>(),
-      getIt<RentRepository>(),
-      getIt<TenantRepository>(),
-    ),
-  );
-  getIt.registerFactory<TenantHistoryCubit>(
-    () => TenantHistoryCubit(getIt<TenantHistoryRepository>()),
-  );
-  getIt.registerFactory<TenantHistoryDetailCubit>(
-    () => TenantHistoryDetailCubit(getIt<TenantHistoryRepository>()),
-  );
 
   // Reports
   getIt.registerLazySingleton<ReportsRepository>(

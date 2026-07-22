@@ -126,6 +126,10 @@ class AppDatabase {
     if (oldVersion < 14) {
       await RentLocalSchema.migrateFromVersion13(db);
     }
+
+    if (oldVersion < 15) {
+      await RentLocalSchema.migrateFromVersion14(db);
+    }
   }
 
   Future<void> close() async {

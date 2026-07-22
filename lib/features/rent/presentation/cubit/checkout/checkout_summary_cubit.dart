@@ -75,7 +75,7 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
 
   CheckoutSummaryCubit(this._rentRepository) : super(const CheckoutSummaryState());
 
-  Future<void> loadSummary(int stayId) async {
+  Future<void> loadSummary(int stayId, {DateTime? checkoutDate}) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
       final stay = await _rentRepository.getStayById(stayId);
@@ -85,8 +85,9 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
 
       double pendingRent = 0;
       double alreadyPaid = 0;
-      final now = DateTime.now();
-      final currentMonthPrefix = '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+      final effectiveCheckoutDate = checkoutDate ?? DateTime.now();
+      final currentMonthPrefix =
+          '${effectiveCheckoutDate.year}-${effectiveCheckoutDate.month.toString().padLeft(2, '0')}-01';
 
       for (final record in records) {
         if (record.startDate.toIso8601String().startsWith(currentMonthPrefix)) {
@@ -106,7 +107,10 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
       // The actual calculation is re-performed by the repository on commit.
       final monthlyRent = stay.monthlyRentSnapshot;
       final currentMonthCharge = monthlyRent > 0
-          ? RentCalculator.calculateCurrentMonthRent(monthlyRent, now)
+          ? RentCalculator.calculateCurrentMonthRent(
+              monthlyRent,
+              effectiveCheckoutDate,
+            )
           : 0.0;
 
       double depositHeld = 0;
@@ -119,7 +123,7 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
         monthlyRent: monthlyRent,
         currentMonthCharge: currentMonthCharge,
         currentMonthChargeStartDay: 1,
-        currentMonthChargeEndDay: now.day.toDouble(),
+        currentMonthChargeEndDay: effectiveCheckoutDate.day.toDouble(),
         pendingRent: pendingRent,
         depositHeld: depositHeld,
         alreadyPaid: alreadyPaid,

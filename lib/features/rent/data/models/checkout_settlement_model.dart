@@ -7,6 +7,7 @@ class CheckoutSettlementModel {
   final double currentMonthCharge;
   final double rentDue;
   final double lateFee;
+  final double otherCharges;
   final double damageCharges;
   final double depositAdjustment;
   final double refundAmount;
@@ -24,6 +25,7 @@ class CheckoutSettlementModel {
     required this.currentMonthCharge,
     required this.rentDue,
     required this.lateFee,
+    this.otherCharges = 0,
     required this.damageCharges,
     required this.depositAdjustment,
     required this.refundAmount,
@@ -43,6 +45,7 @@ class CheckoutSettlementModel {
       currentMonthCharge: (map['current_month_charge'] as num? ?? 0).toDouble(),
       rentDue: (map['rent_due'] as num).toDouble(),
       lateFee: (map['late_fee'] as num).toDouble(),
+      otherCharges: (map['other_charges'] as num? ?? 0).toDouble(),
       damageCharges: (map['damage_charges'] as num).toDouble(),
       depositAdjustment: (map['deposit_adjustment'] as num).toDouble(),
       refundAmount: (map['refund_amount'] as num).toDouble(),
@@ -67,6 +70,7 @@ class CheckoutSettlementModel {
       currentMonthCharge: entity.currentMonthCharge,
       rentDue: entity.rentDue,
       lateFee: entity.lateFee,
+      otherCharges: entity.otherCharges,
       damageCharges: entity.damageCharges,
       depositAdjustment: entity.depositAdjustment,
       refundAmount: entity.refundAmount,
@@ -86,6 +90,7 @@ class CheckoutSettlementModel {
       'current_month_charge': currentMonthCharge,
       'rent_due': rentDue,
       'late_fee': lateFee,
+      'other_charges': otherCharges,
       'damage_charges': damageCharges,
       'deposit_adjustment': depositAdjustment,
       'refund_amount': refundAmount,
@@ -108,6 +113,7 @@ class CheckoutSettlementModel {
       currentMonthCharge: currentMonthCharge,
       rentDue: rentDue,
       lateFee: lateFee,
+      otherCharges: otherCharges,
       damageCharges: damageCharges,
       depositAdjustment: depositAdjustment,
       refundAmount: refundAmount,

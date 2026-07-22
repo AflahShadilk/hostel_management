@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../../core/widgets/app_text_field.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../../domain/entities/checkout_request.dart';
+import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
 import '../../cubit/checkout/checkout_cubit.dart';
 import '../../cubit/checkout/checkout_state.dart';
 import '../../cubit/checkout/checkout_summary_cubit.dart';
@@ -27,17 +29,26 @@ class CheckoutSettlementPage extends StatefulWidget {
 
 class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
   final _damageController = TextEditingController(text: '0.0');
+  final _otherChargesController = TextEditingController(text: '0.0');
   final _notesController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   double _damageAmount = 0.0;
+  double _otherCharges = 0.0;
+  DateTime _checkoutDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<CheckoutSummaryCubit>().loadSummary(widget.stay.id!);
+        context.read<CheckoutSummaryCubit>().loadSummary(
+              widget.stay.id!,
+              checkoutDate: _checkoutDate,
+            );
+        if (context.read<TenantCubit>().state.tenants.isEmpty) {
+          context.read<TenantCubit>().loadTenants();
+        }
       }
     });
 
@@ -49,11 +60,20 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
         });
       }
     });
+    _otherChargesController.addListener(() {
+      final value = double.tryParse(_otherChargesController.text) ?? 0.0;
+      if (value != _otherCharges) {
+        setState(() {
+          _otherCharges = value;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _damageController.dispose();
+    _otherChargesController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -72,6 +92,22 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[month - 1]} $year';
+  }
+
+  Future<void> _pickCheckoutDate() async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _checkoutDate,
+      firstDate: widget.stay.checkInDate,
+      lastDate: DateTime(2100),
+    );
+    if (selectedDate == null || !mounted) return;
+
+    setState(() => _checkoutDate = selectedDate);
+    context.read<CheckoutSummaryCubit>().loadSummary(
+          widget.stay.id!,
+          checkoutDate: selectedDate,
+        );
   }
 
   void _submit(BuildContext context, CheckoutSummaryState summaryState) {
@@ -98,6 +134,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                 CheckoutRequest(
                   stayId: widget.stay.id!,
                   damageAmount: _damageAmount,
+                  otherCharges: _otherCharges,
+                  checkoutDate: _checkoutDate,
                   notes: _notesController.text,
                 ),
               );
@@ -111,7 +149,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = _checkoutDate;
     return MultiBlocListener(
       listeners: [
         BlocListener<CheckoutCubit, CheckoutState>(
@@ -161,13 +199,20 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                   return const Center(child: AppLoadingIndicator());
                 }
 
+                final tenantState = context.watch<TenantCubit>().state;
+                final tenantMatches = tenantState.tenants
+                    .where((item) => item.id == widget.stay.tenantId)
+                    .toList();
+                final tenant =
+                    tenantMatches.isEmpty ? null : tenantMatches.first;
+
                 // Live settlement calculations (display only — repo re-calculates on save)
                 final pendingRent = summaryState.pendingRent;
                 final currentMonthCharge = summaryState.currentMonthCharge;
                 final depositHeld = summaryState.depositHeld;
                 final monthlyRent = summaryState.monthlyRent;
 
-                final totalDue = pendingRent + currentMonthCharge + _damageAmount;
+                final totalDue = pendingRent + currentMonthCharge + _damageAmount + _otherCharges;
                 final netAfterDeposit = depositHeld - totalDue;
                 final isRefund = netAfterDeposit >= 0;
                 final displayRefund = isRefund ? netAfterDeposit : 0.0;
@@ -184,7 +229,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // 1. STAY DETAILS
-                            Card(
+                            AppDashboardCard(
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -197,7 +242,11 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     const Divider(),
                                     _InfoRow(
                                       label: 'Tenant',
-                                      value: 'Tenant #${widget.stay.tenantId}',
+                                      value: tenant?.fullName ?? 'Tenant information unavailable',
+                                    ),
+                                    _InfoRow(
+                                      label: 'Phone',
+                                      value: tenant?.phoneNumber ?? 'Not available',
                                     ),
                                     _InfoRow(
                                       label: 'Room',
@@ -211,9 +260,13 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                       label: 'Check-in',
                                       value: _formatDate(widget.stay.checkInDate),
                                     ),
-                                    _InfoRow(
-                                      label: 'Checkout',
-                                      value: _formatDate(now),
+                                    InkWell(
+                                      onTap: isSubmitting ? null : _pickCheckoutDate,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: _InfoRow(
+                                        label: 'Checkout Date (edit)',
+                                        value: _formatDate(_checkoutDate),
+                                      ),
                                     ),
                                     _InfoRow(
                                       label: 'Monthly Rent',
@@ -226,8 +279,9 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                             const SizedBox(height: AppSpacing.md),
 
                             // 2. CURRENT MONTH RENT CARD
-                            Card(
-                              color: Theme.of(context).colorScheme.secondaryContainer,
+                            AppDashboardCard(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.secondaryContainer,
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -271,7 +325,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                             const SizedBox(height: AppSpacing.md),
 
                             // 3. FINANCIAL SUMMARY
-                            Card(
+                            AppDashboardCard(
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -309,7 +363,7 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                             const SizedBox(height: AppSpacing.md),
 
                             // 4. DAMAGE CHARGES
-                            Card(
+                            AppDashboardCard(
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -337,6 +391,25 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     ),
                                     const SizedBox(height: AppSpacing.md),
                                     AppTextField(
+                                      controller: _otherChargesController,
+                                      label: 'Other Charges',
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                      enabled: !isSubmitting,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Required';
+                                        }
+                                        final amount = double.tryParse(value);
+                                        if (amount == null) return 'Must be a number';
+                                        if (amount < 0) return 'Cannot be negative';
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: AppSpacing.md),
+                                    AppTextField(
                                       controller: _notesController,
                                       label: 'Settlement Notes',
                                       maxLines: 3,
@@ -349,8 +422,9 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                             const SizedBox(height: AppSpacing.md),
 
                             // 5. SETTLEMENT OVERVIEW (live)
-                            Card(
-                              color: Theme.of(context).colorScheme.primaryContainer,
+                            AppDashboardCard(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primaryContainer,
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(

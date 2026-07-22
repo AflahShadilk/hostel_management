@@ -266,6 +266,9 @@ class RentRepositoryImpl implements RentRepository {
     if (!request.damageAmount.isFinite || request.damageAmount < 0) {
       throw ArgumentError('Damage amount cannot be negative.');
     }
+    if (!request.otherCharges.isFinite || request.otherCharges < 0) {
+      throw ArgumentError('Other charges cannot be negative.');
+    }
     final database = await _appDatabase.database;
     return database.transaction((txn) async {
       final stayRows = await txn.query(
@@ -284,7 +287,7 @@ class RentRepositoryImpl implements RentRepository {
       );
       if (existing.isNotEmpty) throw StateError('Checkout settlement already exists.');
 
-      final now = DateTime.now();
+      final now = request.checkoutDate ?? DateTime.now();
       final nowText = now.toIso8601String();
 
       // ----------------------------------------------------------------
@@ -363,7 +366,7 @@ class RentRepositoryImpl implements RentRepository {
       final deposit = depositRows.isEmpty ? null : depositRows.first;
       final held = deposit == null ? 0.0 : (deposit['amount'] as num).toDouble();
 
-      final totalDue = pendingRent + request.damageAmount;
+      final totalDue = pendingRent + request.damageAmount + request.otherCharges;
       final refund = (held - totalDue).clamp(0, held).toDouble();
       final adjustment = held - refund;
       final remaining = (totalDue - held).clamp(0, double.infinity).toDouble();
@@ -380,6 +383,7 @@ class RentRepositoryImpl implements RentRepository {
           'current_month_charge': currentMonthCharge,
           'rent_due': pendingRent,
           'late_fee': 0.0,
+          'other_charges': request.otherCharges,
           'damage_charges': request.damageAmount,
           'deposit_adjustment': adjustment,
           'refund_amount': refund,
@@ -473,6 +477,7 @@ class RentRepositoryImpl implements RentRepository {
         currentMonthCharge: currentMonthCharge,
         rentDue: pendingRent,
         lateFee: 0,
+        otherCharges: request.otherCharges,
         damageCharges: request.damageAmount,
         depositAdjustment: adjustment,
         refundAmount: refund,

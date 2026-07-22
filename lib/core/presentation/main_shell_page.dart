@@ -42,15 +42,14 @@ class _MainShellPageState extends State<MainShellPage> {
       case 3:
       case 4:
       case 5:
-      case 12: // Tenant History
-        return 2; // Tenants (Tenants, Stays, Checkout, History)
+        return 2; // Tenants, stays, and checkout
       case 6:
       case 7:
       case 8:
       case 9:
       case 10:
       case 11:
-      case 13: // P&L Reports
+      case 12: // P&L Reports
         return 3; // Finance (Damage, Deposits, Receipts, Payments, Rent, Expenses, Reports)
       case 0:
       default:
@@ -117,14 +116,6 @@ class _MainShellPageState extends State<MainShellPage> {
           onTap: () {
             Navigator.pop(context);
             _goBranch(5);
-          },
-        ),
-        _MenuItem(
-          icon: Icons.history_rounded,
-          label: 'Tenant History',
-          onTap: () {
-            Navigator.pop(context);
-            _goBranch(12); // New branch for History
           },
         ),
       ],
@@ -206,7 +197,7 @@ class _MainShellPageState extends State<MainShellPage> {
           label: 'P&L Reports',
           onTap: () {
             Navigator.pop(context);
-            _goBranch(13);
+            _goBranch(12);
           },
         ),
         _MenuItem(

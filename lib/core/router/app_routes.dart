@@ -132,11 +132,6 @@ abstract final class AppRoutes {
   static const String editExpenseName = 'editExpense';
   static const String editExpensePath = ':expenseId/edit';
 
-  static const String historyName = 'history';
-  static const String historyPath = '/history';
-  static const String historyDetailsName = 'historyDetails';
-  static const String historyDetailsPath = ':stayId';
-
   static const String profitLossName = 'profitLoss';
   static const String profitLossPath = '/reports/profit-loss';
 }

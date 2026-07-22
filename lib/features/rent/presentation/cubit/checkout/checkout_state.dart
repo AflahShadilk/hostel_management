@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entities/checkout_settlement_entity.dart';
+import '../../models/checkout_receipt_preview_view_model.dart';
 
 abstract class CheckoutState extends Equatable {
   const CheckoutState();
@@ -24,6 +25,15 @@ class CheckoutLoaded extends CheckoutState {
   final List<CheckoutSettlementEntity> settlements;
 
   const CheckoutLoaded(this.settlements);
+
+  /// Read-only preview data for receipt-oriented checkout presentation.
+  List<CheckoutReceiptPreviewViewModel> get receiptPreviews =>
+      settlements
+          .map(
+            (settlement) =>
+                CheckoutReceiptPreviewViewModel(settlement: settlement),
+          )
+          .toList(growable: false);
 
   @override
   List<Object?> get props => [settlements];

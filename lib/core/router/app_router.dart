@@ -64,6 +64,7 @@ import '../../features/rent/presentation/pages/damage_charge/damage_charge_detai
 import '../../features/rent/presentation/pages/damage_charge/damage_charge_list_page.dart';
 import '../../features/rent/domain/entities/checkout_settlement_entity.dart';
 import '../../features/rent/presentation/cubit/checkout/checkout_cubit.dart';
+import '../../features/rent/presentation/cubit/checkout/checkout_summary_cubit.dart';
 import '../../features/rent/presentation/pages/checkout/add_edit_checkout_page.dart';
 import '../../features/rent/presentation/pages/checkout/checkout_details_page.dart';
 import '../../features/rent/presentation/pages/checkout/checkout_flow_page.dart';
@@ -79,10 +80,6 @@ import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
-import '../../features/tenant_history/presentation/cubit/tenant_history_cubit.dart';
-import '../../features/tenant_history/presentation/cubit/tenant_history_detail_cubit.dart';
-import '../../features/tenant_history/presentation/pages/tenant_history_page.dart';
-import '../../features/tenant_history/presentation/pages/tenant_history_detail_page.dart';
 import '../../features/reports/presentation/cubit/profit_loss_cubit.dart';
 import '../../features/reports/presentation/pages/profit_loss_page.dart';
 
@@ -159,8 +156,6 @@ abstract final class AppRouter {
               BlocProvider(create: (_) => getIt<ExpenseCategoryCubit>()),
               BlocProvider(create: (_) => getIt<ExpenseCubit>()),
               BlocProvider(create: (_) => getIt<SearchCubit>()),
-              BlocProvider(create: (_) => getIt<TenantHistoryCubit>()),
-              BlocProvider(create: (_) => getIt<TenantHistoryDetailCubit>()),
               BlocProvider(create: (_) => getIt<ProfitLossCubit>()),
             ],
             child: MainShellPage(navigationShell: navigationShell),
@@ -303,22 +298,44 @@ abstract final class AppRouter {
                       path: AppRoutes.addCheckoutPath,
                       builder: (context, state) => const AddEditCheckoutPage()),
                   GoRoute(
-                      name: AppRoutes.checkoutDetailsName,
-                      path: AppRoutes.checkoutDetailsPath,
-                      builder: (context, state) => CheckoutDetailsPage(
-                          settlement:
-                              state.extra as CheckoutSettlementEntity?)),
-                  GoRoute(
                       name: AppRoutes.editCheckoutName,
                       path: AppRoutes.editCheckoutPath,
-                      builder: (context, state) => AddEditCheckoutPage(
-                          settlement:
-                              state.extra as CheckoutSettlementEntity?)),
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        return AddEditCheckoutPage(
+                          settlement: extra is CheckoutSettlementEntity
+                              ? extra
+                              : null,
+                        );
+                      }),
                   GoRoute(
                       name: AppRoutes.checkoutSettlementFormName,
                       path: AppRoutes.checkoutSettlementFormPath,
-                      builder: (context, state) => CheckoutSettlementPage(
-                          stay: state.extra as StayEntity)),
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        if (extra is! StayEntity) {
+                          return const Scaffold(
+                            body: Center(
+                              child: Text('Checkout stay data is unavailable.'),
+                            ),
+                          );
+                        }
+                        return BlocProvider<CheckoutSummaryCubit>(
+                          create: (_) => getIt<CheckoutSummaryCubit>(),
+                          child: CheckoutSettlementPage(stay: extra),
+                        );
+                      }),
+                  GoRoute(
+                      name: AppRoutes.checkoutDetailsName,
+                      path: AppRoutes.checkoutDetailsPath,
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        return CheckoutDetailsPage(
+                          settlement: extra is CheckoutSettlementEntity
+                              ? extra
+                              : null,
+                        );
+                      }),
                 ],
               ),
             ],
@@ -502,26 +519,7 @@ abstract final class AppRouter {
               ),
             ],
           ),
-          // Branch 12: Tenant History
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                name: AppRoutes.historyName,
-                path: AppRoutes.historyPath,
-                builder: (context, state) => const TenantHistoryPage(),
-                routes: [
-                  GoRoute(
-                    name: AppRoutes.historyDetailsName,
-                    path: AppRoutes.historyDetailsPath,
-                    builder: (context, state) => TenantHistoryDetailPage(
-                      stayIdStr: state.pathParameters['stayId'] ?? '',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Branch 13: P&L Reports
+          // Branch 12: P&L Reports
           StatefulShellBranch(
             routes: [
               GoRoute(

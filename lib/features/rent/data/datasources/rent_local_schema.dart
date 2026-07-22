@@ -161,7 +161,9 @@ class RentLocalSchema {
         damage_charges REAL NOT NULL DEFAULT 0,
         final_amount REAL NOT NULL DEFAULT 0,
         outstanding_amount REAL NOT NULL DEFAULT 0,
+        current_month_charge REAL NOT NULL DEFAULT 0,
         late_fee REAL NOT NULL DEFAULT 0,
+        other_charges REAL NOT NULL DEFAULT 0,
         refund_amount REAL NOT NULL DEFAULT 0,
         settlement_date TEXT,
         notes TEXT,
@@ -189,6 +191,18 @@ class RentLocalSchema {
 
   static Future<void> migrateFromVersion13(Database db) async {
     await db.execute('ALTER TABLE $tableCheckoutSettlements ADD COLUMN notes TEXT');
+  }
+
+  /// Adds the checkout snapshot values introduced by the settlement workflow.
+  static Future<void> migrateFromVersion14(Database db) async {
+    await db.transaction((txn) async {
+      await txn.execute(
+        'ALTER TABLE $tableCheckoutSettlements ADD COLUMN current_month_charge REAL NOT NULL DEFAULT 0',
+      );
+      await txn.execute(
+        'ALTER TABLE $tableCheckoutSettlements ADD COLUMN other_charges REAL NOT NULL DEFAULT 0',
+      );
+    });
   }
 
   /// Migrates the v4 rent foundation to v5 without deleting financial rows.
