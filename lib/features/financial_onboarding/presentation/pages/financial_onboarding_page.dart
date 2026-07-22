@@ -48,13 +48,31 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
     final registration = widget.registrationContext;
     return BlocListener<FinancialOnboardingCubit, FinancialOnboardingState>(
       listener: (context, state) {
+        // A validation or platform error occurred — show the message.
         if (state.status == FinancialOnboardingStatus.failure &&
             state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage!)),
           );
         }
-        if (state.status == FinancialOnboardingStatus.success) {
+
+        // A single section was saved — stay on page, show confirmation.
+        if (state.status == FinancialOnboardingStatus.stepSaved) {
+          final label = state.depositDone && !state.rentDone
+              ? 'Deposit saved ✔'
+              : state.rentDone && !state.depositDone
+                  ? 'Rent saved ✔'
+                  : 'Section saved ✔';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(label),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Both sections are resolved — the ONLY moment we navigate away.
+        if (state.status == FinancialOnboardingStatus.completed) {
           Navigator.of(context).pop(true);
         }
       },
@@ -122,9 +140,17 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               const Divider(),
                               const SizedBox(height: 8),
                               FilledButton.icon(
-                                onPressed: saving ? null : () => _save(context, processDeposit: true, processRent: false),
-                                icon: const Icon(Icons.shield_outlined),
-                                label: const Text('Collect Deposit'),
+                                onPressed: saving || state.depositDone
+                                    ? null
+                                    : () => _saveDeposit(context),
+                                icon: state.depositDone
+                                    ? const Icon(Icons.check_circle_outline)
+                                    : const Icon(Icons.shield_outlined),
+                                label: Text(
+                                  state.depositDone
+                                      ? 'Deposit Collected'
+                                      : 'Collect Deposit',
+                                ),
                               ),
                             ],
                           ),
@@ -172,9 +198,17 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               const Divider(),
                               const SizedBox(height: 8),
                               FilledButton.icon(
-                                onPressed: saving ? null : () => _save(context, processDeposit: false, processRent: true),
-                                icon: const Icon(Icons.payments_outlined),
-                                label: const Text('Collect Rent'),
+                                onPressed: saving || state.rentDone
+                                    ? null
+                                    : () => _saveRent(context),
+                                icon: state.rentDone
+                                    ? const Icon(Icons.check_circle_outline)
+                                    : const Icon(Icons.payments_outlined),
+                                label: Text(
+                                  state.rentDone
+                                      ? 'Rent Collected'
+                                      : 'Collect Rent',
+                                ),
                               ),
                             ],
                           ),
@@ -190,7 +224,9 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               child: OutlinedButton(
                                 onPressed: saving
                                     ? null
-                                    : () => Navigator.of(context).pop(false),
+                                    : () => context
+                                        .read<FinancialOnboardingCubit>()
+                                        .skipAndFinish(),
                                 child: const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 12),
                                   child: Text('Skip For Now'),
@@ -200,7 +236,9 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: FilledButton(
-                                onPressed: saving ? null : () => _save(context, processDeposit: true, processRent: true),
+                                onPressed: saving
+                                    ? null
+                                    : () => _finish(context),
                                 child: const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 12),
                                   child: Text('Save & Finish'),
@@ -222,17 +260,49 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
     );
   }
 
-  void _save(BuildContext context, {required bool processDeposit, required bool processRent}) {
-    final depositAmount = double.tryParse(_depositAmountController.text.trim()) ?? 0;
-    final rentAmount = double.tryParse(_rentAmountController.text.trim()) ?? 0;
-    context.read<FinancialOnboardingCubit>().save(
+  void _saveDeposit(BuildContext context) {
+    final depositAmount =
+        double.tryParse(_depositAmountController.text.trim()) ?? 0;
+    context.read<FinancialOnboardingCubit>().saveSection(
+          context: widget.registrationContext,
+          depositAmount: depositAmount,
+          depositNotes: _depositNotesController.text,
+          rentAmount: 0,
+          rentNotes: '',
+          processDeposit: true,
+          processRent: false,
+        );
+  }
+
+  void _saveRent(BuildContext context) {
+    final rentAmount =
+        double.tryParse(_rentAmountController.text.trim()) ?? 0;
+    context.read<FinancialOnboardingCubit>().saveSection(
+          context: widget.registrationContext,
+          depositAmount: 0,
+          depositNotes: '',
+          rentAmount: rentAmount,
+          rentNotes: _rentNotesController.text,
+          processDeposit: false,
+          processRent: true,
+        );
+  }
+
+  /// Called by both "Skip For Now" and "Save & Finish".
+  ///
+  /// The cubit's [finish] method handles any remaining unsaved sections
+  /// (including zero-amount skips) and then emits [completed] to navigate away.
+  void _finish(BuildContext context) {
+    final depositAmount =
+        double.tryParse(_depositAmountController.text.trim()) ?? 0;
+    final rentAmount =
+        double.tryParse(_rentAmountController.text.trim()) ?? 0;
+    context.read<FinancialOnboardingCubit>().finish(
           context: widget.registrationContext,
           depositAmount: depositAmount,
           depositNotes: _depositNotesController.text,
           rentAmount: rentAmount,
           rentNotes: _rentNotesController.text,
-          processDeposit: processDeposit,
-          processRent: processRent,
         );
   }
 }
