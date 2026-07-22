@@ -114,6 +114,21 @@ class RentLocalSchema {
     ''');
 
     await db.execute('''
+      CREATE TABLE $tableReceipts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        payment_id INTEGER NOT NULL,
+        receipt_number TEXT NOT NULL UNIQUE,
+        payment_amount_snapshot REAL NOT NULL,
+        payment_method_snapshot TEXT NOT NULL,
+        issued_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+
+        FOREIGN KEY(payment_id) REFERENCES $tablePayments(id) ON DELETE RESTRICT
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE $tableDeposits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         stay_id INTEGER NOT NULL,
@@ -203,6 +218,24 @@ class RentLocalSchema {
         'ALTER TABLE $tableCheckoutSettlements ADD COLUMN other_charges REAL NOT NULL DEFAULT 0',
       );
     });
+  }
+
+  /// v15 → v16: Re-creates the receipts table that was dropped in v9 but never recreated.
+  static Future<void> migrateFromVersion15(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableReceipts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        payment_id INTEGER NOT NULL,
+        receipt_number TEXT NOT NULL UNIQUE,
+        payment_amount_snapshot REAL NOT NULL,
+        payment_method_snapshot TEXT NOT NULL,
+        issued_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+
+        FOREIGN KEY(payment_id) REFERENCES $tablePayments(id) ON DELETE RESTRICT
+      )
+    ''');
   }
 
   /// Migrates the v4 rent foundation to v5 without deleting financial rows.

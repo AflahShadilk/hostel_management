@@ -110,19 +110,11 @@ void main() {
   });
 
   test('skip creates no financial transactions', () async {
-    await cubit.save(
-      context: _context(),
-      depositAmount: 0,
-      depositNotes: '',
-      rentAmount: 0,
-      rentNotes: '',
-      processDeposit: false,
-      processRent: false,
-    );
+    cubit.skipAndFinish();
 
     expect(repository.deposits, isEmpty);
     expect(repository.payments, isEmpty);
-    expect(cubit.state.status, FinancialOnboardingStatus.success);
+    expect(cubit.state.status, FinancialOnboardingStatus.completed);
   });
 
   test('records held deposit and partial rent using existing repository calls', () async {
@@ -130,14 +122,12 @@ void main() {
     cubit.setDepositPaymentMethod(PaymentMethod.cash);
     cubit.setRentPaymentMethod(PaymentMethod.upi);
 
-    await cubit.save(
+    await cubit.finish(
       context: _context(),
       depositAmount: 2000,
       depositNotes: 'Cash received at check-in',
       rentAmount: 1500,
       rentNotes: 'UPI reference',
-      processDeposit: true,
-      processRent: true,
     );
 
     expect(repository.deposits.single.status, DepositStatus.held);
@@ -146,14 +136,14 @@ void main() {
     expect(repository.deposits.single.notes, 'Cash received at check-in');
     expect(repository.payments.single.amount, 1500);
     expect(repository.payments.single.paymentMethod, PaymentMethod.upi);
-    expect(cubit.state.status, FinancialOnboardingStatus.success);
+    expect(cubit.state.status, FinancialOnboardingStatus.completed);
   });
 
   test('rejects rent amounts above the outstanding rent', () async {
     cubit.init(_context());
     cubit.setRentPaymentMethod(PaymentMethod.cash);
 
-    await cubit.save(
+    await cubit.saveSection(
       context: _context(),
       depositAmount: 0,
       depositNotes: '',
