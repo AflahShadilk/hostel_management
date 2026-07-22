@@ -103,19 +103,19 @@ class _MainShellPageState extends State<MainShellPage> {
           },
         ),
         _MenuItem(
-          icon: Icons.hotel_rounded,
-          label: 'Stay Records',
-          onTap: () {
-            Navigator.pop(context);
-            _goBranch(4);
-          },
-        ),
-        _MenuItem(
           icon: Icons.logout_rounded,
           label: 'Checkout',
           onTap: () {
             Navigator.pop(context);
             _goBranch(5);
+          },
+        ),
+        _MenuItem(
+          icon: Icons.hotel_rounded,
+          label: 'Stay Records',
+          onTap: () {
+            Navigator.pop(context);
+            _goBranch(4);
           },
         ),
       ],

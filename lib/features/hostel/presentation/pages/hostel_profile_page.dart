@@ -199,20 +199,6 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Hostel Profile'),
-          actions: [
-            BlocSelector<HostelCubit, HostelState, HostelStatus>(
-              selector: (s) => s.status,
-              builder: (context, status) {
-                final hostel = context.read<HostelCubit>().state.hostel;
-                if (hostel == null || _isEditing) return const SizedBox.shrink();
-                return TextButton.icon(
-                  onPressed: _enterEditMode,
-                  icon: const Icon(Icons.edit_rounded),
-                  label: const Text('Edit'),
-                );
-              },
-            ),
-          ],
         ),
         body: BlocBuilder<HostelCubit, HostelState>(
           builder: (context, state) {
@@ -246,145 +232,167 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
     final hasLogo = (hostel.logoPath != null && hostel.logoPath!.isNotEmpty);
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ----------------------------------------------------------------
-          // Hero card
-          // ----------------------------------------------------------------
           Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primary,
-                  colorScheme.primary.withValues(alpha: 0.75),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: colorScheme.outlineVariant),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x140F172A),
+                  blurRadius: 16,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 36,
-              horizontal: AppSpacing.lg,
-            ),
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo
-                Stack(
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.primaryContainer,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 3,
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colorScheme.primaryContainer,
+                    border: Border.all(
+                      color: colorScheme.surfaceContainerLowest,
+                      width: 3,
+                    ),
+                    image: hasLogo
+                        ? DecorationImage(
+                            image: FileImage(File(hostel.logoPath!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: !hasLogo
+                      ? Icon(
+                          Icons.apartment_rounded,
+                          size: 38,
+                          color: colorScheme.onPrimaryContainer,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hostel.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
                         ),
-                        image: hasLogo
-                            ? DecorationImage(
-                                image: FileImage(File(hostel.logoPath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
                       ),
-                      child: !hasLogo
-                          ? Icon(
-                              Icons.apartment_rounded,
-                              size: 44,
-                              color: colorScheme.onPrimaryContainer,
-                            )
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  hostel.name,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (hostel.gstNumber != null &&
-                    hostel.gstNumber!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'GST: ${hostel.gstNumber}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        letterSpacing: 0.3,
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        hostel.address,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.phone_outlined,
+                            size: 16,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Expanded(
+                            child: Text(
+                              hostel.phone,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
           ),
-
-          // ----------------------------------------------------------------
-          // Sections
-          // ----------------------------------------------------------------
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: AppSpacing.md),
+          FilledButton.icon(
+            onPressed: _enterEditMode,
+            icon: const Icon(Icons.edit_rounded),
+            label: const Text('Edit Profile'),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _SectionCard(
+            title: 'Contact Information',
+            icon: Icons.contacts_rounded,
+            children: [
+              _InfoRow(
+                icon: Icons.location_on_outlined,
+                label: 'Address',
+                value: hostel.address,
+              ),
+              _InfoRow(
+                icon: Icons.phone_outlined,
+                label: 'Phone',
+                value: hostel.phone,
+              ),
+              if (hostel.email != null && hostel.email!.isNotEmpty)
+                _InfoRow(
+                  icon: Icons.email_outlined,
+                  label: 'Email',
+                  value: hostel.email!,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _SectionCard(
+            title: 'Owner Information',
+            icon: Icons.person_rounded,
+            children: [
+              _InfoRow(
+                icon: Icons.badge_outlined,
+                label: 'Owner Name',
+                value: hostel.ownerName,
+              ),
+            ],
+          ),
+          if ((hostel.gstNumber?.isNotEmpty ?? false) ||
+              (hostel.website?.isNotEmpty ?? false)) ...[
+            const SizedBox(height: AppSpacing.md),
+            _SectionCard(
+              title: 'Business Information',
+              icon: Icons.business_center_outlined,
               children: [
-                _SectionCard(
-                  title: 'Contact Details',
-                  icon: Icons.contacts_rounded,
-                  children: [
-                    _InfoRow(
-                      icon: Icons.location_on_outlined,
-                      label: 'Address',
-                      value: hostel.address,
-                    ),
-                    _InfoRow(
-                      icon: Icons.phone_outlined,
-                      label: 'Phone',
-                      value: hostel.phone,
-                    ),
-                    if (hostel.email != null && hostel.email!.isNotEmpty)
-                      _InfoRow(
-                        icon: Icons.email_outlined,
-                        label: 'Email',
-                        value: hostel.email!,
-                      ),
-                    if (hostel.website != null && hostel.website!.isNotEmpty)
-                      _InfoRow(
-                        icon: Icons.language_outlined,
-                        label: 'Website',
-                        value: hostel.website!,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _SectionCard(
-                  title: 'Owner Details',
-                  icon: Icons.person_rounded,
-                  children: [
-                    _InfoRow(
-                      icon: Icons.badge_outlined,
-                      label: 'Owner Name',
-                      value: hostel.ownerName,
-                    ),
-                  ],
-                ),
+                if (hostel.gstNumber?.isNotEmpty ?? false)
+                  _InfoRow(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'GST',
+                    value: hostel.gstNumber!,
+                  ),
+                if (hostel.website?.isNotEmpty ?? false)
+                  _InfoRow(
+                    icon: Icons.language_outlined,
+                    label: 'Website',
+                    value: hostel.website!,
+                  ),
               ],
             ),
-          ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );
