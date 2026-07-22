@@ -6,6 +6,8 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
@@ -40,6 +42,10 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _ownerNameController = TextEditingController();
+  final _gstController = TextEditingController();
+  final _websiteController = TextEditingController();
+  
+  File? _selectedLogo;
 
   @override
   void initState() {
@@ -65,6 +71,8 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
     _phoneController.dispose();
     _emailController.dispose();
     _ownerNameController.dispose();
+    _gstController.dispose();
+    _websiteController.dispose();
     super.dispose();
   }
 
@@ -98,11 +106,13 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
 
     context.read<HostelCubit>().createHostel(
           name: _hostelNameController.text,
-          logoPath: null, // Image picker will be added in a future task.
+          logoPath: _selectedLogo?.path,
           address: _addressController.text,
           phone: _phoneController.text,
           email: _emailController.text,
           ownerName: _ownerNameController.text,
+          gstNumber: _gstController.text,
+          website: _websiteController.text,
           ownerUserId: user.id!,
         );
   }
@@ -133,12 +143,23 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
 
   static String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter an email address.';
+      return null; // optional
     }
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
       return 'Please enter a valid email address.';
     }
     return null;
+  }
+
+  Future<void> _pickLogo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _selectedLogo = File(result.files.single.path!);
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -228,9 +249,14 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
                       const SizedBox(height: AppSpacing.lg),
 
                       // --------------------------------------------------------
-                      // Logo Placeholder
+                      // Logo Picker
                       // --------------------------------------------------------
-                      _LogoPlaceholder(),
+                      GestureDetector(
+                        onTap: _pickLogo,
+                        child: _LogoPlaceholder(
+                          selectedLogo: _selectedLogo,
+                        ),
+                      ),
 
                       const SizedBox(height: AppSpacing.lg),
 
@@ -285,9 +311,34 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
                         controller: _ownerNameController,
                         label: 'Owner Name',
                         prefixIcon: const Icon(Icons.person_outline_rounded),
-                        textInputAction: TextInputAction.done,
+                        textInputAction: TextInputAction.next,
                         validator: (value) => _validateRequired(
                             value, 'Please enter the owner name.'),
+                      ),
+
+                      const SizedBox(height: AppSpacing.md),
+
+                      // --------------------------------------------------------
+                      // GST Number (Optional)
+                      // --------------------------------------------------------
+                      AppTextField(
+                        controller: _gstController,
+                        label: 'GST Number (Optional)',
+                        prefixIcon: const Icon(Icons.receipt_long_outlined),
+                        textInputAction: TextInputAction.next,
+                      ),
+
+                      const SizedBox(height: AppSpacing.md),
+
+                      // --------------------------------------------------------
+                      // Website (Optional)
+                      // --------------------------------------------------------
+                      AppTextField(
+                        controller: _websiteController,
+                        label: 'Website (Optional)',
+                        prefixIcon: const Icon(Icons.language_outlined),
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.done,
                       ),
 
                       const SizedBox(height: AppSpacing.xl),
@@ -335,9 +386,11 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
 // Logo Placeholder Widget
 // ---------------------------------------------------------------------------
 
-/// Informational placeholder for the future logo picker.
-/// Passes logoPath: null during hostel creation — no fake paths are created.
 class _LogoPlaceholder extends StatelessWidget {
+  final File? selectedLogo;
+
+  const _LogoPlaceholder({this.selectedLogo});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -360,12 +413,20 @@ class _LogoPlaceholder extends StatelessWidget {
               color: AppColors.background,
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(12),
+              image: selectedLogo != null
+                  ? DecorationImage(
+                      image: FileImage(selectedLogo!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(
-              Icons.apartment_rounded,
-              size: 36,
-              color: AppColors.textSecondary,
-            ),
+            child: selectedLogo == null
+                ? const Icon(
+                    Icons.apartment_rounded,
+                    size: 36,
+                    color: AppColors.textSecondary,
+                  )
+                : null,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -377,7 +438,7 @@ class _LogoPlaceholder extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Optional · Logo selection coming soon',
+            selectedLogo != null ? 'Tap to change logo' : 'Optional · Tap to select logo',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),

@@ -23,6 +23,9 @@ abstract final class AppRoutes {
   static const String hostelSetupName = 'hostelSetup';
   static const String hostelSetupPath = '/hostel/setup';
 
+  static const String hostelProfileName = 'hostelProfile';
+  static const String hostelProfilePath = '/hostel/profile';
+
   static const String homeName = 'home';
   static const String homePath = '/home';
 

@@ -27,6 +27,7 @@ class RoomManagementPage extends StatefulWidget {
 class _RoomManagementPageState extends State<RoomManagementPage> {
   // Track whether we've triggered initial load to avoid repeated DB queries.
   bool _loadTriggered = false;
+  String _selectedFloor = 'All';
 
   @override
   void initState() {
@@ -220,27 +221,120 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
       );
     }
 
+    // Extract unique floors dynamically
+    final floorSet = <String>{};
+    for (final room in state.rooms) {
+      if (room.floor.trim().isNotEmpty) {
+        floorSet.add(room.floor.trim());
+      }
+    }
+    final sortedFloors = floorSet.toList()
+      ..sort((a, b) {
+        final numA = int.tryParse(a);
+        final numB = int.tryParse(b);
+        if (numA != null && numB != null) return numA.compareTo(numB);
+        return a.compareTo(b);
+      });
+
+    final filteredRooms = _selectedFloor == 'All'
+        ? state.rooms
+        : state.rooms.where((r) => r.floor.trim() == _selectedFloor).toList();
+
     // Room list / grid.
     final isMutating = state.status == RoomOperationStatus.creating ||
         state.status == RoomOperationStatus.updating ||
         state.status == RoomOperationStatus.deleting;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = _columnCount(constraints.maxWidth);
-        return RefreshIndicator(
-          onRefresh: () async {
-            final hostelId = _hostelId;
-            if (hostelId != null) {
-              context.read<RoomCubit>().loadRooms(hostelId);
-            }
-          },
-          child: columns == 1
-              ? _buildList(context, state.rooms, isMutating)
-              : _buildGrid(context, state.rooms, isMutating, columns),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFloorFilterBar(sortedFloors),
+        Expanded(
+          child: filteredRooms.isEmpty
+              ? Center(
+                  child: AppEmptyState(
+                    icon: Icons.meeting_room_outlined,
+                    title: 'No rooms on this floor',
+                    message:
+                        'There are no rooms on ${_formatFloorLabel(_selectedFloor)}.',
+                    action: AppButton(
+                      label: 'Show All Rooms',
+                      onPressed: () => setState(() => _selectedFloor = 'All'),
+                    ),
+                  ),
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = _columnCount(constraints.maxWidth);
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        final hostelId = _hostelId;
+                        if (hostelId != null) {
+                          context.read<RoomCubit>().loadRooms(hostelId);
+                        }
+                      },
+                      child: columns == 1
+                          ? _buildList(context, filteredRooms, isMutating)
+                          : _buildGrid(
+                              context, filteredRooms, isMutating, columns),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildFloorFilterBar(List<String> floors) {
+    if (floors.isEmpty) return const SizedBox.shrink();
+    final allOptions = ['All', ...floors];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Row(
+        children: allOptions.map((floorKey) {
+          final isSelected = _selectedFloor == floorKey;
+          final label = _formatFloorLabel(floorKey);
+
+          return Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: FilterChip(
+              label: Text(label),
+              selected: isSelected,
+              showCheckmark: false,
+              onSelected: (_) {
+                setState(() {
+                  _selectedFloor = floorKey;
+                });
+              },
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  String _formatFloorLabel(String floor) {
+    if (floor == 'All') return 'All';
+    if (floor.toLowerCase().startsWith('floor')) return floor;
+    if (int.tryParse(floor) != null) return 'Floor $floor';
+    return floor;
   }
 
   Widget _buildList(

@@ -126,7 +126,9 @@ class TenantCubit extends Cubit<TenantState> {
       final matchPhone = t.phoneNumber.toLowerCase().contains(trimmedQuery);
       final matchEmail =
           t.email != null && t.email!.toLowerCase().contains(trimmedQuery);
-      return matchName || matchPhone || matchEmail;
+      final matchRoom = vm.roomName.toLowerCase().contains(trimmedQuery);
+      final matchBed = vm.bedName.toLowerCase().contains(trimmedQuery);
+      return matchName || matchPhone || matchEmail || matchRoom || matchBed;
     }).toList();
   }
 

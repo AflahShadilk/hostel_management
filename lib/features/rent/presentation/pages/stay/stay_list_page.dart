@@ -10,6 +10,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_empty_state.dart';
 import '../../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../../core/widgets/app_text_field.dart';
 import '../../../domain/constants/rent_status_constants.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../cubit/stay/stay_cubit.dart';
@@ -29,6 +30,9 @@ class StayListPage extends StatefulWidget {
 class _StayListPageState extends State<StayListPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final _searchController = TextEditingController();
+  bool _isSearchActive = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _StayListPageState extends State<StayListPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -74,6 +79,21 @@ class _StayListPageState extends State<StayListPage>
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Stay Records'),
+          actions: [
+            IconButton(
+              icon: Icon(_isSearchActive ? Icons.close : Icons.search),
+              tooltip: _isSearchActive ? 'Close search' : 'Search stays',
+              onPressed: () {
+                setState(() {
+                  _isSearchActive = !_isSearchActive;
+                  if (!_isSearchActive) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                });
+              },
+            ),
+          ],
           bottom: TabBar(
             controller: _tabController,
             tabs: const [
@@ -82,42 +102,78 @@ class _StayListPageState extends State<StayListPage>
             ],
           ),
         ),
-        // No FloatingActionButton — stays are created automatically
-        body: BlocBuilder<StayCubit, StayState>(
-          builder: (context, state) {
-            if (state is StayLoading || state is StayInitial) {
-              return const Center(child: AppLoadingIndicator());
-            }
-            if (state is StayEmpty) {
-              return const AppEmptyState(
-                icon: Icons.hotel_outlined,
-                title: 'No stay records yet',
-                message:
-                    'Stays are created automatically when a tenant is assigned a bed.',
-              );
-            }
-            if (state is StayLoaded) {
-              final allStays = state.stays;
-              return RefreshIndicator(
-                onRefresh: () async {
-                  await context.read<StayCubit>().loadAllStays();
-                  await context.read<CheckoutCubit>().loadAllCheckoutSettlements();
-                },
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _StayList(
-                        stays: allStays,
-                        date: _date,
-                        tenantState: tenantState,
-                        emptyMessage: 'No stay records.'),
-                    _CheckoutHistory(tenantState: tenantState),
-                  ],
+        body: Column(
+          children: [
+            if (_isSearchActive)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.xs,
                 ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+                child: AppTextField(
+                  controller: _searchController,
+                  hint: 'Search by name, phone, room, bed...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  onChanged: (query) {
+                    setState(() => _searchQuery = query);
+                  },
+                ),
+              ),
+            Expanded(
+              child: BlocBuilder<StayCubit, StayState>(
+                builder: (context, state) {
+                  if (state is StayLoading || state is StayInitial) {
+                    return const Center(child: AppLoadingIndicator());
+                  }
+                  if (state is StayEmpty) {
+                    return const AppEmptyState(
+                      icon: Icons.hotel_outlined,
+                      title: 'No stay records yet',
+                      message:
+                          'Stays are created automatically when a tenant is assigned a bed.',
+                    );
+                  }
+                  if (state is StayLoaded) {
+                    final allStays = state.stays;
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        await context.read<StayCubit>().loadAllStays();
+                        await context.read<CheckoutCubit>().loadAllCheckoutSettlements();
+                      },
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _StayList(
+                            stays: allStays,
+                            date: _date,
+                            tenantState: tenantState,
+                            emptyMessage: 'No stay records.',
+                            searchQuery: _searchQuery,
+                          ),
+                          _CheckoutHistory(
+                            tenantState: tenantState,
+                            searchQuery: _searchQuery,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -129,31 +185,61 @@ class _StayList extends StatelessWidget {
   final String Function(DateTime?) date;
   final String emptyMessage;
   final TenantState tenantState;
+  final String searchQuery;
 
-  const _StayList(
-      {required this.stays, required this.date, required this.emptyMessage, required this.tenantState});
+  const _StayList({
+    required this.stays,
+    required this.date,
+    required this.emptyMessage,
+    required this.tenantState,
+    this.searchQuery = '',
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (stays.isEmpty) {
+    final query = searchQuery.trim().toLowerCase();
+    final filteredStays = query.isEmpty
+        ? stays
+        : stays.where((stay) {
+            final matches = tenantState.tenants
+                .where((tenant) => tenant.id == stay.tenantId)
+                .toList();
+            final tenant = matches.isEmpty ? null : matches.first;
+
+            final name = tenant?.fullName.toLowerCase() ?? '';
+            final phone = tenant?.phoneNumber.toLowerCase() ?? '';
+            final roomStr = 'room ${stay.roomId}'.toLowerCase();
+            final roomNum = stay.roomId.toString();
+            final bedStr = 'bed ${stay.bedId}'.toLowerCase();
+            final bedNum = stay.bedId.toString();
+
+            return name.contains(query) ||
+                phone.contains(query) ||
+                roomStr.contains(query) ||
+                roomNum == query ||
+                bedStr.contains(query) ||
+                bedNum == query;
+          }).toList();
+
+    if (filteredStays.isEmpty) {
       return Center(
         child: AppEmptyState(
-          icon: Icons.hotel_outlined,
-          title: emptyMessage,
+          icon: query.isNotEmpty ? Icons.search_off : Icons.hotel_outlined,
+          title: query.isNotEmpty ? 'No results found' : emptyMessage,
+          message: query.isNotEmpty ? 'No stay records match your search.' : null,
         ),
       );
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: stays.length,
+      itemCount: filteredStays.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-      itemBuilder: (context, index) =>
-          _StayCard(
-            stay: stays[index],
-            date: date,
-            tenantName: _tenantName(tenantState, stays[index].tenantId),
-            phoneNumber: _tenantPhone(tenantState, stays[index].tenantId),
-          ),
+      itemBuilder: (context, index) => _StayCard(
+        stay: filteredStays[index],
+        date: date,
+        tenantName: _tenantName(tenantState, filteredStays[index].tenantId),
+        phoneNumber: _tenantPhone(tenantState, filteredStays[index].tenantId),
+      ),
     );
   }
 
@@ -173,9 +259,13 @@ class _StayList extends StatelessWidget {
 }
 
 class _CheckoutHistory extends StatelessWidget {
-  const _CheckoutHistory({required this.tenantState});
+  const _CheckoutHistory({
+    required this.tenantState,
+    this.searchQuery = '',
+  });
 
   final TenantState tenantState;
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context) => BlocBuilder<CheckoutCubit, CheckoutState>(
@@ -190,15 +280,62 @@ class _CheckoutHistory extends StatelessWidget {
             );
           }
           if (state is CheckoutLoaded) {
+            final query = searchQuery.trim().toLowerCase();
+            final allStays = context.read<StayCubit>().state is StayLoaded
+                ? (context.read<StayCubit>().state as StayLoaded).stays
+                : const <StayEntity>[];
+
+            final filteredSettlements = query.isEmpty
+                ? state.settlements
+                : state.settlements.where((settlement) {
+                    final matchingStays = allStays
+                        .where((stay) => stay.id == settlement.stayId)
+                        .toList();
+                    final stay = matchingStays.isEmpty ? null : matchingStays.first;
+                    final tenantId = stay?.tenantId;
+                    final tenants = tenantId == null
+                        ? const []
+                        : tenantState.tenants
+                            .where((tenant) => tenant.id == tenantId)
+                            .toList();
+                    final tenant = tenants.isEmpty ? null : tenants.first;
+
+                    final name = tenant?.fullName.toLowerCase() ?? '';
+                    final phone = tenant?.phoneNumber.toLowerCase() ?? '';
+                    final roomStr =
+                        stay != null ? 'room ${stay.roomId}'.toLowerCase() : '';
+                    final roomNum = stay != null ? stay.roomId.toString() : '';
+                    final bedStr =
+                        stay != null ? 'bed ${stay.bedId}'.toLowerCase() : '';
+                    final bedNum = stay != null ? stay.bedId.toString() : '';
+
+                    return name.contains(query) ||
+                        phone.contains(query) ||
+                        roomStr.contains(query) ||
+                        roomNum == query ||
+                        bedStr.contains(query) ||
+                        bedNum == query;
+                  }).toList();
+
+            if (filteredSettlements.isEmpty) {
+              return Center(
+                child: AppEmptyState(
+                  icon: query.isNotEmpty ? Icons.search_off : Icons.history_outlined,
+                  title: query.isNotEmpty ? 'No results found' : 'No checkout history',
+                  message: query.isNotEmpty ? 'No checkout records match your search.' : null,
+                ),
+              );
+            }
+
             return ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: state.settlements.length,
+              itemCount: filteredSettlements.length,
               separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
-                final settlement = state.settlements[index];
-                final matchingStays = context.read<StayCubit>().state is StayLoaded
-                    ? (context.read<StayCubit>().state as StayLoaded).stays.where((stay) => stay.id == settlement.stayId).toList()
-                    : const <StayEntity>[];
+                final settlement = filteredSettlements[index];
+                final matchingStays = allStays
+                    .where((stay) => stay.id == settlement.stayId)
+                    .toList();
                 final tenantId = matchingStays.isEmpty ? null : matchingStays.first.tenantId;
                 final tenants = tenantId == null ? const [] : tenantState.tenants.where((tenant) => tenant.id == tenantId).toList();
                 final tenant = tenants.isEmpty ? null : tenants.first;

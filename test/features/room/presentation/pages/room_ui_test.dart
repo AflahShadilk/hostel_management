@@ -36,24 +36,28 @@ class FakeHostelCubit extends Cubit<HostelState> implements HostelCubit {
 
   @override
   Future<void> createHostel({
-    required String name,
-    String? logoPath,
     required String address,
-    required String phone,
-    required String email,
+    String? email,
+    String? gstNumber,
+    String? logoPath,
+    required String name,
     required String ownerName,
     required int ownerUserId,
+    required String phone,
+    String? website,
   }) async {}
 
   @override
   Future<void> updateHostel({
-    required HostelEntity hostel,
-    required String name,
-    String? logoPath,
     required String address,
-    required String phone,
-    required String email,
+    String? email,
+    String? gstNumber,
+    required HostelEntity hostel,
+    String? logoPath,
+    required String name,
     required String ownerName,
+    required String phone,
+    String? website,
   }) async {}
 }
 
@@ -130,7 +134,7 @@ HostelState get _configuredHostelState => HostelState(
         name: 'Test Hostel',
         address: 'Address',
         phone: '1234567890',
-        email: 'test@hostel.com',
+        email: 'test@example.com',
         ownerName: 'Owner',
         ownerUserId: 1,
         createdAt: DateTime.now(),

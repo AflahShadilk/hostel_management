@@ -229,7 +229,7 @@ class _MainShellPageState extends State<MainShellPage> {
           label: 'Hostel Information',
           onTap: () {
             Navigator.pop(context);
-            _showComingSoon(context);
+            context.pushNamed(AppRoutes.hostelProfileName);
           },
         ),
         _MenuItem(

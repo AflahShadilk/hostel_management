@@ -58,8 +58,10 @@ class HostelCubit extends Cubit<HostelState> {
     String? logoPath,
     required String address,
     required String phone,
-    required String email,
+    String? email,
     required String ownerName,
+    String? gstNumber,
+    String? website,
     required int ownerUserId,
   }) async {
     if (state.status == HostelStatus.saving ||
@@ -71,7 +73,7 @@ class HostelCubit extends Cubit<HostelState> {
     final trimmedName = name.trim();
     final trimmedAddress = address.trim();
     final trimmedPhone = phone.trim();
-    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedEmail = email?.trim().toLowerCase() ?? '';
     final trimmedOwnerName = ownerName.trim();
 
     if (trimmedName.isEmpty) {
@@ -95,7 +97,7 @@ class HostelCubit extends Cubit<HostelState> {
       ));
       return;
     }
-    if (normalizedEmail.isEmpty || !_isValidEmail(normalizedEmail)) {
+    if (normalizedEmail.isNotEmpty && !_isValidEmail(normalizedEmail)) {
       emit(state.copyWith(
         status: HostelStatus.failure,
         errorMessage: 'Please enter a valid email address.',
@@ -141,8 +143,10 @@ class HostelCubit extends Cubit<HostelState> {
         logoPath: logoPath,
         address: trimmedAddress,
         phone: trimmedPhone,
-        email: normalizedEmail,
+        email: normalizedEmail.isEmpty ? null : normalizedEmail,
         ownerName: trimmedOwnerName,
+        gstNumber: gstNumber?.trim(),
+        website: website?.trim(),
         ownerUserId: ownerUserId,
         createdAt: now,
         updatedAt: now,
@@ -168,8 +172,10 @@ class HostelCubit extends Cubit<HostelState> {
     String? logoPath,
     required String address,
     required String phone,
-    required String email,
+    String? email,
     required String ownerName,
+    String? gstNumber,
+    String? website,
   }) async {
     if (hostel.id == null) {
       emit(state.copyWith(
@@ -188,7 +194,7 @@ class HostelCubit extends Cubit<HostelState> {
     final trimmedName = name.trim();
     final trimmedAddress = address.trim();
     final trimmedPhone = phone.trim();
-    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedEmail = email?.trim().toLowerCase() ?? '';
     final trimmedOwnerName = ownerName.trim();
 
     if (trimmedName.isEmpty) {
@@ -215,7 +221,7 @@ class HostelCubit extends Cubit<HostelState> {
       ));
       return;
     }
-    if (normalizedEmail.isEmpty || !_isValidEmail(normalizedEmail)) {
+    if (normalizedEmail.isNotEmpty && !_isValidEmail(normalizedEmail)) {
       emit(state.copyWith(
         status: HostelStatus.failure,
         hostel: state.hostel,
@@ -240,8 +246,10 @@ class HostelCubit extends Cubit<HostelState> {
       logoPath: logoPath,
       address: trimmedAddress,
       phone: trimmedPhone,
-      email: normalizedEmail,
+      email: normalizedEmail.isEmpty ? null : normalizedEmail,
       ownerName: trimmedOwnerName,
+      gstNumber: gstNumber?.trim(),
+      website: website?.trim(),
       ownerUserId: hostel.ownerUserId, // preserved
       createdAt: hostel.createdAt, // preserved
       updatedAt: DateTime.now(),

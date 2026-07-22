@@ -28,9 +28,11 @@ class FakeHostelRepository implements HostelRepository {
       phone: hostel.phone,
       email: hostel.email,
       ownerName: hostel.ownerName,
+      gstNumber: hostel.gstNumber,
+      website: hostel.website,
       ownerUserId: hostel.ownerUserId,
       createdAt: hostel.createdAt,
-      updatedAt: hostel.updatedAt,
+      updatedAt: DateTime.now(),
     );
     return _stored!;
   }
@@ -67,9 +69,9 @@ HostelEntity _seededHostel({int ownerUserId = 1}) => HostelEntity(
       id: 1,
       name: 'Sunrise Hostel',
       address: '42 Baker Street',
-      phone: '9876543210',
-      email: 'info@sunrise.com',
-      ownerName: 'Alice',
+      phone: '123456789',
+      email: 'seed@hostel.com',
+      ownerName: 'Seed Owner',
       ownerUserId: ownerUserId,
       createdAt: DateTime(2024, 1, 1),
       updatedAt: DateTime(2024, 1, 1),
@@ -264,9 +266,9 @@ void main() {
       final noIdHostel = HostelEntity(
         name: 'No ID',
         address: 'Addr',
-        phone: '123',
-        email: 'a@b.com',
-        ownerName: 'Owner',
+        phone: '123456',
+        email: 'test@hostel.com',
+        ownerName: 'Test Owner',
         ownerUserId: 1,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),

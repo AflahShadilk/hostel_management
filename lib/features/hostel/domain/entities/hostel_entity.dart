@@ -6,8 +6,10 @@ class HostelEntity extends Equatable {
   final String? logoPath;
   final String address;
   final String phone;
-  final String email;
+  final String? email;
   final String ownerName;
+  final String? gstNumber;
+  final String? website;
   final int ownerUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,8 +20,10 @@ class HostelEntity extends Equatable {
     this.logoPath,
     required this.address,
     required this.phone,
-    required this.email,
+    this.email,
     required this.ownerName,
+    this.gstNumber,
+    this.website,
     required this.ownerUserId,
     required this.createdAt,
     required this.updatedAt,
@@ -34,6 +38,8 @@ class HostelEntity extends Equatable {
         phone,
         email,
         ownerName,
+        gstNumber,
+        website,
         ownerUserId,
         createdAt,
         updatedAt,

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/tenant_entity.dart';
 import '../../../communication/domain/repositories/communication_repository.dart';
 import '../cubit/tenant_cubit.dart';
@@ -195,23 +196,7 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: isSearchActive
-                ? TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Search by name, phone, email...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(color: Colors.white70),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    onChanged: (query) =>
-                        context.read<TenantCubit>().search(query),
-                  )
-                : const Text('Tenants'),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
+            title: const Text('Tenants'),
             actions: [
               IconButton(
                 icon: Icon(isSearchActive ? Icons.close : Icons.search),
@@ -235,7 +220,36 @@ class _TenantManagementPageState extends State<TenantManagementPage> {
               child: const Icon(Icons.add),
             ),
           ),
-          body: _buildBody(context, state),
+          body: Column(
+            children: [
+              if (isSearchActive)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.xs,
+                  ),
+                  child: AppTextField(
+                    controller: _searchController,
+                    hint: 'Search by name, phone, room, bed...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              context.read<TenantCubit>().search('');
+                            },
+                          )
+                        : null,
+                    onChanged: (query) =>
+                        context.read<TenantCubit>().search(query),
+                  ),
+                ),
+              Expanded(child: _buildBody(context, state)),
+            ],
+          ),
         );
       },
     );
