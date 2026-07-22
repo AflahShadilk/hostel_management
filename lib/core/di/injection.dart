@@ -59,7 +59,9 @@ import '../../features/expense/domain/repositories/expense_repository.dart';
 import '../../features/expense/presentation/cubit/expense/expense_cubit.dart';
 import '../../features/expense/presentation/cubit/expense_category/expense_category_cubit.dart';
 import '../../features/communication/data/repositories/communication_repository_impl.dart';
+import '../../features/communication/data/services/communication_service.dart';
 import '../../features/communication/domain/repositories/communication_repository.dart';
+import '../../features/communication/presentation/cubit/communication_cubit.dart';
 import '../../features/search/data/repositories/search_repository_impl.dart';
 import '../../features/search/domain/repositories/search_repository.dart';
 import '../../features/search/presentation/cubit/search_cubit.dart';
@@ -240,8 +242,16 @@ Future<void> configureDependencies() async {
     () => ExpenseCubit(getIt<ExpenseRepository>()),
   );
 
+  getIt.registerLazySingleton<CommunicationService>(
+    () => const CommunicationService(),
+  );
+
   getIt.registerLazySingleton<CommunicationRepository>(
-    () => const CommunicationRepositoryImpl(),
+    () => CommunicationRepositoryImpl(getIt<CommunicationService>()),
+  );
+
+  getIt.registerFactory<CommunicationCubit>(
+    () => CommunicationCubit(getIt<CommunicationRepository>()),
   );
 
   getIt.registerLazySingleton<SearchRepository>(

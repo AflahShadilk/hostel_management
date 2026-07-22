@@ -1,149 +1,128 @@
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-
+import '../services/communication_service.dart';
 import '../../domain/repositories/communication_repository.dart';
 
+/// Implements [CommunicationRepository] by delegating every platform action to
+/// [CommunicationService].
+///
+/// This class is responsible for:
+///  * phone-number validation / normalisation
+///  * translating raw boolean results from [CommunicationService] into the
+///    presentation-friendly [CommunicationResult] type
+///
+/// It never imports [url_launcher] or [share_plus] directly.
 class CommunicationRepositoryImpl implements CommunicationRepository {
-  const CommunicationRepositoryImpl();
+  const CommunicationRepositoryImpl(this._service);
+
+  final CommunicationService _service;
+
+  // ---------------------------------------------------------------------------
+  // WhatsApp
+  // ---------------------------------------------------------------------------
 
   @override
-  Future<CommunicationResult> openWhatsAppChat(String phoneNumber) {
-    final normalizedPhoneNumber = _normalizePhoneNumber(phoneNumber);
-    if (normalizedPhoneNumber == null) {
-      return Future.value(
-        const CommunicationResult.failure('A valid phone number is required.'),
-      );
+  Future<CommunicationResult> openWhatsAppChat(String phoneNumber) async {
+    final number = _normalizePhoneNumber(phoneNumber);
+    if (number == null) {
+      return const CommunicationResult.failure(
+          'A valid phone number is required.');
     }
-
-    return _launch(
-      Uri(
-        scheme: 'whatsapp',
-        host: 'send',
-        queryParameters: <String, String>{'phone': normalizedPhoneNumber},
-      ),
-      unavailableMessage: 'WhatsApp is not available on this device.',
-    );
+    final launched = await _service.launchWhatsApp(number);
+    return launched
+        ? const CommunicationResult.success()
+        : const CommunicationResult.failure(
+            'WhatsApp is not available on this device.');
   }
 
   @override
   Future<CommunicationResult> sendWhatsAppMessage(
     String phoneNumber,
     String message,
-  ) {
-    final normalizedPhoneNumber = _normalizePhoneNumber(phoneNumber);
-    if (normalizedPhoneNumber == null) {
-      return Future.value(
-        const CommunicationResult.failure('A valid phone number is required.'),
-      );
+  ) async {
+    final number = _normalizePhoneNumber(phoneNumber);
+    if (number == null) {
+      return const CommunicationResult.failure(
+          'A valid phone number is required.');
     }
     if (message.trim().isEmpty) {
-      return Future.value(
-        const CommunicationResult.failure('A message is required.'),
-      );
+      return const CommunicationResult.failure('A message is required.');
     }
-
-    return _launch(
-      Uri(
-        scheme: 'whatsapp',
-        host: 'send',
-        queryParameters: <String, String>{
-          'phone': normalizedPhoneNumber,
-          'text': message,
-        },
-      ),
-      unavailableMessage: 'WhatsApp is not available on this device.',
-    );
+    final launched = await _service.launchWhatsAppWithMessage(number, message);
+    return launched
+        ? const CommunicationResult.success()
+        : const CommunicationResult.failure(
+            'WhatsApp is not available on this device.');
   }
 
-  @override
-  Future<CommunicationResult> makePhoneCall(String phoneNumber) {
-    final normalizedPhoneNumber = _normalizePhoneNumber(phoneNumber);
-    if (normalizedPhoneNumber == null) {
-      return Future.value(
-        const CommunicationResult.failure('A valid phone number is required.'),
-      );
-    }
+  // ---------------------------------------------------------------------------
+  // Phone call
+  // ---------------------------------------------------------------------------
 
-    return _launch(
-      Uri(scheme: 'tel', path: normalizedPhoneNumber),
-      unavailableMessage: 'Phone calls are not available on this device.',
-    );
+  @override
+  Future<CommunicationResult> makePhoneCall(String phoneNumber) async {
+    final number = _normalizePhoneNumber(phoneNumber);
+    if (number == null) {
+      return const CommunicationResult.failure(
+          'A valid phone number is required.');
+    }
+    final launched = await _service.launchPhone(number);
+    return launched
+        ? const CommunicationResult.success()
+        : const CommunicationResult.failure(
+            'Phone calls are not available on this device.');
   }
 
+  // ---------------------------------------------------------------------------
+  // SMS
+  // ---------------------------------------------------------------------------
+
   @override
-  Future<CommunicationResult> sendSms(String phoneNumber, String message) {
-    final normalizedPhoneNumber = _normalizePhoneNumber(phoneNumber);
-    if (normalizedPhoneNumber == null) {
-      return Future.value(
-        const CommunicationResult.failure('A valid phone number is required.'),
-      );
+  Future<CommunicationResult> sendSms(
+      String phoneNumber, String message) async {
+    final number = _normalizePhoneNumber(phoneNumber);
+    if (number == null) {
+      return const CommunicationResult.failure(
+          'A valid phone number is required.');
     }
     if (message.trim().isEmpty) {
-      return Future.value(
-        const CommunicationResult.failure('A message is required.'),
-      );
+      return const CommunicationResult.failure('A message is required.');
     }
-
-    return _launch(
-      Uri(
-        scheme: 'sms',
-        path: normalizedPhoneNumber,
-        queryParameters: <String, String>{'body': message},
-      ),
-      unavailableMessage: 'SMS is not available on this device.',
-    );
+    final launched = await _service.launchSms(number, message);
+    return launched
+        ? const CommunicationResult.success()
+        : const CommunicationResult.failure(
+            'SMS is not available on this device.');
   }
+
+  // ---------------------------------------------------------------------------
+  // Share
+  // ---------------------------------------------------------------------------
 
   @override
   Future<CommunicationResult> shareText(String text) async {
     if (text.trim().isEmpty) {
       return const CommunicationResult.failure('Text to share is required.');
     }
-
-    try {
-      final result = await Share.share(text);
-      if (result.status == ShareResultStatus.unavailable) {
-        return const CommunicationResult.failure(
-          'Text sharing is not available on this device.',
-        );
-      }
-      return const CommunicationResult.success();
-    } catch (_) {
-      return const CommunicationResult.failure('Unable to share text.');
-    }
+    final shared = await _service.shareText(text);
+    return shared
+        ? const CommunicationResult.success()
+        : const CommunicationResult.failure(
+            'Text sharing is not available on this device.');
   }
 
   @override
   Future<CommunicationResult> shareReceiptText(String receiptText) =>
       shareText(receiptText);
 
-  Future<CommunicationResult> _launch(
-    Uri uri, {
-    required String unavailableMessage,
-  }) async {
-    try {
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-      if (!launched) {
-        return CommunicationResult.failure(unavailableMessage);
-      }
-      return const CommunicationResult.success();
-    } catch (_) {
-      return CommunicationResult.failure(unavailableMessage);
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
 
+  /// Strips non-digit characters and validates the result.
+  /// Returns the compact digit-only string on success, or [null] if invalid.
   String? _normalizePhoneNumber(String phoneNumber) {
-    final compactNumber = phoneNumber.trim().replaceAll(RegExp(r'[\s\-()]'), '');
-    final hasCountryCode = compactNumber.startsWith('+');
-    final digits = hasCountryCode ? compactNumber.substring(1) : compactNumber;
-
-    if (!RegExp(r'^\d{6,15}$').hasMatch(digits)) {
-      return null;
-    }
-
-    return digits;
+    final compact =
+        phoneNumber.trim().replaceAll(RegExp(r'[\s\-()+]'), '');
+    if (!RegExp(r'^\d{6,15}$').hasMatch(compact)) return null;
+    return compact;
   }
 }
