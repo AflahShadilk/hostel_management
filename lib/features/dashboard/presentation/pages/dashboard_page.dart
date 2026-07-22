@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../hostel/presentation/cubit/hostel_cubit.dart';
@@ -136,7 +138,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 return RefreshIndicator(
                   onRefresh: _refresh,
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xl,
+                    ),
                     children: [
                       // ── 1. Occupancy KPI Grid ────────────────────────────
                       _sectionTitle(theme, 'Occupancy'),
@@ -186,7 +193,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           );
                         },
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 2. Financial KPI Grid ────────────────────────────
                       _sectionTitle(theme, 'Financials (This Month)'),
@@ -230,7 +237,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           );
                         },
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 3. Attention Required ────────────────────────────
                       _sectionTitle(theme, 'Attention Required'),
@@ -287,7 +294,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ],
                           ),
                         ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 4. Quick Actions ─────────────────────────────────
                       _sectionTitle(theme, 'Quick Actions'),
@@ -319,25 +326,25 @@ class _DashboardPageState extends State<DashboardPage> {
                         description: 'Log new hostel expenses and manage categories.',
                         onTap: () => StatefulNavigationShell.of(context).goBranch(11),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 5. Recent Check-ins ──────────────────────────────
                       _sectionTitle(theme, 'Recent Check-ins'),
                       const SizedBox(height: 12),
                       _buildRecentStayList(theme, summary.recentCheckIns, isCheckIn: true),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 6. Recent Check-outs ─────────────────────────────
                       _sectionTitle(theme, 'Recent Checkouts'),
                       const SizedBox(height: 12),
                       _buildRecentStayList(theme, summary.recentCheckOuts, isCheckIn: false),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // ── 7. Recent Activity ───────────────────────────────
                       _sectionTitle(theme, 'Recent Activity'),
                       const SizedBox(height: 12),
                       _buildRecentActivityList(theme, summary.recentActivities),
-                      const SizedBox(height: 80),
+                      const SizedBox(height: AppSpacing.xl),
                     ],
                   ),
                 );
@@ -359,13 +366,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _attentionContainer(ThemeData theme, {required Color color, required Color borderColor, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.fromBorderSide(BorderSide(color: borderColor)),
-      ),
+    return AppDashboardCard(
+      backgroundColor: color,
+      borderColor: borderColor,
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: child,
     );
   }
@@ -392,29 +396,22 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildRecentStayList(ThemeData theme, List<RecentStayItemEntity> items, {required bool isCheckIn}) {
     if (items.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
-        ),
+      return AppDashboardCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        backgroundColor: theme.colorScheme.surfaceContainer,
         child: Center(
           child: Text(isCheckIn ? 'No recent check-ins' : 'No recent checkouts', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
-      ),
+    return AppDashboardCard(
+      backgroundColor: theme.colorScheme.surfaceContainer,
+      padding: const EdgeInsets.all(AppSpacing.sm),
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.zero,
         itemCount: items.length,
         separatorBuilder: (_, __) => Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3), height: 1, indent: 64, endIndent: 16),
         itemBuilder: (context, index) {
@@ -439,27 +436,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildRecentActivityList(ThemeData theme, List<DashboardActivityEntity> activities) {
     if (activities.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
-        ),
+      return AppDashboardCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        backgroundColor: theme.colorScheme.surfaceContainer,
         child: const Center(child: Text('No recent activity.')),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.fromBorderSide(BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3))),
-      ),
+    return AppDashboardCard(
+      backgroundColor: theme.colorScheme.surfaceContainer,
+      padding: const EdgeInsets.all(AppSpacing.sm),
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.zero,
         itemCount: activities.length,
         separatorBuilder: (_, __) => Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3), height: 1, indent: 64, endIndent: 16),
         itemBuilder: (context, index) {

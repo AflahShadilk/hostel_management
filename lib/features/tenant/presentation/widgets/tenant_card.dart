@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../domain/entities/tenant_entity.dart';
 import '../../domain/entities/tenant_status.dart';
 import 'tenant_status_chip.dart';
@@ -49,16 +50,8 @@ class TenantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border, width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
+    return AppDashboardCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header: Name + Status chip
@@ -126,8 +119,9 @@ class TenantCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
 
             // Action row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: AppSpacing.xs,
               children: [
                 if (onWhatsApp != null ||
                     onCallTenant != null ||
@@ -189,14 +183,12 @@ class TenantCard extends StatelessWidget {
                     color: AppColors.primary,
                     onPressed: actionsEnabled ? onTransfer : null,
                   ),
-                const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   tooltip: 'Edit Tenant',
                   color: AppColors.primary,
                   onPressed: actionsEnabled ? onEdit : null,
                 ),
-                const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   tooltip: 'Delete Tenant',
@@ -206,7 +198,6 @@ class TenantCard extends StatelessWidget {
               ],
             ),
           ],
-        ),
       ),
     );
   }

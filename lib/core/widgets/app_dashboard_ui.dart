@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import '../constants/app_radius.dart';
 import '../constants/app_spacing.dart';
 
-abstract final class AppElevation {
-  static const double card = 2;
-}
-
 abstract final class AppShadows {
   static const List<BoxShadow> card = <BoxShadow>[
     BoxShadow(
@@ -26,17 +22,26 @@ abstract final class AppGradients {
 }
 
 class AppDashboardCard extends StatelessWidget {
-  const AppDashboardCard({super.key, required this.child, this.padding});
+  const AppDashboardCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.backgroundColor,
+    this.borderColor,
+  });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
+  final Color? backgroundColor;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) => Container(
         padding: padding ?? const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: backgroundColor ?? Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: borderColor == null ? null : Border.all(color: borderColor!),
           boxShadow: AppShadows.card,
         ),
         child: child,

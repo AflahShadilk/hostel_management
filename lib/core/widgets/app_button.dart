@@ -20,15 +20,16 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = ElevatedButton(
+    final button = ElevatedButton.icon(
       // Keeps the button visually active (non-disabled) while loading so the
       // primary background colour is preserved around the progress indicator.
       onPressed: isLoading ? () {} : onPressed,
-      child: isLoading
+      icon: isLoading
           ? AppButtonLoading(
               color: Theme.of(context).colorScheme.onPrimary,
             )
-          : _buildLabel(),
+          : icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
+      label: Text(label),
     );
 
     if (isFullWidth) {
@@ -38,17 +39,4 @@ class AppButton extends StatelessWidget {
     return button;
   }
 
-  Widget _buildLabel() {
-    if (icon != null) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
-      );
-    }
-    return Text(label);
-  }
 }

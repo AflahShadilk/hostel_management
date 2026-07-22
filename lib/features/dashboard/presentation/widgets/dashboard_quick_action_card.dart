@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
+
 class DashboardQuickActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -18,23 +22,15 @@ class DashboardQuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.fromBorderSide(
-          BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
-      ),
+    return AppDashboardCard(
+      padding: EdgeInsets.zero,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
                 Container(
@@ -49,7 +45,7 @@ class DashboardQuickActionCard extends StatelessWidget {
                     size: 28,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

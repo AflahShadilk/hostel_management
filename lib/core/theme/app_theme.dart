@@ -107,6 +107,20 @@ abstract final class AppTheme {
           textStyle: AppTextStyles.labelLarge,
         ),
       ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shape: StadiumBorder(),
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        side: BorderSide.none,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        labelStyle: AppTextStyles.labelLarge,
+      ),
       cardTheme: CardTheme(
         color: AppColors.surface,
         elevation: 0,
