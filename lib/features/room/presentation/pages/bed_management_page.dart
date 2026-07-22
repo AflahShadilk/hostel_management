@@ -9,6 +9,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../domain/entities/room_entity.dart';
 import '../../domain/entities/bed_entity.dart';
 import '../../domain/entities/bed_status.dart';
@@ -156,26 +157,10 @@ class _BedManagementPageState extends State<BedManagementPage> {
 
   Widget _buildMainBody(BuildContext context) {
     if (_resolvedRoom == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: AppColors.textSecondary),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Room information is unavailable.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return const AppEmptyState(
+        icon: Icons.error_outline,
+        title: 'Room information unavailable',
+        message: 'Return to Rooms and open this room again.',
       );
     }
 
@@ -235,14 +220,17 @@ class _BedManagementPageState extends State<BedManagementPage> {
 
   Widget _buildRoomSummary(BuildContext context) {
     final room = _resolvedRoom!;
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        0,
+      ),
+      child: AppDashboardCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(
             'Room ${room.roomNumber}',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -264,7 +252,8 @@ class _BedManagementPageState extends State<BedManagementPage> {
                   fontWeight: FontWeight.w500,
                 ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -321,8 +310,8 @@ class _BedManagementPageState extends State<BedManagementPage> {
               spacing: AppSpacing.sm,
               children: BedFilter.values.map((filter) {
                 final isSelected = filter == selectedFilter;
-                return ChoiceChip(
-                  label: Text(filter.label),
+                return AppFilterChip(
+                  label: filter.label,
                   selected: isSelected,
                   onSelected: (selected) {
                     if (selected) {
@@ -443,16 +432,15 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
+    return SizedBox(
+      width: 88,
+      child: AppDashboardCard(
+        backgroundColor: color.withValues(alpha: 0.1),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.xs,
+        ),
+        child: Column(
         children: [
           Text(
             count.toString(),
@@ -470,6 +458,7 @@ class _SummaryCard extends StatelessWidget {
                 ),
           ),
         ],
+        ),
       ),
     );
   }

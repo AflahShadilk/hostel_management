@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/widgets/app_dashboard_ui.dart';
 import '../../domain/entities/bed_entity.dart';
 import '../../domain/entities/bed_status.dart';
 import '../extensions/bed_presentation_extensions.dart';
@@ -23,16 +24,8 @@ class BedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.border, width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
+    return AppDashboardCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header row
@@ -69,7 +62,6 @@ class BedCard extends StatelessWidget {
               child: _buildActionRow(context),
             ),
           ],
-        ),
       ),
     );
   }

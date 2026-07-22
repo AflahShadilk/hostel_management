@@ -176,26 +176,10 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
     // Hostel not configured — show fallback.
     final hostelStatus = context.read<HostelCubit>().state.status;
     if (hostelStatus != HostelStatus.configured) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.business_outlined,
-                  size: 48, color: AppColors.textSecondary),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Unable to load hostel information.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return const AppEmptyState(
+        icon: Icons.business_outlined,
+        title: 'Hostel information unavailable',
+        message: 'Configure or select a hostel to manage its rooms.',
       );
     }
 
