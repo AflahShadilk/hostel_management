@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/pdf/widgets/export_pdf_bottom_sheet.dart';
 import '../../../../core/widgets/app_dashboard_ui.dart';
+import '../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../../domain/entities/profit_loss_entity.dart';
 import '../cubit/profit_loss_cubit.dart';
 import '../cubit/profit_loss_state.dart';
 import '../cubit/reports_date_filter.dart';
+import '../services/profit_loss_pdf_export_service.dart';
 
 class ProfitLossPage extends StatefulWidget {
   const ProfitLossPage({super.key});
@@ -39,6 +43,83 @@ class _ProfitLossPageState extends State<ProfitLossPage> {
       await cubit.loadWithCustomRange(
         range.start,
         DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59),
+      );
+    }
+  }
+
+  void _showExportSheet(ProfitLossState state) {
+    if (state.data == null) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => ExportPdfBottomSheet(
+        onExportPdf: () {
+          Navigator.pop(sheetContext);
+          _previewPdf(state);
+        },
+        onSharePdf: () {
+          Navigator.pop(sheetContext);
+          _sharePdf(state);
+        },
+        onSavePdf: () {
+          Navigator.pop(sheetContext);
+          _savePdf(state);
+        },
+      ),
+    );
+  }
+
+  Future<void> _previewPdf(ProfitLossState state) => _runExport(
+        (service, hostelName, logoPath) => service.preview(
+          state: state,
+          hostelName: hostelName,
+          logoPath: logoPath,
+        ),
+      );
+
+  Future<void> _sharePdf(ProfitLossState state) => _runExport(
+        (service, hostelName, logoPath) => service.share(
+          state: state,
+          hostelName: hostelName,
+          logoPath: logoPath,
+        ),
+      );
+
+  Future<void> _savePdf(ProfitLossState state) => _runExport(
+        (service, hostelName, logoPath) async {
+          await service.save(
+            state: state,
+            hostelName: hostelName,
+            logoPath: logoPath,
+          );
+        },
+        successMessage: 'Report saved to Hostel Management/Reports.',
+      );
+
+  Future<void> _runExport(
+    Future<void> Function(
+      ProfitLossPdfExportService service,
+      String hostelName,
+      String? logoPath,
+    )
+        action, {
+    String? successMessage,
+  }) async {
+    final hostel = context.read<HostelCubit>().state.hostel;
+    try {
+      await action(
+        getIt<ProfitLossPdfExportService>(),
+        hostel?.name ?? 'Hostel Management',
+        hostel?.logoPath,
+      );
+      if (!mounted || successMessage == null) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to export the report.')),
       );
     }
   }
@@ -164,6 +245,15 @@ class _Header extends StatelessWidget {
                             ),
                       ),
                     ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Export report',
+                  onPressed:
+                      state.data == null ? null : () => page._showExportSheet(state),
+                  icon: Icon(
+                    Icons.file_download_outlined,
+                    color: colors.onPrimary,
                   ),
                 ),
               ],

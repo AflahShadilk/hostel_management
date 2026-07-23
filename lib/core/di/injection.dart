@@ -3,6 +3,11 @@ import 'package:get_it/get_it.dart';
 
 import '../database/app_database.dart';
 import '../services/secure_storage_service.dart';
+import '../pdf/generators/receipt_pdf_generator.dart';
+import '../pdf/generators/report_pdf_generator.dart';
+import '../pdf/services/pdf_service.dart';
+import '../pdf/services/pdf_share_service.dart';
+import '../pdf/services/pdf_storage_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/data/services/credential_hash_service.dart';
@@ -82,6 +87,8 @@ import '../../features/financial_onboarding/presentation/cubit/financial_onboard
 import '../../features/reports/domain/repositories/reports_repository.dart';
 import '../../features/reports/data/repositories/reports_repository_impl.dart';
 import '../../features/reports/presentation/cubit/profit_loss_cubit.dart';
+import '../../features/reports/presentation/mappers/profit_loss_pdf_data_mapper.dart';
+import '../../features/reports/presentation/services/profit_loss_pdf_export_service.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -99,6 +106,25 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<SecureStorageService>(
     () => SecureStorageService(getIt<FlutterSecureStorage>()),
+  );
+
+  getIt.registerLazySingleton<ReportPdfGenerator>(
+    () => const ReportPdfGenerator(),
+  );
+  getIt.registerLazySingleton<ReceiptPdfGenerator>(
+    () => const ReceiptPdfGenerator(),
+  );
+  getIt.registerLazySingleton<PdfService>(
+    () => PdfService(
+      getIt<ReportPdfGenerator>(),
+      getIt<ReceiptPdfGenerator>(),
+    ),
+  );
+  getIt.registerLazySingleton<PdfStorageService>(
+    () => const PdfStorageService(),
+  );
+  getIt.registerLazySingleton<PdfShareService>(
+    () => const PdfShareService(),
   );
 
   getIt.registerLazySingleton<AuthRepository>(
@@ -305,6 +331,17 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<ProfitLossCubit>(
     () => ProfitLossCubit(getIt<ReportsRepository>()),
+  );
+  getIt.registerLazySingleton<ProfitLossPdfDataMapper>(
+    () => const ProfitLossPdfDataMapper(),
+  );
+  getIt.registerLazySingleton<ProfitLossPdfExportService>(
+    () => ProfitLossPdfExportService(
+      getIt<PdfService>(),
+      getIt<PdfStorageService>(),
+      getIt<PdfShareService>(),
+      getIt<ProfitLossPdfDataMapper>(),
+    ),
   );
 }
 
