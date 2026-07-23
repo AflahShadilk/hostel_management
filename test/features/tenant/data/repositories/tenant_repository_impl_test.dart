@@ -107,10 +107,16 @@ void main() {
     repo = TenantRepositoryImpl(appDatabase);
     final db = await appDatabase.database;
     // Clear tenants table before every test; preserve schema rows.
+    await db.delete('receipts');
+    await db.delete('payments');
+    await db.delete('checkout_settlements');
+    await db.delete('damage_charges');
     await db.delete('deposits');
     await db.delete('rent_records');
     await db.delete('stays');
     await db.delete('tenants');
+    await db.delete('beds');
+    await db.delete('rooms');
     // Seed two beds for tests that need them.
     await seedBed(1);
     await seedBed(2);

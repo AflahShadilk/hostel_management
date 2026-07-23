@@ -17,6 +17,17 @@ void main() {
     appDatabase = AppDatabase.instance;
     // Open once and create schema
     final db = await appDatabase.database;
+    await db.delete('receipts');
+    await db.delete('payments');
+    await db.delete('checkout_settlements');
+    await db.delete('damage_charges');
+    await db.delete('deposits');
+    await db.delete('rent_records');
+    await db.delete('stays');
+    await db.delete('tenants');
+    await db.delete('beds');
+    await db.delete('rooms');
+    await db.delete('hostels');
     await db.delete('users');
   });
 
@@ -25,6 +36,17 @@ void main() {
     authRepository = AuthRepositoryImpl(appDatabase);
     // Clear users table before each test for isolation
     final db = await appDatabase.database;
+    await db.delete('receipts');
+    await db.delete('payments');
+    await db.delete('checkout_settlements');
+    await db.delete('damage_charges');
+    await db.delete('deposits');
+    await db.delete('rent_records');
+    await db.delete('stays');
+    await db.delete('tenants');
+    await db.delete('beds');
+    await db.delete('rooms');
+    await db.delete('hostels');
     await db.delete('users');
   });
 

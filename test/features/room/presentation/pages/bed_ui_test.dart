@@ -340,7 +340,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the Vacant filter chip
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Vacant'));
       await tester.pumpAndSettle();
 
       // Only B1 (vacant) should be visible; B2 and B3 should be hidden
@@ -368,7 +368,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Occupied'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Occupied'));
       await tester.pumpAndSettle();
 
       expect(find.text('B1'), findsNothing);
@@ -395,7 +395,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Inactive'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Inactive'));
       await tester.pumpAndSettle();
 
       expect(find.text('B1'), findsNothing);
@@ -422,13 +422,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Switch to Vacant
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Vacant'));
       await tester.pumpAndSettle();
 
       expect(find.text('B2'), findsNothing);
 
       // Switch back to All
-      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
+      await tester.tap(find.widgetWithText(FilterChip, 'All'));
       await tester.pumpAndSettle();
 
       expect(find.text('B1'), findsOneWidget);
@@ -454,7 +454,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Vacant'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Vacant'));
       await tester.pumpAndSettle();
 
       expect(find.byType(AppEmptyState), findsOneWidget);

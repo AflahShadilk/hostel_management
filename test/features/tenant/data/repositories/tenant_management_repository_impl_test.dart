@@ -101,6 +101,10 @@ void main() {
     );
 
     final db = await appDatabase.database;
+    await db.delete('receipts');
+    await db.delete('payments');
+    await db.delete('checkout_settlements');
+    await db.delete('damage_charges');
     await db.delete('deposits');
     await db.delete('rent_records');
     await db.delete('stays');
