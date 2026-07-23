@@ -185,14 +185,6 @@ class _MainShellPageState extends State<MainShellPage> {
       title: 'More',
       items: [
         _MenuItem(
-          icon: Icons.search_rounded,
-          label: 'Search',
-          onTap: () {
-            Navigator.pop(context);
-            _goBranch(0);
-          },
-        ),
-        _MenuItem(
           icon: Icons.bar_chart_rounded,
           label: 'P&L Reports',
           onTap: () {
@@ -237,7 +229,7 @@ class _MainShellPageState extends State<MainShellPage> {
           label: 'About',
           onTap: () {
             Navigator.pop(context);
-            _showComingSoon(context);
+            context.pushNamed(AppRoutes.aboutName);
           },
         ),
       ],

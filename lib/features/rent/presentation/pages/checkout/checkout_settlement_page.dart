@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,9 +13,13 @@ import '../../../../../core/widgets/app_text_field.dart';
 import '../../../domain/entities/stay_entity.dart';
 import '../../../domain/entities/checkout_request.dart';
 import '../../../../tenant/presentation/cubit/tenant_cubit.dart';
+import '../../../../room/presentation/cubit/room_cubit.dart';
+import '../../../../dashboard/presentation/cubit/dashboard_cubit.dart';
+import '../../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../../cubit/checkout/checkout_cubit.dart';
 import '../../cubit/checkout/checkout_state.dart';
 import '../../cubit/checkout/checkout_summary_cubit.dart';
+import '../../cubit/stay/stay_cubit.dart';
 
 class CheckoutSettlementPage extends StatefulWidget {
   final StayEntity stay;
@@ -147,13 +153,28 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
     );
   }
 
+  Future<void> _refreshPresentationState() async {
+    final hostelId = context.read<HostelCubit>().state.hostel?.id;
+    final refreshes = <Future<void>>[
+      context.read<StayCubit>().loadAllStays(),
+      context.read<TenantCubit>().loadTenants(),
+    ];
+
+    if (hostelId != null) {
+      refreshes.add(context.read<RoomCubit>().loadRooms(hostelId));
+      refreshes.add(context.read<DashboardCubit>().loadDashboard(hostelId));
+    }
+
+    await Future.wait(refreshes);
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = _checkoutDate;
     return MultiBlocListener(
       listeners: [
         BlocListener<CheckoutCubit, CheckoutState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is CheckoutError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -162,6 +183,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                 ),
               );
             } else if (state is CheckoutLoaded) {
+              await _refreshPresentationState();
+              if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Checkout completed successfully.'),

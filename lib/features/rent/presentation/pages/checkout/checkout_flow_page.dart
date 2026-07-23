@@ -19,9 +19,6 @@ import '../../cubit/checkout/checkout_cubit.dart';
 import '../../cubit/checkout/checkout_state.dart';
 import '../../cubit/stay/stay_cubit.dart';
 import '../../cubit/stay/stay_state.dart';
-import '../../../../room/presentation/cubit/room_cubit.dart';
-import '../../../../dashboard/presentation/cubit/dashboard_cubit.dart';
-import '../../../../hostel/presentation/cubit/hostel_cubit.dart';
 
 /// Entry point for the Checkout workflow.
 ///
@@ -52,16 +49,10 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
 
   Future<void> _confirmCheckout(
       BuildContext context, StayEntity stay) async {
-    final result = await context.pushNamed(
+    await context.pushNamed(
       AppRoutes.checkoutSettlementFormName,
       extra: stay,
     );
-    if (result == true && mounted) {
-      context.read<StayCubit>().loadAllStays();
-      context.read<TenantCubit>().loadTenants();
-      final hostelId = context.read<HostelCubit>().state.hostel?.id ?? 0; if(hostelId > 0) context.read<RoomCubit>().loadRooms(hostelId);
-      if(hostelId > 0) context.read<DashboardCubit>().loadDashboard(hostelId);
-    }
   }
 
   @override

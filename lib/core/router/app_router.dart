@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/di/injection.dart';
 import '../../core/presentation/main_shell_page.dart';
+import '../../core/presentation/about_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'app_routes.dart';
@@ -141,6 +142,11 @@ abstract final class AppRouter {
           create: (_) => getIt<SettingsCubit>(),
           child: const SettingsPage(),
         ),
+      ),
+      GoRoute(
+        name: AppRoutes.aboutName,
+        path: AppRoutes.aboutPath,
+        builder: (context, state) => const AboutPage(),
       ),
       // -----------------------------------------------------------------------
       // Main Application Shell

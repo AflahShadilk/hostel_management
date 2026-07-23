@@ -67,8 +67,8 @@ class CheckoutCubit extends Cubit<CheckoutState> {
   Future<void> completeCheckout(CheckoutRequest request) async {
     emit(const CheckoutLoading());
     try {
-      final settlement = await _rentRepository.completeCheckout(request);
-      emit(CheckoutLoaded(<CheckoutSettlementEntity>[settlement]));
+      await _rentRepository.completeCheckout(request);
+      await _reloadAllCheckoutSettlements();
     } catch (error) {
       emit(CheckoutError(error.toString()));
     }
