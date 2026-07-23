@@ -231,27 +231,27 @@ class _BedManagementPageState extends State<BedManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Text(
-            'Room ${room.roomNumber}',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            '${room.floor} · ${room.roomType.label} · ${room.numberOfBeds} Configured Beds',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Status: ${room.status.label}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
+            Text(
+              'Room ${room.roomNumber}',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              '${room.floor} · ${room.roomType.label} · ${room.numberOfBeds} Configured Beds',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Status: ${room.status.label}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
           ],
         ),
       ),
@@ -353,8 +353,8 @@ class _BedManagementPageState extends State<BedManagementPage> {
 
         if (filteredBeds.isEmpty) {
           final emptyMessage = switch (filter) {
-            BedFilter.all      => 'No beds have been added to this room yet.',
-            BedFilter.vacant   => 'No vacant beds found.',
+            BedFilter.all => 'No beds have been added to this room yet.',
+            BedFilter.vacant => 'No vacant beds found.',
             BedFilter.occupied => 'No occupied beds.',
             BedFilter.inactive => 'No inactive beds.',
           };
@@ -441,23 +441,23 @@ class _SummaryCard extends StatelessWidget {
           horizontal: AppSpacing.xs,
         ),
         child: Column(
-        children: [
-          Text(
-            count.toString(),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
-        ],
+          children: [
+            Text(
+              count.toString(),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ],
         ),
       ),
     );

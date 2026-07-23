@@ -44,7 +44,7 @@ class _HostelSetupPageState extends State<HostelSetupPage> {
   final _ownerNameController = TextEditingController();
   final _gstController = TextEditingController();
   final _websiteController = TextEditingController();
-  
+
   File? _selectedLogo;
 
   @override
@@ -438,7 +438,9 @@ class _LogoPlaceholder extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            selectedLogo != null ? 'Tap to change logo' : 'Optional · Tap to select logo',
+            selectedLogo != null
+                ? 'Tap to change logo'
+                : 'Optional · Tap to select logo',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),

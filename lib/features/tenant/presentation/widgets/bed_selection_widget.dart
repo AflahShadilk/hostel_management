@@ -153,8 +153,7 @@ class _BedTile extends StatelessWidget {
               ? AppColors.primary.withValues(alpha: 0.08)
               : Colors.transparent,
           border: Border(
-            bottom:
-                BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
+            bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
           ),
         ),
         child: Row(
@@ -178,8 +177,7 @@ class _BedTile extends StatelessWidget {
             ),
             const Spacer(),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),

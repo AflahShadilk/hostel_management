@@ -56,7 +56,8 @@ class RentCollectionLoaded extends RentCollectionState {
       filteredItems: filteredItems ?? this.filteredItems,
       totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
       totalOverdueAmount: totalOverdueAmount ?? this.totalOverdueAmount,
-      totalCollectedThisMonth: totalCollectedThisMonth ?? this.totalCollectedThisMonth,
+      totalCollectedThisMonth:
+          totalCollectedThisMonth ?? this.totalCollectedThisMonth,
       pendingRecordsCount: pendingRecordsCount ?? this.pendingRecordsCount,
       activeFilter: activeFilter ?? this.activeFilter,
       searchQuery: searchQuery ?? this.searchQuery,

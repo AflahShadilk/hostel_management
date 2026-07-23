@@ -115,22 +115,19 @@ class _RentRecordDetailsPageState extends State<RentRecordDetailsPage> {
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                                Text('Status: ${record.status}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium),
-                                const Divider(),
-                                _Row('Billing Period', record.formattedPeriod),
-                                _Row('Rent Amount',
-                                    record.amountDue.toStringAsFixed(2)),
-                                _Row('Paid Amount',
-                                    record.amountPaid.toStringAsFixed(2)),
-                                _Row('Balance Amount',
-                                    balance.toStringAsFixed(2)),
-                                _Row('Due Date', _date(record.dueDate)),
-                                _Row('Created Date', _date(record.createdAt)),
-                                _Row('Updated Date', _date(record.updatedAt)),
-                              ])),
+                        Text('Status: ${record.status}',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const Divider(),
+                        _Row('Billing Period', record.formattedPeriod),
+                        _Row(
+                            'Rent Amount', record.amountDue.toStringAsFixed(2)),
+                        _Row('Paid Amount',
+                            record.amountPaid.toStringAsFixed(2)),
+                        _Row('Balance Amount', balance.toStringAsFixed(2)),
+                        _Row('Due Date', _date(record.dueDate)),
+                        _Row('Created Date', _date(record.createdAt)),
+                        _Row('Updated Date', _date(record.updatedAt)),
+                      ])),
                 ]),
           ),
         );

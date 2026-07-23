@@ -25,11 +25,13 @@ class IdentityDocumentPicker extends StatelessWidget {
       if (!context.mounted) return;
       final sourcePath = result.files.single.path!;
       final extension = p.extension(sourcePath).toLowerCase();
-      final isImage = ['jpg', 'jpeg', 'png'].contains(extension.replaceAll('.', ''));
+      final isImage =
+          ['jpg', 'jpeg', 'png'].contains(extension.replaceAll('.', ''));
 
       try {
         final appDir = await getApplicationDocumentsDirectory();
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${result.files.single.name}';
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${result.files.single.name}';
         final savedPath = p.join(appDir.path, fileName);
 
         await File(sourcePath).copy(savedPath);
@@ -125,9 +127,10 @@ class IdentityDocumentPicker extends StatelessWidget {
                           ),
                           Text(
                             'Tap remove to replace',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
                           ),
                         ],
                       ),

@@ -30,12 +30,9 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
   void initState() {
     super.initState();
     final charge = widget.damageCharge;
-    _stayId =
-        TextEditingController(text: charge?.stayId.toString() ?? '');
-    _description =
-        TextEditingController(text: charge?.description ?? '');
-    _amount =
-        TextEditingController(text: charge?.amount.toString() ?? '');
+    _stayId = TextEditingController(text: charge?.stayId.toString() ?? '');
+    _description = TextEditingController(text: charge?.description ?? '');
+    _amount = TextEditingController(text: charge?.amount.toString() ?? '');
   }
 
   @override
@@ -46,12 +43,11 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
     super.dispose();
   }
 
-  String? _idValidator(String? value) =>
-      value == null || value.trim().isEmpty
-          ? 'Stay ID is required.'
-          : int.tryParse(value.trim()) == null
-              ? 'Enter a valid stay ID.'
-              : null;
+  String? _idValidator(String? value) => value == null || value.trim().isEmpty
+      ? 'Stay ID is required.'
+      : int.tryParse(value.trim()) == null
+          ? 'Enter a valid stay ID.'
+          : null;
 
   String? _amountValidator(String? value) {
     if (value == null || value.trim().isEmpty) return 'Amount is required.';
@@ -87,8 +83,7 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
       providers: [
         BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
         BlocProvider<SelectedStatusCubit>(
-            create: (_) =>
-                SelectedStatusCubit(charge?.status ?? 'pending')),
+            create: (_) => SelectedStatusCubit(charge?.status ?? 'pending')),
       ],
       child: Builder(builder: (context) {
         return BlocListener<DamageChargeCubit, DamageChargeState>(
@@ -105,9 +100,8 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
           },
           child: Scaffold(
             appBar: AppBar(
-                title: Text(_editing
-                    ? 'Edit Damage Charge'
-                    : 'Add Damage Charge')),
+                title: Text(
+                    _editing ? 'Edit Damage Charge' : 'Add Damage Charge')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -149,8 +143,8 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: const ['pending', 'paid', 'waived']
                                   .map((v) => DropdownMenuItem(
                                       value: v, child: Text(v)))
@@ -166,19 +160,17 @@ class _AddEditDamageChargePageState extends State<AddEditDamageChargePage> {
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           BlocBuilder<SubmittingCubit, bool>(
-                            builder: (context, submitting) =>
-                                BlocBuilder<DamageChargeCubit,
-                                    DamageChargeState>(
+                            builder: (context, submitting) => BlocBuilder<
+                                DamageChargeCubit, DamageChargeState>(
                               builder: (context, state) => AppButton(
                                 label: _editing
                                     ? 'Save Changes'
                                     : 'Add Damage Charge',
-                                isLoading: submitting ||
-                                    state is DamageChargeLoading,
+                                isLoading:
+                                    submitting || state is DamageChargeLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

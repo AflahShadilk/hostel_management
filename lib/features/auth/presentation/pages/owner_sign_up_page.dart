@@ -177,7 +177,9 @@ class _OwnerSignUpPageState extends State<OwnerSignUpPage> {
                             if (text.isEmpty) {
                               return 'Please enter your email address';
                             }
-                            if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(text)) {
+                            if (!RegExp(
+                                    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                                .hasMatch(text)) {
                               return 'Enter a valid email address.';
                             }
                             return null;

@@ -41,11 +41,16 @@ class _AddExpensePageState extends State<AddExpensePage> {
     super.initState();
     final expense = widget.expense;
     _titleController = TextEditingController(text: expense?.title ?? '');
-    _descriptionController = TextEditingController(text: expense?.description ?? '');
-    _amountController = TextEditingController(text: expense?.amount.toString() ?? '');
-    _paymentMethodController = TextEditingController(text: expense?.paymentMethod ?? '');
-    _referenceNumberController = TextEditingController(text: expense?.referenceNumber ?? '');
-    _vendorNameController = TextEditingController(text: expense?.vendorName ?? '');
+    _descriptionController =
+        TextEditingController(text: expense?.description ?? '');
+    _amountController =
+        TextEditingController(text: expense?.amount.toString() ?? '');
+    _paymentMethodController =
+        TextEditingController(text: expense?.paymentMethod ?? '');
+    _referenceNumberController =
+        TextEditingController(text: expense?.referenceNumber ?? '');
+    _vendorNameController =
+        TextEditingController(text: expense?.vendorName ?? '');
     _notesController = TextEditingController(text: expense?.notes ?? '');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<ExpenseCategoryCubit>().loadCategories();
@@ -114,10 +119,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
       providers: [
         BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
         BlocProvider<SelectedDateCubit>(
-          create: (_) => SelectedDateCubit(expense?.expenseDate ?? DateTime.now()),
+          create: (_) =>
+              SelectedDateCubit(expense?.expenseDate ?? DateTime.now()),
         ),
         BlocProvider<SelectedStatusCubit>(
-          create: (_) => SelectedStatusCubit(expense?.categoryId.toString() ?? ''),
+          create: (_) =>
+              SelectedStatusCubit(expense?.categoryId.toString() ?? ''),
         ),
       ],
       child: Builder(
@@ -133,7 +140,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: Text(_isEditing ? 'Edit Expense' : 'Add Expense')),
+            appBar: AppBar(
+                title: Text(_isEditing ? 'Edit Expense' : 'Add Expense')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -143,22 +151,27 @@ class _AddExpensePageState extends State<AddExpensePage> {
                       AppSpacing.md,
                       AppSpacing.md,
                       AppSpacing.md,
-                      AppSpacing.xl + MediaQuery.viewPaddingOf(context).bottom + 80,
+                      AppSpacing.xl +
+                          MediaQuery.viewPaddingOf(context).bottom +
+                          80,
                     ),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          BlocBuilder<ExpenseCategoryCubit, ExpenseCategoryState>(
+                          BlocBuilder<ExpenseCategoryCubit,
+                              ExpenseCategoryState>(
                             builder: (context, state) {
                               final categories = state is ExpenseCategoryLoaded
                                   ? state.categories
                                   : const <ExpenseCategoryEntity>[];
                               return BlocBuilder<SelectedStatusCubit, String>(
-                                builder: (context, categoryId) => DropdownButtonFormField<String>(
+                                builder: (context, categoryId) =>
+                                    DropdownButtonFormField<String>(
                                   value: categoryId.isEmpty ? null : categoryId,
-                                  decoration: const InputDecoration(labelText: 'Category'),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Category'),
                                   items: categories
                                       .where((category) => category.id != null)
                                       .map((category) => DropdownMenuItem(
@@ -166,12 +179,15 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                             child: Text(category.name),
                                           ))
                                       .toList(),
-                                  validator: (value) => value == null || value.isEmpty
-                                      ? 'Category is required.'
-                                      : null,
+                                  validator: (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Category is required.'
+                                          : null,
                                   onChanged: (value) {
                                     if (value != null) {
-                                      context.read<SelectedStatusCubit>().select(value);
+                                      context
+                                          .read<SelectedStatusCubit>()
+                                          .select(value);
                                     }
                                   },
                                 ),
@@ -182,20 +198,29 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           AppTextField(
                             controller: _titleController,
                             label: 'Title',
-                            validator: (value) => value == null || value.trim().isEmpty
-                                ? 'Title is required.'
-                                : null,
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Title is required.'
+                                    : null,
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(controller: _descriptionController, label: 'Description', maxLines: 3),
+                          AppTextField(
+                              controller: _descriptionController,
+                              label: 'Description',
+                              maxLines: 3),
                           const SizedBox(height: AppSpacing.md),
                           AppTextField(
                             controller: _amountController,
                             label: 'Amount',
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d{0,2}'))
+                            ],
                             validator: (value) {
-                              final amount = double.tryParse(value?.trim() ?? '');
+                              final amount =
+                                  double.tryParse(value?.trim() ?? '');
                               return amount == null || amount <= 0
                                   ? 'Amount must be greater than zero.'
                                   : null;
@@ -208,7 +233,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                   labelText: 'Expense Date',
-                                  suffixIcon: Icon(Icons.calendar_today_outlined),
+                                  suffixIcon:
+                                      Icon(Icons.calendar_today_outlined),
                                 ),
                                 child: Text(_date(date ?? DateTime.now())),
                               ),
@@ -218,23 +244,33 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           AppTextField(
                             controller: _paymentMethodController,
                             label: 'Payment Method',
-                            validator: (value) => value == null || value.trim().isEmpty
-                                ? 'Payment method is required.'
-                                : null,
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Payment method is required.'
+                                    : null,
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(controller: _referenceNumberController, label: 'Reference Number'),
+                          AppTextField(
+                              controller: _referenceNumberController,
+                              label: 'Reference Number'),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(controller: _vendorNameController, label: 'Vendor Name'),
+                          AppTextField(
+                              controller: _vendorNameController,
+                              label: 'Vendor Name'),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(controller: _notesController, label: 'Notes', maxLines: 3),
+                          AppTextField(
+                              controller: _notesController,
+                              label: 'Notes',
+                              maxLines: 3),
                           const SizedBox(height: AppSpacing.xl),
                           BlocBuilder<SubmittingCubit, bool>(
                             builder: (context, submitting) => AppButton(
-                              label: _isEditing ? 'Save Changes' : 'Add Expense',
+                              label:
+                                  _isEditing ? 'Save Changes' : 'Add Expense',
                               isLoading: submitting,
                               isFullWidth: true,
-                              onPressed: submitting ? null : () => _submit(context),
+                              onPressed:
+                                  submitting ? null : () => _submit(context),
                             ),
                           ),
                         ],

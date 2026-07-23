@@ -36,7 +36,8 @@ class TenantFormState extends Equatable {
   }) {
     return TenantFormState(
       checkInDate: checkInDate ?? this.checkInDate,
-      checkOutDate: clearCheckOutDate ? null : (checkOutDate ?? this.checkOutDate),
+      checkOutDate:
+          clearCheckOutDate ? null : (checkOutDate ?? this.checkOutDate),
       status: status ?? this.status,
       selectedBed: selectedBed ?? this.selectedBed,
       selectedIdType: selectedIdType ?? this.selectedIdType,

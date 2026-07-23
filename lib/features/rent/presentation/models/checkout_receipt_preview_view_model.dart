@@ -5,5 +5,4 @@ class CheckoutReceiptPreviewViewModel {
   const CheckoutReceiptPreviewViewModel({required this.settlement});
 
   final CheckoutSettlementEntity settlement;
-
 }

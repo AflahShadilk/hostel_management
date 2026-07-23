@@ -14,6 +14,7 @@ abstract interface class ExpenseRepository {
   Future<ExpenseEntity> updateExpense(ExpenseEntity expense);
   Future<void> deleteExpense(int id);
   Future<ExpenseEntity?> getExpenseById(int id);
-  Future<List<ExpenseEntity>> getAllExpenses([ExpenseQuery query = const ExpenseQuery()]);
+  Future<List<ExpenseEntity>> getAllExpenses(
+      [ExpenseQuery query = const ExpenseQuery()]);
   Future<ExpenseSummaryEntity> getExpenseSummary();
 }

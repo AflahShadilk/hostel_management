@@ -49,8 +49,7 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
         TextEditingController(text: c?.depositAdjustment.toString() ?? '');
     _refundAmount =
         TextEditingController(text: c?.refundAmount.toString() ?? '');
-    _finalAmount =
-        TextEditingController(text: c?.finalAmount.toString() ?? '');
+    _finalAmount = TextEditingController(text: c?.finalAmount.toString() ?? '');
   }
 
   @override
@@ -66,8 +65,7 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
     super.dispose();
   }
 
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/'
+  String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/'
       '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
   Future<void> _pickDate(BuildContext context) async {
@@ -80,12 +78,11 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
     if (date != null && context.mounted) cubit.pick(date);
   }
 
-  String? _idValidator(String? value) =>
-      value == null || value.trim().isEmpty
-          ? 'Stay ID is required.'
-          : int.tryParse(value.trim()) == null
-              ? 'Enter a valid stay ID.'
-              : null;
+  String? _idValidator(String? value) => value == null || value.trim().isEmpty
+      ? 'Stay ID is required.'
+      : int.tryParse(value.trim()) == null
+          ? 'Enter a valid stay ID.'
+          : null;
 
   String? _amountValidator(String? value, String label) {
     if (value == null || value.trim().isEmpty) return '$label is required.';
@@ -177,8 +174,8 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Settlement Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
                                 child: Text(_date(date ?? DateTime.now())),
                               ),
                             ),
@@ -208,7 +205,8 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                       decimal: true),
-                              validator: (v) => _amountValidator(v, 'late fee')),
+                              validator: (v) =>
+                                  _amountValidator(v, 'late fee')),
                           const SizedBox(height: AppSpacing.md),
                           AppTextField(
                               controller: _damageCharges,
@@ -250,8 +248,8 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: const ['pending', 'completed']
                                   .map((v) => DropdownMenuItem(
                                       value: v, child: Text(v)))
@@ -270,15 +268,13 @@ class _AddEditCheckoutPageState extends State<AddEditCheckoutPage> {
                             builder: (context, submitting) =>
                                 BlocBuilder<CheckoutCubit, CheckoutState>(
                               builder: (context, state) => AppButton(
-                                label: _editing
-                                    ? 'Save Changes'
-                                    : 'Add Checkout',
+                                label:
+                                    _editing ? 'Save Changes' : 'Add Checkout',
                                 isLoading:
                                     submitting || state is CheckoutLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

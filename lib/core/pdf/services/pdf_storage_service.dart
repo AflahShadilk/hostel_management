@@ -33,16 +33,16 @@ class PdfStorageService {
   }
 
   String _normalizeFileName(String value) {
-    final withExtension = value.toLowerCase().endsWith('.pdf')
-        ? value
-        : '$value.pdf';
+    final withExtension =
+        value.toLowerCase().endsWith('.pdf') ? value : '$value.pdf';
     final sanitized = _sanitizePathSegment(withExtension);
-    return sanitized.isEmpty || sanitized == '.pdf' ? 'document.pdf' : sanitized;
+    return sanitized.isEmpty || sanitized == '.pdf'
+        ? 'document.pdf'
+        : sanitized;
   }
 
-  String _sanitizePathSegment(String value) => value
-      .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
-      .trim();
+  String _sanitizePathSegment(String value) =>
+      value.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_').trim();
 
   Future<File> _nextAvailableFile(Directory directory, String fileName) async {
     final extension = path.extension(fileName);

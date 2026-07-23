@@ -41,8 +41,7 @@ abstract final class CheckoutPresentationComposer {
         monthlyRent: stay.monthlyRentSnapshot,
         pendingRent: summaryState.outstandingRent,
         status: stay.status,
-        receiptPreview:
-            previewsForStay.isEmpty ? null : previewsForStay.first,
+        receiptPreview: previewsForStay.isEmpty ? null : previewsForStay.first,
       );
     }).toList(growable: false);
   }

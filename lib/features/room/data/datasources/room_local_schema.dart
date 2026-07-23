@@ -76,7 +76,7 @@ class RoomLocalSchema {
     await db.execute('''
       ALTER TABLE $tableBeds ADD COLUMN monthly_rent REAL NOT NULL DEFAULT 0.0
     ''');
-    
+
     // Populate monthly_rent from rooms table for existing data
     await db.execute('''
       UPDATE $tableBeds

@@ -59,11 +59,13 @@ class _RoomManagementPageState extends State<RoomManagementPage> {
   }
 
   void _navigateToEditRoom(BuildContext context, RoomEntity room) {
-    context.pushNamed(
+    context
+        .pushNamed(
       AppRoutes.editRoomName,
       pathParameters: {'roomId': room.id!.toString()},
       extra: room,
-    ).then((changed) {
+    )
+        .then((changed) {
       if (changed == true && mounted) _triggerLoad();
     });
   }

@@ -20,7 +20,8 @@ class BedSelectionCubit extends Cubit<BedSelectionState> {
       for (final room in rooms) {
         if (room.id == null) continue;
         final beds = await _bedRepository.getVacantBedsByRoomId(room.id!);
-        final activeBeds = beds.where((b) => b.status == BedStatus.vacant).toList();
+        final activeBeds =
+            beds.where((b) => b.status == BedStatus.vacant).toList();
         if (activeBeds.isNotEmpty) {
           result.add(RoomWithBeds(room, activeBeds));
         }

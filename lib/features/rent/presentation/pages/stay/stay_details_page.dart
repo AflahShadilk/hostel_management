@@ -101,9 +101,10 @@ class StayDetailsPage extends StatelessWidget {
                           tenant?.fullName ?? 'Tenant information unavailable',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                         Text(
                           tenant?.phoneNumber ?? 'Phone not available',
@@ -129,8 +130,10 @@ class StayDetailsPage extends StatelessWidget {
               icon: Icons.calendar_month_outlined,
               child: Column(
                 children: [
-                  _DetailRow('Room', viewModel?.roomName ?? 'Room ${currentStay.roomId}'),
-                  _DetailRow('Bed', viewModel?.bedName ?? 'Bed ${currentStay.bedId}'),
+                  _DetailRow('Room',
+                      viewModel?.roomName ?? 'Room ${currentStay.roomId}'),
+                  _DetailRow(
+                      'Bed', viewModel?.bedName ?? 'Bed ${currentStay.bedId}'),
                   _DetailRow('Check-in', _date(currentStay.checkInDate)),
                   _DetailRow('Checkout', _date(currentStay.checkOutDate)),
                   _DetailRow('Stay duration', _duration(currentStay)),
@@ -143,8 +146,10 @@ class StayDetailsPage extends StatelessWidget {
               icon: Icons.hotel_outlined,
               child: Column(
                 children: [
-                  _DetailRow('Monthly rent', '₹${currentStay.monthlyRentSnapshot.toStringAsFixed(2)}'),
-                  _DetailRow('Expected checkout', _date(currentStay.expectedCheckoutDate)),
+                  _DetailRow('Monthly rent',
+                      '₹${currentStay.monthlyRentSnapshot.toStringAsFixed(2)}'),
+                  _DetailRow('Expected checkout',
+                      _date(currentStay.expectedCheckoutDate)),
                   _DetailRow('Status', _statusLabel(currentStay.status)),
                 ],
               ),

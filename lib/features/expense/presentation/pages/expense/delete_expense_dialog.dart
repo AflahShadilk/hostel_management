@@ -12,17 +12,17 @@ class DeleteExpenseDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(title),
-    content: Text(message),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(false),
-        child: const Text('Cancel'),
-      ),
-      ElevatedButton(
-        onPressed: () => Navigator.of(context).pop(true),
-        child: const Text('Delete'),
-      ),
-    ],
-  );
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      );
 }

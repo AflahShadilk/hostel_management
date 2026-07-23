@@ -109,8 +109,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                 borderRadius: BorderRadius.circular(22),
                                 boxShadow: [
                                   BoxShadow(
-                                    color:
-                                        AppColors.primary.withAlpha(60),
+                                    color: AppColors.primary.withAlpha(60),
                                     blurRadius: 20,
                                     offset: const Offset(0, 8),
                                   ),
@@ -292,8 +291,7 @@ class _RoleCardState extends State<_RoleCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        transform: Matrix4.identity()
-          ..translate(0.0, _hovering ? -4.0 : 0.0),
+        transform: Matrix4.identity()..translate(0.0, _hovering ? -4.0 : 0.0),
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(20),

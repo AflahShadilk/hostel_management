@@ -5,7 +5,7 @@ class CommunicationResult {
   const CommunicationResult.success() : this._(isSuccess: true);
 
   const CommunicationResult.failure(String message)
-    : this._(isSuccess: false, message: message);
+      : this._(isSuccess: false, message: message);
 
   final bool isSuccess;
   final String? message;

@@ -118,8 +118,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(
           status: AuthStatus.registrationPendingPin, user: persistedUser));
     } on StateError catch (e) {
-      emit(state.copyWith(
-          status: AuthStatus.failure, errorMessage: e.message));
+      emit(state.copyWith(status: AuthStatus.failure, errorMessage: e.message));
     } catch (e) {
       emit(state.copyWith(
           status: AuthStatus.failure,

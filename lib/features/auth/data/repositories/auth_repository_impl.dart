@@ -45,7 +45,9 @@ class AuthRepositoryImpl implements AuthRepository {
         final errorMsg = e.toString();
         // SQLite error format: "UNIQUE constraint failed: users.<column>"
         // Parse the last segment after the final dot to get the exact column name
-        final match = RegExp(r'UNIQUE constraint failed: \w+\.(\w+)', caseSensitive: false).firstMatch(errorMsg);
+        final match = RegExp(r'UNIQUE constraint failed: \w+\.(\w+)',
+                caseSensitive: false)
+            .firstMatch(errorMsg);
         final column = match?.group(1)?.toLowerCase();
         if (column == 'email') {
           throw StateError('This email address is already registered.');

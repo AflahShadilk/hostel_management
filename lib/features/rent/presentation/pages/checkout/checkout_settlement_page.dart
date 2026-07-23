@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, curly_braces_in_flow_control_structures
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -86,16 +86,36 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
   }
 
   String _monthLabel(int month, int year) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[month - 1]} $year';
   }
@@ -137,14 +157,14 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
             onPressed: () {
               Navigator.pop(dialogCtx);
               context.read<CheckoutCubit>().completeCheckout(
-                CheckoutRequest(
-                  stayId: widget.stay.id!,
-                  damageAmount: _damageAmount,
-                  otherCharges: _otherCharges,
-                  checkoutDate: _checkoutDate,
-                  notes: _notesController.text,
-                ),
-              );
+                    CheckoutRequest(
+                      stayId: widget.stay.id!,
+                      damageAmount: _damageAmount,
+                      otherCharges: _otherCharges,
+                      checkoutDate: _checkoutDate,
+                      notes: _notesController.text,
+                    ),
+                  );
             },
             child: const Text('Complete Checkout'),
           ),
@@ -235,7 +255,13 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                 final depositHeld = summaryState.depositHeld;
                 final monthlyRent = summaryState.monthlyRent;
 
-                final totalDue = pendingRent + currentMonthCharge + _damageAmount + _otherCharges;
+                final currentMonthPaid = summaryState.currentMonthPaid;
+
+                final totalDue = pendingRent +
+                    currentMonthCharge -
+                    currentMonthPaid +
+                    _damageAmount +
+                    _otherCharges;
                 final netAfterDeposit = depositHeld - totalDue;
                 final isRefund = netAfterDeposit >= 0;
                 final displayRefund = isRefund ? netAfterDeposit : 0.0;
@@ -260,16 +286,20 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                   children: [
                                     Text(
                                       'Stay Details',
-                                      style: Theme.of(context).textTheme.titleLarge,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
                                     ),
                                     const Divider(),
                                     _InfoRow(
                                       label: 'Tenant',
-                                      value: tenant?.fullName ?? 'Tenant information unavailable',
+                                      value: tenant?.fullName ??
+                                          'Tenant information unavailable',
                                     ),
                                     _InfoRow(
                                       label: 'Phone',
-                                      value: tenant?.phoneNumber ?? 'Not available',
+                                      value: tenant?.phoneNumber ??
+                                          'Not available',
                                     ),
                                     _InfoRow(
                                       label: 'Room',
@@ -281,10 +311,13 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     ),
                                     _InfoRow(
                                       label: 'Check-in',
-                                      value: _formatDate(widget.stay.checkInDate),
+                                      value:
+                                          _formatDate(widget.stay.checkInDate),
                                     ),
                                     InkWell(
-                                      onTap: isSubmitting ? null : _pickCheckoutDate,
+                                      onTap: isSubmitting
+                                          ? null
+                                          : _pickCheckoutDate,
                                       borderRadius: BorderRadius.circular(8),
                                       child: _InfoRow(
                                         label: 'Checkout Date (edit)',
@@ -293,7 +326,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     ),
                                     _InfoRow(
                                       label: 'Monthly Rent',
-                                      value: '₹${monthlyRent.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${monthlyRent.toStringAsFixed(0)}',
                                     ),
                                   ],
                                 ),
@@ -303,8 +337,9 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
 
                             // 2. CURRENT MONTH RENT CARD
                             AppDashboardCard(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.secondaryContainer,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -325,7 +360,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     _InfoRow(
                                       label:
                                           '1 ${_monthLabel(now.month, now.year)} → ${now.day} ${_monthLabel(now.month, now.year)}',
-                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${currentMonthCharge.toStringAsFixed(0)}',
                                       isBold: true,
                                     ),
                                     const SizedBox(height: 4),
@@ -356,28 +392,35 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                   children: [
                                     Text(
                                       'Financial Summary',
-                                      style: Theme.of(context).textTheme.titleLarge,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
                                     ),
                                     const Divider(),
                                     _InfoRow(
                                       label: 'Monthly Rent',
-                                      value: '₹${monthlyRent.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${monthlyRent.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: 'Current Month Charge',
-                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${currentMonthCharge.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: 'Pending Rent (prev. months)',
-                                      value: '₹${pendingRent.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${pendingRent.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: 'Already Paid',
-                                      value: '₹${summaryState.alreadyPaid.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${summaryState.alreadyPaid.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: 'Deposit Held',
-                                      value: '₹${depositHeld.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${depositHeld.toStringAsFixed(0)}',
                                     ),
                                   ],
                                 ),
@@ -394,21 +437,27 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                   children: [
                                     Text(
                                       'Damage Charges',
-                                      style: Theme.of(context).textTheme.titleLarge,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge,
                                     ),
                                     const Divider(),
                                     AppTextField(
                                       controller: _damageController,
                                       label: 'Damage Amount',
-                                      keyboardType: const TextInputType.numberWithOptions(
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
                                         decimal: true,
                                       ),
                                       enabled: !isSubmitting,
                                       validator: (value) {
-                                        if (value == null || value.isEmpty) return 'Required';
+                                        if (value == null || value.isEmpty)
+                                          return 'Required';
                                         final num = double.tryParse(value);
-                                        if (num == null) return 'Must be a number';
-                                        if (num < 0) return 'Cannot be negative';
+                                        if (num == null)
+                                          return 'Must be a number';
+                                        if (num < 0)
+                                          return 'Cannot be negative';
                                         return null;
                                       },
                                     ),
@@ -426,8 +475,10 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                           return 'Required';
                                         }
                                         final amount = double.tryParse(value);
-                                        if (amount == null) return 'Must be a number';
-                                        if (amount < 0) return 'Cannot be negative';
+                                        if (amount == null)
+                                          return 'Must be a number';
+                                        if (amount < 0)
+                                          return 'Cannot be negative';
                                         return null;
                                       },
                                     ),
@@ -446,8 +497,9 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
 
                             // 5. SETTLEMENT OVERVIEW (live)
                             AppDashboardCard(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               child: Padding(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
@@ -455,7 +507,10 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                   children: [
                                     Text(
                                       'Settlement Overview',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
                                             color: Theme.of(context)
                                                 .colorScheme
                                                 .onPrimaryContainer,
@@ -464,15 +519,24 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     const Divider(),
                                     _InfoRow(
                                       label: 'Pending Rent',
-                                      value: '₹${pendingRent.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${pendingRent.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: '+ Current Month Charge',
-                                      value: '₹${currentMonthCharge.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${currentMonthCharge.toStringAsFixed(0)}',
                                     ),
+                                    if (currentMonthPaid > 0)
+                                      _InfoRow(
+                                        label: '- Already Paid (Current Month)',
+                                        value:
+                                            '₹${currentMonthPaid.toStringAsFixed(0)}',
+                                      ),
                                     _InfoRow(
                                       label: '+ Damage Charges',
-                                      value: '₹${_damageAmount.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${_damageAmount.toStringAsFixed(0)}',
                                     ),
                                     const Divider(),
                                     _InfoRow(
@@ -483,7 +547,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     const SizedBox(height: AppSpacing.sm),
                                     _InfoRow(
                                       label: 'Deposit Held',
-                                      value: '₹${depositHeld.toStringAsFixed(0)}',
+                                      value:
+                                          '₹${depositHeld.toStringAsFixed(0)}',
                                     ),
                                     _InfoRow(
                                       label: '- Total Due',
@@ -493,14 +558,17 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                                     if (isRefund)
                                       _InfoRow(
                                         label: 'Deposit Refund',
-                                        value: '₹${displayRefund.toStringAsFixed(0)}',
+                                        value:
+                                            '₹${displayRefund.toStringAsFixed(0)}',
                                         isBold: true,
                                         color: AppColors.success,
                                       )
                                     else
                                       _InfoRow(
-                                        label: 'Remaining Balance (tenant owes)',
-                                        value: '₹${remainingBalance.toStringAsFixed(0)}',
+                                        label:
+                                            'Remaining Balance (tenant owes)',
+                                        value:
+                                            '₹${remainingBalance.toStringAsFixed(0)}',
                                         isBold: true,
                                         color: AppColors.error,
                                       ),
@@ -515,7 +583,8 @@ class _CheckoutSettlementPageState extends State<CheckoutSettlementPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 TextButton(
-                                  onPressed: isSubmitting ? null : () => context.pop(),
+                                  onPressed:
+                                      isSubmitting ? null : () => context.pop(),
                                   child: const Text('Cancel'),
                                 ),
                                 const SizedBox(width: AppSpacing.md),

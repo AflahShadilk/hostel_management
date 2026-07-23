@@ -41,5 +41,6 @@ class ProfitLossState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [data, isLoading, error, activeFilter, customFrom, customTo];
+  List<Object?> get props =>
+      [data, isLoading, error, activeFilter, customFrom, customTo];
 }

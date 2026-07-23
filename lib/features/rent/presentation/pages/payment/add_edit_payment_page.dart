@@ -37,8 +37,7 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
     _rentRecordId =
         TextEditingController(text: payment?.rentRecordId.toString() ?? '');
     _amount = TextEditingController(text: payment?.amount.toString() ?? '');
-    _paymentMethod =
-        TextEditingController(text: payment?.paymentMethod ?? '');
+    _paymentMethod = TextEditingController(text: payment?.paymentMethod ?? '');
     _notes = TextEditingController(text: payment?.notes ?? '');
   }
 
@@ -51,8 +50,7 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
     super.dispose();
   }
 
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/'
+  String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/'
       '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
   Future<void> _pickDate(BuildContext context) async {
@@ -118,8 +116,8 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
             create: (_) =>
                 SelectedDateCubit(payment?.paymentDate ?? DateTime.now())),
         BlocProvider<SelectedStatusCubit>(
-            create: (_) =>
-                SelectedStatusCubit(payment?.status ?? PaymentStatus.completed)),
+            create: (_) => SelectedStatusCubit(
+                payment?.status ?? PaymentStatus.completed)),
       ],
       child: Builder(builder: (context) {
         return BlocListener<PaymentCubit, PaymentState>(
@@ -135,9 +133,8 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(
-                title:
-                    Text(_editing ? 'Edit Payment' : 'Add Payment')),
+            appBar:
+                AppBar(title: Text(_editing ? 'Edit Payment' : 'Add Payment')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -164,10 +161,10 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Payment Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
-                                child: Text(
-                                    _date(paymentDate ?? DateTime.now())),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
+                                child:
+                                    Text(_date(paymentDate ?? DateTime.now())),
                               ),
                             ),
                           ),
@@ -197,8 +194,8 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: PaymentStatus.values
                                   .map((v) => DropdownMenuItem(
                                       value: v, child: Text(v)))
@@ -217,15 +214,13 @@ class _AddEditPaymentPageState extends State<AddEditPaymentPage> {
                             builder: (context, submitting) =>
                                 BlocBuilder<PaymentCubit, PaymentState>(
                               builder: (context, state) => AppButton(
-                                label: _editing
-                                    ? 'Save Changes'
-                                    : 'Add Payment',
+                                label:
+                                    _editing ? 'Save Changes' : 'Add Payment',
                                 isLoading:
                                     submitting || state is PaymentLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

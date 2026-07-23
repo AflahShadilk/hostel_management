@@ -1,14 +1,6 @@
-/// Reusable, pure validation functions for tenant registration fields.
-///
-/// All methods are static. No Flutter or widget dependencies — safe to use
-/// in cubits or unit tests without a widget context.
-///
-/// Rules follow the project requirements:
-///   - Name: required, 3–60 chars, letters and spaces only (after trim).
-///   - Phone: required, exactly 10 digits.
-///   - Email: optional, standard email format when provided.
-///   - Address: optional, maximum 300 characters.
-///   - Emergency phone: optional, exactly 10 digits when provided.
+
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 abstract final class TenantValidators {
   // Matches a name that contains only letters (Unicode) and spaces.
   static final _nameRegExp = RegExp(r"^[\p{L} ]+$", unicode: true);
@@ -27,7 +19,8 @@ abstract final class TenantValidators {
     if (v.isEmpty) return 'Please enter tenant name.';
     if (v.length < 3) return 'Name must be at least 3 characters.';
     if (v.length > 60) return 'Name must be 60 characters or fewer.';
-    if (!_nameRegExp.hasMatch(v)) return 'Name may contain letters and spaces only.';
+    if (!_nameRegExp.hasMatch(v))
+      return 'Name may contain letters and spaces only.';
     return null;
   }
 
@@ -35,7 +28,8 @@ abstract final class TenantValidators {
   static String? validatePhone(String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return 'Please enter phone number.';
-    if (!_phone10RegExp.hasMatch(v)) return 'Enter a valid 10-digit phone number.';
+    if (!_phone10RegExp.hasMatch(v))
+      return 'Enter a valid 10-digit phone number.';
     return null;
   }
 
@@ -59,7 +53,8 @@ abstract final class TenantValidators {
   static String? validateEmergencyPhone(String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return null; // optional
-    if (!_phone10RegExp.hasMatch(v)) return 'Enter a valid 10-digit phone number.';
+    if (!_phone10RegExp.hasMatch(v))
+      return 'Enter a valid 10-digit phone number.';
     return null;
   }
 }

@@ -55,9 +55,9 @@ class RentLocalSchema {
       CREATE UNIQUE INDEX stay_current_tenant_unique
       ON $tableStays(tenant_id)
       WHERE status IN (${_sqlValues(<String>[
-        StayStatus.active,
-        StayStatus.checkoutPending,
-      ])})
+          StayStatus.active,
+          StayStatus.checkoutPending,
+        ])})
     ''');
 
     await db.execute('''
@@ -205,7 +205,8 @@ class RentLocalSchema {
   }
 
   static Future<void> migrateFromVersion13(Database db) async {
-    await db.execute('ALTER TABLE $tableCheckoutSettlements ADD COLUMN notes TEXT');
+    await db
+        .execute('ALTER TABLE $tableCheckoutSettlements ADD COLUMN notes TEXT');
   }
 
   /// Adds the checkout snapshot values introduced by the settlement workflow.
@@ -345,17 +346,18 @@ class RentLocalSchema {
 
   static Future<void> migrateFromVersion9(DatabaseExecutor db) async {
     await db.execute('DROP TABLE IF EXISTS receipts');
-    
-    // We recreate the payments table because SQLite doesn't support adding constraints 
+
+    // We recreate the payments table because SQLite doesn't support adding constraints
     // to existing tables easily, but we can just use ALTER TABLE to add columns if we allow nulls.
     // However, stay_id, tenant_id, receipt_number are NOT NULL.
     // If the payments table is empty (which it likely is at this stage of development since UI didn't exist),
     // we can just drop and recreate it.
-    
+
     // Check if table is empty
-    final results = await db.query(tablePayments, columns: ['COUNT(*) as count']);
+    final results =
+        await db.query(tablePayments, columns: ['COUNT(*) as count']);
     final count = Sqflite.firstIntValue(results) ?? 0;
-    
+
     if (count == 0) {
       await db.execute('DROP TABLE IF EXISTS $tablePayments');
       await db.execute('''
@@ -390,7 +392,8 @@ class RentLocalSchema {
     } else {
       // If not empty, we would need a complex migration copying data, generating fake receipt numbers, etc.
       // Assuming it's empty for this iteration as payment recording was not yet implemented.
-      throw StateError('Cannot migrate non-empty payments table automatically from v9 to v10.');
+      throw StateError(
+          'Cannot migrate non-empty payments table automatically from v9 to v10.');
     }
   }
 
@@ -404,13 +407,16 @@ class RentLocalSchema {
   static Future<void> migrateFromVersion10(Database db) async {
     await db.transaction((txn) async {
       // Check payment dependency: if payments exist, we cannot drop rent_records.
-      final paymentCount =
-          Sqflite.firstIntValue(await txn.query(tablePayments, columns: ['COUNT(*) as count'])) ?? 0;
+      final paymentCount = Sqflite.firstIntValue(
+              await txn.query(tablePayments, columns: ['COUNT(*) as count'])) ??
+          0;
 
       if (paymentCount > 0) {
         // Payments exist: use ALTER TABLE to add new columns (they default to NULL temporarily).
-        await txn.execute('ALTER TABLE $tableRentRecords ADD COLUMN start_date TEXT');
-        await txn.execute('ALTER TABLE $tableRentRecords ADD COLUMN end_date TEXT');
+        await txn.execute(
+            'ALTER TABLE $tableRentRecords ADD COLUMN start_date TEXT');
+        await txn
+            .execute('ALTER TABLE $tableRentRecords ADD COLUMN end_date TEXT');
 
         // Backfill start_date from billing_month/billing_year: e.g. 2026-07-01
         await txn.execute("""

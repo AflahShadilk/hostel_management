@@ -21,7 +21,8 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
       ? 'Not set'
       : '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 
-  Future<void> _delete(BuildContext context, CheckoutSettlementEntity settlement) async {
+  Future<void> _delete(
+      BuildContext context, CheckoutSettlementEntity settlement) async {
     final deletingCubit = context.read<DeletingCubit>();
     final mainCubit = context.read<CheckoutCubit>();
     final confirmed = await showDialog<bool>(
@@ -103,10 +104,14 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
                                     _Row('Stay ID', '${settlement.stayId}'),
                                     _Row('Checkout Date',
                                         _date(settlement.settlementDate)),
-                                    _Row('Total Charges',
-                                        settlement.finalAmount.toStringAsFixed(2)),
-                                    _Row('Total Refund',
-                                        settlement.refundAmount.toStringAsFixed(2)),
+                                    _Row(
+                                        'Total Charges',
+                                        settlement.finalAmount
+                                            .toStringAsFixed(2)),
+                                    _Row(
+                                        'Total Refund',
+                                        settlement.refundAmount
+                                            .toStringAsFixed(2)),
                                     _Row('Created Date',
                                         _date(settlement.createdAt)),
                                     _Row('Updated Date',

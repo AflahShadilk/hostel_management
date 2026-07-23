@@ -1,15 +1,24 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../features/room/data/datasources/room_local_schema.dart';
+import '../../../../features/room/domain/entities/bed_status.dart';
+import '../../../../features/room/domain/entities/room_status.dart';
+import '../../../../features/tenant/data/datasources/tenant_local_schema.dart';
 import '../../../../features/tenant/domain/entities/tenant_status.dart';
 import '../../domain/constants/rent_status_constants.dart';
+import '../models/checkout_data_bundle.dart';
 import '../models/checkout_settlement_model.dart';
 import '../models/damage_charge_model.dart';
 import '../models/deposit_model.dart';
 import '../models/payment_model.dart';
+import '../models/persist_checkout_command.dart';
 import '../models/receipt_model.dart';
 import '../models/rent_record_model.dart';
 import '../models/stay_model.dart';
+import '../models/upsert_rent_record_command.dart';
 import 'rent_local_datasource.dart';
 import 'rent_local_schema.dart';
 
@@ -103,7 +112,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
 
   @override
   Future<StayModel> updateStay(StayModel stay) async {
-    await _update(RentLocalSchema.tableStays, stay.id, stay.toMap(), 'update stay');
+    await _update(
+        RentLocalSchema.tableStays, stay.id, stay.toMap(), 'update stay');
     return stay;
   }
 
@@ -126,33 +136,42 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
     return _perform('check in tenant', () async {
       return await database.transaction((txn) async {
         // 1. Verify tenant exists
-        final tenants = await txn.query('tenants', where: 'id = ?', whereArgs: [tenantId], limit: 1);
+        final tenants = await txn.query('tenants',
+            where: 'id = ?', whereArgs: [tenantId], limit: 1);
         if (tenants.isEmpty) throw Exception('Tenant not found.');
 
         // 2. Verify room exists
-        final rooms = await txn.query('rooms', where: 'id = ?', whereArgs: [roomId], limit: 1);
+        final rooms = await txn.query('rooms',
+            where: 'id = ?', whereArgs: [roomId], limit: 1);
         if (rooms.isEmpty) throw Exception('Room not found.');
 
         // 3. Verify bed exists, belongs to room, is vacant
-        final beds = await txn.query('beds', where: 'id = ?', whereArgs: [bedId], limit: 1);
+        final beds = await txn.query('beds',
+            where: 'id = ?', whereArgs: [bedId], limit: 1);
         if (beds.isEmpty) throw Exception('Bed not found.');
-        if (beds.first['room_id'] != roomId) throw Exception('Bed does not belong to the selected room.');
-        if (beds.first['status'] != 'vacant') throw Exception('Bed is not vacant.');
+        if (beds.first['room_id'] != roomId)
+          throw Exception('Bed does not belong to the selected room.');
+        if (beds.first['status'] != 'vacant')
+          throw Exception('Bed is not vacant.');
 
         // 4. Verify tenant does not have active stay
         final stays = await txn.query(RentLocalSchema.tableStays,
             where: 'tenant_id = ? AND status = ?',
             whereArgs: [tenantId, StayStatus.active],
             limit: 1);
-        if (stays.isNotEmpty) throw Exception('Tenant already has an active stay.');
+        if (stays.isNotEmpty)
+          throw Exception('Tenant already has an active stay.');
 
         final now = DateTime.now().toIso8601String();
 
         // 5. Update bed to occupied
-        await txn.update('beds', {'status': 'occupied', 'updated_at': now}, where: 'id = ?', whereArgs: [bedId]);
+        await txn.update('beds', {'status': 'occupied', 'updated_at': now},
+            where: 'id = ?', whereArgs: [bedId]);
 
         // 6. Update tenant to active and assign to bed
-        await txn.update('tenants', {'status': 'active', 'bed_id': bedId, 'updated_at': now}, where: 'id = ?', whereArgs: [tenantId]);
+        await txn.update(
+            'tenants', {'status': 'active', 'bed_id': bedId, 'updated_at': now},
+            where: 'id = ?', whereArgs: [tenantId]);
 
         // 7. Insert Stay
         final stayMap = {
@@ -168,7 +187,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           'updated_at': now,
         };
         final stayId = await txn.insert(RentLocalSchema.tableStays, stayMap);
-        final createdStay = StayModel.fromMap(<String, dynamic>{...stayMap, 'id': stayId});
+        final createdStay =
+            StayModel.fromMap(<String, dynamic>{...stayMap, 'id': stayId});
 
         // 8. If deposit > 0, Insert Deposit
         if (depositAmount > 0) {
@@ -207,7 +227,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         for (final stay in stayRows) {
           final stayId = stay['id'] as int;
           final tenantId = stay['tenant_id'] as int;
-          final monthlyRent = (stay['monthly_rent_snapshot'] as num?)?.toDouble() ?? 0.0;
+          final monthlyRent =
+              (stay['monthly_rent_snapshot'] as num?)?.toDouble() ?? 0.0;
 
           // 2. Verify the tenant is active.
           final tenantRows = await txn.query(
@@ -235,11 +256,13 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           );
           if (lastRows.isEmpty) continue;
 
-          final lastEndDate = DateTime.parse(lastRows.first['end_date'] as String);
+          final lastEndDate =
+              DateTime.parse(lastRows.first['end_date'] as String);
 
           // 5. Only generate if the last billing period has ended (or is ending today).
           //    Do not generate future records more than 3 days early.
-          final generationThreshold = lastEndDate.subtract(const Duration(days: 3));
+          final generationThreshold =
+              lastEndDate.subtract(const Duration(days: 3));
           if (now.isBefore(generationThreshold)) continue;
 
           // 6. New period: starts the day after the last period ended.
@@ -347,7 +370,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
     final database = await _appDatabase.database;
     return _perform('allocate payment', () async {
       if (payment.id != null) {
-        throw StateError('A payment that already has an ID cannot be allocated again.');
+        throw StateError(
+            'A payment that already has an ID cannot be allocated again.');
       }
       if (!payment.amount.isFinite || payment.amount <= 0) {
         throw ArgumentError('Payment amount must be greater than zero.');
@@ -377,9 +401,10 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         final dueDate = DateTime.parse(rentRecord['due_date'] as String);
         const moneyPrecision = 0.000001;
         final outstanding = amountDue - amountPaid;
-        
+
         if (outstanding < -moneyPrecision) {
-          throw StateError('Rent record has an invalid negative outstanding balance.');
+          throw StateError(
+              'Rent record has an invalid negative outstanding balance.');
         }
         if (payment.amount - outstanding > moneyPrecision) {
           throw StateError('Payment amount exceeds the outstanding balance.');
@@ -397,7 +422,7 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         }
         final stay = stayRows.first;
         final tenantId = stay['tenant_id'] as int;
-        
+
         if (stay['status'] != StayStatus.active) {
           throw StateError('Stay is not active.');
         }
@@ -416,7 +441,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
 
         final nowStr = DateTime.now().toIso8601String();
         final dateStr = nowStr.substring(0, 10).replaceAll('-', '');
-        final randomPart = DateTime.now().millisecondsSinceEpoch.toString().substring(8);
+        final randomPart =
+            DateTime.now().millisecondsSinceEpoch.toString().substring(8);
         final receiptNumber = 'RCP-$dateStr-$randomPart';
 
         final map = payment.toMap();
@@ -427,8 +453,7 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         final duplicatePayments = await txn.query(
           RentLocalSchema.tablePayments,
           columns: ['id'],
-          where:
-              'rent_record_id = ? AND amount = ? AND payment_date = ? AND '
+          where: 'rent_record_id = ? AND amount = ? AND payment_date = ? AND '
               'payment_method = ? AND status = ? AND created_at = ? AND '
               'updated_at = ?',
           whereArgs: [
@@ -445,7 +470,7 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         if (duplicatePayments.isNotEmpty) {
           throw StateError('This payment has already been allocated.');
         }
-        
+
         final paymentId = await txn.insert(RentLocalSchema.tablePayments, map);
 
         final rawUpdatedAmountPaid = amountPaid + payment.amount;
@@ -454,14 +479,18 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
                 ? amountDue
                 : rawUpdatedAmountPaid;
         final remaining = amountDue - updatedAmountPaid;
-        
+
         String status;
         if (remaining <= moneyPrecision) {
           status = RentStatus.paid;
         } else if (updatedAmountPaid == 0) {
-          status = DateTime.now().isAfter(dueDate) ? RentStatus.overdue : RentStatus.pending;
+          status = DateTime.now().isAfter(dueDate)
+              ? RentStatus.overdue
+              : RentStatus.pending;
         } else {
-          status = DateTime.now().isAfter(dueDate) && remaining > moneyPrecision ? RentStatus.overdue : RentStatus.partial;
+          status = DateTime.now().isAfter(dueDate) && remaining > moneyPrecision
+              ? RentStatus.overdue
+              : RentStatus.partial;
         }
 
         final updatedRows = await txn.update(
@@ -521,7 +550,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
 
   @override
   Future<PaymentModel> updatePayment(PaymentModel payment) async {
-    await _update(RentLocalSchema.tablePayments, payment.id, payment.toMap(), 'update payment');
+    await _update(RentLocalSchema.tablePayments, payment.id, payment.toMap(),
+        'update payment');
     return payment;
   }
 
@@ -545,7 +575,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         }
         final payment = PaymentModel.fromMap(paymentRows.first);
         if (payment.status != PaymentStatus.completed) {
-          throw StateError('A receipt can only be generated for a completed payment.');
+          throw StateError(
+              'A receipt can only be generated for a completed payment.');
         }
 
         final rentRecordRows = await txn.query(
@@ -570,7 +601,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
           throw StateError('Associated stay not found.');
         }
         if (stayRows.first['status'] != StayStatus.active) {
-          throw StateError('A receipt can only be generated for an active stay.');
+          throw StateError(
+              'A receipt can only be generated for an active stay.');
         }
 
         final existingReceiptRows = await txn.query(
@@ -636,7 +668,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
 
   @override
   Future<ReceiptModel> updateReceipt(ReceiptModel receipt) async {
-    await _update(RentLocalSchema.tableReceipts, receipt.id, receipt.toMap(), 'update receipt');
+    await _update(RentLocalSchema.tableReceipts, receipt.id, receipt.toMap(),
+        'update receipt');
     return receipt;
   }
 
@@ -679,7 +712,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
 
   @override
   Future<DepositModel> updateDeposit(DepositModel deposit) async {
-    await _update(RentLocalSchema.tableDeposits, deposit.id, deposit.toMap(), 'update deposit');
+    await _update(RentLocalSchema.tableDeposits, deposit.id, deposit.toMap(),
+        'update deposit');
     return deposit;
   }
 
@@ -749,7 +783,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         RentLocalSchema.tableCheckoutSettlements,
         map,
       );
-      return CheckoutSettlementModel.fromMap(<String, dynamic>{...map, 'id': id});
+      return CheckoutSettlementModel.fromMap(
+          <String, dynamic>{...map, 'id': id});
     });
   }
 
@@ -773,7 +808,8 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
   Future<List<CheckoutSettlementModel>> getAllCheckoutSettlements() async {
     final database = await _appDatabase.database;
     return _perform('get all checkout settlements', () async {
-      final rows = await database.query(RentLocalSchema.tableCheckoutSettlements);
+      final rows =
+          await database.query(RentLocalSchema.tableCheckoutSettlements);
       return rows.map(CheckoutSettlementModel.fromMap).toList();
     });
   }
@@ -797,4 +833,252 @@ class RentLocalDataSourceImpl implements RentLocalDataSource {
         id,
         'delete checkout settlement',
       );
+
+  // ---------------------------------------------------------------------------
+  // Checkout workflow methods
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<CheckoutDataBundle> loadCheckoutData(int stayId) async {
+    final database = await _appDatabase.database;
+    return _perform('load checkout data', () async {
+      // Load active stay.
+      final stayRows = await database.query(
+        RentLocalSchema.tableStays,
+        where: 'id = ? AND status = ?',
+        whereArgs: <Object?>[stayId, StayStatus.active],
+        limit: 1,
+      );
+      if (stayRows.isEmpty) throw StateError('Active stay not found.');
+      final stay = StayModel.fromMap(stayRows.first);
+
+      // Guard: no duplicate settlement.
+      final existing = await database.query(
+        RentLocalSchema.tableCheckoutSettlements,
+        columns: ['id'],
+        where: 'stay_id = ?',
+        whereArgs: <Object?>[stayId],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        throw StateError('Checkout settlement already exists for this stay.');
+      }
+
+      // Load all rent records for this stay.
+      final recordRows = await database.query(
+        RentLocalSchema.tableRentRecords,
+        where: 'stay_id = ?',
+        whereArgs: <Object?>[stayId],
+        orderBy: 'start_date ASC',
+      );
+      final rentRecords = recordRows.map(RentRecordModel.fromMap).toList();
+
+      // Load held deposit (if any).
+      final depositRows = await database.query(
+        RentLocalSchema.tableDeposits,
+        where: 'stay_id = ? AND status = ?',
+        whereArgs: <Object?>[stayId, 'held'],
+        limit: 1,
+      );
+      final heldDeposit =
+          depositRows.isEmpty ? null : DepositModel.fromMap(depositRows.first);
+
+      return CheckoutDataBundle(
+        stay: stay,
+        rentRecords: rentRecords,
+        heldDeposit: heldDeposit,
+      );
+    });
+  }
+
+  @override
+  Future<void> upsertCurrentMonthRentRecord(
+    UpsertRentRecordCommand cmd,
+  ) async {
+    final database = await _appDatabase.database;
+    return _perform('upsert current month rent record', () async {
+      await database.transaction((txn) async {
+        await _upsertCurrentMonthRentRecord(txn, cmd);
+      });
+    });
+  }
+
+  Future<void> _upsertCurrentMonthRentRecord(
+    Transaction txn,
+    UpsertRentRecordCommand cmd,
+  ) async {
+    final nowText = cmd.checkoutDate.toIso8601String();
+
+    final existing = await txn.query(
+      RentLocalSchema.tableRentRecords,
+      columns: ['id'],
+      where: 'stay_id = ? AND start_date LIKE ?',
+      whereArgs: <Object?>[cmd.stayId, '${cmd.currentMonthPrefix}%'],
+      limit: 1,
+    );
+
+    if (existing.isNotEmpty) {
+      final record = existing.first;
+
+      await txn.update(
+        RentLocalSchema.tableRentRecords,
+        <String, Object?>{
+          'start_date': cmd.effectiveStartDate.toIso8601String(),
+          'end_date': nowText,
+          'amount_due': cmd.currentMonthCharge,
+          'status': cmd.status,
+          'updated_at': nowText,
+        },
+        where: 'id = ?',
+        whereArgs: <Object?>[record['id']],
+      );
+      return;
+    }
+
+    await txn.insert(RentLocalSchema.tableRentRecords, <String, Object?>{
+      'stay_id': cmd.stayId,
+      'start_date': cmd.effectiveStartDate.toIso8601String(),
+      'end_date': nowText,
+      'generated_at': nowText,
+      'due_date': nowText,
+      'amount_due': cmd.currentMonthCharge,
+      'amount_paid': 0.0,
+      'status': RentStatus.pending,
+      'created_at': nowText,
+      'updated_at': nowText,
+    });
+  }
+
+  @override
+  Future<CheckoutSettlementModel> persistCheckout(
+    PersistCheckoutCommand cmd,
+  ) async {
+    final database = await _appDatabase.database;
+    return _perform('persist checkout', () async {
+      return database.transaction((txn) async {
+        final now = cmd.checkoutDate;
+        final nowText = now.toIso8601String();
+        final s = cmd.settlement;
+        final settlementNotes =
+            cmd.notes?.trim().isEmpty == true ? null : cmd.notes?.trim();
+
+        await _upsertCurrentMonthRentRecord(
+          txn,
+          cmd.currentMonthRentRecord,
+        );
+
+        // 1. Insert checkout settlement row.
+        final settlementMap = <String, dynamic>{
+          'stay_id': cmd.stayId,
+          'outstanding_amount': s.previousPendingRent,
+          'current_month_charge': s.currentMonthCharge,
+          'rent_due': s.totalPendingRent,
+          'late_fee': 0.0,
+          'other_charges': cmd.otherCharges,
+          'damage_charges': cmd.damageAmount,
+          'deposit_adjustment': s.depositAdjustment,
+          'refund_amount': s.refundAmount,
+          'final_amount': s.remainingAmount,
+          'settlement_date': nowText,
+          'notes': settlementNotes,
+          'status': SettlementStatus.completed,
+          'created_at': nowText,
+          'updated_at': nowText,
+        };
+        final settlementId = await txn.insert(
+          RentLocalSchema.tableCheckoutSettlements,
+          settlementMap,
+        );
+
+        // 2. Insert damage charge row (if applicable).
+        if (cmd.damageAmount > 0) {
+          await txn.insert(RentLocalSchema.tableDamageCharges, {
+            'stay_id': cmd.stayId,
+            'description': settlementNotes?.isNotEmpty == true
+                ? settlementNotes
+                : 'Checkout damage charge',
+            'amount': cmd.damageAmount,
+            'status': 'paid',
+            'created_at': nowText,
+            'updated_at': nowText,
+          });
+        }
+
+        // 3. Update deposit status.
+        if (cmd.depositId != null) {
+          await txn.update(
+            RentLocalSchema.tableDeposits,
+            {
+              'refunded_amount': s.refundAmount,
+              'refund_date': nowText,
+              'status': s.depositStatus,
+              'updated_at': nowText,
+            },
+            where: 'id = ?',
+            whereArgs: <Object?>[cmd.depositId],
+          );
+        }
+
+        // 4. Mark stay as checked-out.
+        await txn.update(
+          RentLocalSchema.tableStays,
+          {
+            'status': StayStatus.checkedOut,
+            'check_out_date': nowText,
+            'updated_at': nowText,
+          },
+          where: 'id = ?',
+          whereArgs: <Object?>[cmd.stayId],
+        );
+
+        // 5. Update tenant record.
+        await txn.update(
+          TenantLocalSchema.tableTenants,
+          {
+            TenantLocalSchema.colStatus: TenantStatus.checkedOut.databaseValue,
+            TenantLocalSchema.colBedId: null,
+            TenantLocalSchema.colCheckOutDate: nowText,
+            TenantLocalSchema.colUpdatedAt: nowText,
+          },
+          where: 'id = ?',
+          whereArgs: <Object?>[cmd.tenantId],
+        );
+
+        // 6. Mark bed as vacant.
+        await txn.update(
+          RoomLocalSchema.tableBeds,
+          {'status': BedStatus.vacant.databaseValue, 'updated_at': nowText},
+          where: 'id = ?',
+          whereArgs: <Object?>[cmd.bedId],
+        );
+
+        // 7. Recalculate room occupancy status.
+        final occupancy = await txn.rawQuery(
+          'SELECT COUNT(*) AS occupied, '
+          '(SELECT COUNT(*) FROM ${RoomLocalSchema.tableBeds} WHERE room_id = ?) AS total '
+          'FROM ${RoomLocalSchema.tableBeds} WHERE room_id = ? AND status = ?',
+          <Object?>[cmd.roomId, cmd.roomId, BedStatus.occupied.databaseValue],
+        );
+        final occupied = (occupancy.first['occupied'] as num).toInt();
+        final total = (occupancy.first['total'] as num).toInt();
+        await txn.update(
+          RoomLocalSchema.tableRooms,
+          {
+            'status': occupied == 0
+                ? RoomStatus.vacant.databaseValue
+                : occupied == total
+                    ? RoomStatus.occupied.databaseValue
+                    : RoomStatus.partiallyOccupied.databaseValue,
+            'updated_at': nowText,
+          },
+          where: 'id = ?',
+          whereArgs: <Object?>[cmd.roomId],
+        );
+
+        return CheckoutSettlementModel.fromMap(
+          <String, dynamic>{...settlementMap, 'id': settlementId},
+        );
+      });
+    });
+  }
 }

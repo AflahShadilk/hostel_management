@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -35,7 +37,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                     child: const Text('Cancel')),
                 TextButton(
                     onPressed: () => Navigator.pop(dialogContext, true),
-                    style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                    style:
+                        TextButton.styleFrom(foregroundColor: AppColors.error),
                     child: const Text('Delete')),
               ],
             ));
@@ -48,7 +51,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final payment = widget.payment;
-    if (payment == null) return const Scaffold(body: Center(child: Text('Payment data not found.')));
+    if (payment == null)
+      return const Scaffold(
+          body: Center(child: Text('Payment data not found.')));
     return BlocProvider<DeletingCubit>(
       create: (_) => DeletingCubit(),
       child: Builder(builder: (context) {
@@ -56,7 +61,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           listener: (context, state) {
             if (state is PaymentError) {
               context.read<DeletingCubit>().stop();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(state.message)));
             } else if (context.read<DeletingCubit>().state &&
                 (state is PaymentLoaded || state is PaymentEmpty)) {
               context.pop(true);
@@ -64,7 +70,12 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           },
           child: Scaffold(
             appBar: AppBar(title: const Text('Payment Details'), actions: [
-              IconButton(icon: const Icon(Icons.edit_outlined), tooltip: 'Edit', onPressed: () => context.pushNamed(AppRoutes.editPaymentName, pathParameters: {'paymentId': payment.id!.toString()}, extra: payment)),
+              IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Edit',
+                  onPressed: () => context.pushNamed(AppRoutes.editPaymentName,
+                      pathParameters: {'paymentId': payment.id!.toString()},
+                      extra: payment)),
               BlocBuilder<DeletingCubit, bool>(
                 builder: (context, deleting) => IconButton(
                   icon: const Icon(Icons.delete_outline),
@@ -73,23 +84,39 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                 ),
               ),
             ]),
-            body: ListView(padding: const EdgeInsets.all(AppSpacing.md), children: [
-              Card(child: Padding(padding: const EdgeInsets.all(AppSpacing.md), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Status: ${payment.status}', style: Theme.of(context).textTheme.titleMedium), const Divider(),
-                _Row('Payment ID', '${payment.id ?? 'Not assigned'}'),
-                _Row('Rent Record ID', '${payment.rentRecordId}'),
-                _Row('Stay ID', '${payment.stayId}'),
-                _Row('Tenant ID', '${payment.tenantId}'),
-                _Row('Receipt Number', payment.receiptNumber),
-                _Row('Payment Date', _date(payment.paymentDate)),
-                _Row('Amount', payment.amount.toStringAsFixed(2)),
-                _Row('Payment Method', payment.paymentMethod),
-                if (payment.notes != null && payment.notes!.isNotEmpty)
-                  _Row('Notes', payment.notes!),
-                _Row('Created Date', _date(payment.createdAt)),
-                _Row('Updated Date', _date(payment.updatedAt)),
-              ]))),
-            ]),
+            body: ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: [
+                  Card(
+                      child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Status: ${payment.status}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium),
+                                const Divider(),
+                                _Row('Payment ID',
+                                    '${payment.id ?? 'Not assigned'}'),
+                                _Row('Rent Record ID',
+                                    '${payment.rentRecordId}'),
+                                _Row('Stay ID', '${payment.stayId}'),
+                                _Row('Tenant ID', '${payment.tenantId}'),
+                                _Row('Receipt Number', payment.receiptNumber),
+                                _Row(
+                                    'Payment Date', _date(payment.paymentDate)),
+                                _Row('Amount',
+                                    payment.amount.toStringAsFixed(2)),
+                                _Row('Payment Method', payment.paymentMethod),
+                                if (payment.notes != null &&
+                                    payment.notes!.isNotEmpty)
+                                  _Row('Notes', payment.notes!),
+                                _Row('Created Date', _date(payment.createdAt)),
+                                _Row('Updated Date', _date(payment.updatedAt)),
+                              ]))),
+                ]),
           ),
         );
       }),
@@ -98,13 +125,18 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
 }
 
 class _Row extends StatelessWidget {
-  final String label; final String value;
+  final String label;
+  final String value;
   const _Row(this.label, this.value);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(width: 150, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))), Expanded(child: Text(value)),
-    ]),
-  );
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(
+              width: 150,
+              child: Text(label,
+                  style: const TextStyle(fontWeight: FontWeight.w600))),
+          Expanded(child: Text(value)),
+        ]),
+      );
 }

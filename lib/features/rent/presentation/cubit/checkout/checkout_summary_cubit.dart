@@ -14,6 +14,7 @@ class CheckoutSummaryState extends Equatable {
   final double pendingRent;
   final double depositHeld;
   final double alreadyPaid;
+  final double currentMonthPaid;
 
   const CheckoutSummaryState({
     this.isLoading = false,
@@ -25,10 +26,11 @@ class CheckoutSummaryState extends Equatable {
     this.pendingRent = 0,
     this.depositHeld = 0,
     this.alreadyPaid = 0,
+    this.currentMonthPaid = 0,
   });
 
   /// Kept for backward compatibility with any code that reads outstandingRent.
-  double get outstandingRent => pendingRent + currentMonthCharge;
+  double get outstandingRent => pendingRent + currentMonthCharge - currentMonthPaid;
 
   CheckoutSummaryState copyWith({
     bool? isLoading,
@@ -40,6 +42,7 @@ class CheckoutSummaryState extends Equatable {
     double? pendingRent,
     double? depositHeld,
     double? alreadyPaid,
+    double? currentMonthPaid,
   }) {
     return CheckoutSummaryState(
       isLoading: isLoading ?? this.isLoading,
@@ -53,6 +56,7 @@ class CheckoutSummaryState extends Equatable {
       pendingRent: pendingRent ?? this.pendingRent,
       depositHeld: depositHeld ?? this.depositHeld,
       alreadyPaid: alreadyPaid ?? this.alreadyPaid,
+      currentMonthPaid: currentMonthPaid ?? this.currentMonthPaid,
     );
   }
 
@@ -73,32 +77,36 @@ class CheckoutSummaryState extends Equatable {
 class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
   final RentRepository _rentRepository;
 
-  CheckoutSummaryCubit(this._rentRepository) : super(const CheckoutSummaryState());
+  CheckoutSummaryCubit(this._rentRepository)
+      : super(const CheckoutSummaryState());
 
   Future<void> loadSummary(int stayId, {DateTime? checkoutDate}) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
       final stay = await _rentRepository.getStayById(stayId);
       if (stay == null) throw Exception('Stay not found.');
-      final records = await _rentRepository.getRentRecordsByTenantId(stay.tenantId);
+      final records =
+          await _rentRepository.getRentRecordsByTenantId(stay.tenantId);
       final deposit = await _rentRepository.getDepositByStayId(stayId);
 
       double pendingRent = 0;
       double alreadyPaid = 0;
+      double currentMonthPaid = 0;
       final effectiveCheckoutDate = checkoutDate ?? DateTime.now();
       final currentMonthPrefix =
-          '${effectiveCheckoutDate.year}-${effectiveCheckoutDate.month.toString().padLeft(2, '0')}-01';
+          '${effectiveCheckoutDate.year}-${effectiveCheckoutDate.month.toString().padLeft(2, '0')}';
+
+      final checkInMonth = DateTime(stay.checkInDate.year, stay.checkInDate.month, 1);
 
       for (final record in records) {
         if (record.startDate.toIso8601String().startsWith(currentMonthPrefix)) {
           // This is the current month's rent record.
-          // The billing engine might have generated it for a full month.
-          // We will prorate it (handled below and in repo), so we do NOT add its full amountDue to pendingRent.
-          // However, we DO count any amount already paid towards it.
           alreadyPaid += record.amountPaid;
-          // If amount paid is less than the currentMonthCharge, the difference will be in outstandingRent later.
+          currentMonthPaid += record.amountPaid;
         } else {
-          pendingRent += record.outstanding.clamp(0, double.infinity);
+          if (!record.startDate.isBefore(checkInMonth)) {
+            pendingRent += record.outstanding.clamp(0, double.infinity);
+          }
           alreadyPaid += record.amountPaid;
         }
       }
@@ -110,6 +118,7 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
           ? RentCalculator.calculateCurrentMonthRent(
               monthlyRent,
               effectiveCheckoutDate,
+              checkInDate: stay.checkInDate,
             )
           : 0.0;
 
@@ -118,15 +127,24 @@ class CheckoutSummaryCubit extends Cubit<CheckoutSummaryState> {
         depositHeld = deposit.amount;
       }
 
+      final firstDayOfCurrentMonth = DateTime(
+          effectiveCheckoutDate.year, effectiveCheckoutDate.month, 1);
+      final cleanCheckIn = DateTime(
+          stay.checkInDate.year, stay.checkInDate.month, stay.checkInDate.day);
+      final effectiveStartDate = cleanCheckIn.isAfter(firstDayOfCurrentMonth)
+          ? cleanCheckIn
+          : firstDayOfCurrentMonth;
+
       emit(state.copyWith(
         isLoading: false,
         monthlyRent: monthlyRent,
         currentMonthCharge: currentMonthCharge,
-        currentMonthChargeStartDay: 1,
+        currentMonthChargeStartDay: effectiveStartDate.day.toDouble(),
         currentMonthChargeEndDay: effectiveCheckoutDate.day.toDouble(),
         pendingRent: pendingRent,
         depositHeld: depositHeld,
         alreadyPaid: alreadyPaid,
+        currentMonthPaid: currentMonthPaid,
       ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));

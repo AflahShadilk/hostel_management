@@ -109,7 +109,8 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
     super.dispose();
   }
 
-  Future<void> _pickDate(BuildContext context, {required bool isCheckOut}) async {
+  Future<void> _pickDate(BuildContext context,
+      {required bool isCheckOut}) async {
     final formState = context.read<TenantFormCubit>().state;
     final now = DateTime.now();
     final initial = isCheckOut
@@ -199,8 +200,7 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
     widget.onSubmit(tenant);
   }
 
-  String _formatDate(DateTime date) =>
-      '${date.day.toString().padLeft(2, '0')}/'
+  String _formatDate(DateTime date) => '${date.day.toString().padLeft(2, '0')}/'
       '${date.month.toString().padLeft(2, '0')}/'
       '${date.year}';
 
@@ -211,8 +211,9 @@ class _TenantFormBodyState extends State<_TenantFormBody> {
     return BlocBuilder<TenantCubit, TenantState>(
       buildWhen: (prev, curr) => prev.status != curr.status,
       builder: (context, tenantState) {
-        final isSubmitting = tenantState.status == TenantOperationStatus.creating ||
-            tenantState.status == TenantOperationStatus.updating;
+        final isSubmitting =
+            tenantState.status == TenantOperationStatus.creating ||
+                tenantState.status == TenantOperationStatus.updating;
 
         return BlocBuilder<TenantFormCubit, TenantFormState>(
           builder: (context, formState) {

@@ -62,8 +62,7 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
         '${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 
-  Future<void> _pickDate(BuildContext context,
-      {required bool expected}) async {
+  Future<void> _pickDate(BuildContext context, {required bool expected}) async {
     final checkInCubit = context.read<_CheckInDateCubit>();
     final expectedCubit = context.read<_ExpectedCheckoutDateCubit>();
     final initialDate = expected
@@ -132,11 +131,14 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
       providers: [
         BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
         BlocProvider<_CheckInDateCubit>(
-            create: (_) => _CheckInDateCubit(stay?.checkInDate ?? DateTime.now())),
+            create: (_) =>
+                _CheckInDateCubit(stay?.checkInDate ?? DateTime.now())),
         BlocProvider<_ExpectedCheckoutDateCubit>(
-            create: (_) => _ExpectedCheckoutDateCubit(stay?.expectedCheckoutDate)),
+            create: (_) =>
+                _ExpectedCheckoutDateCubit(stay?.expectedCheckoutDate)),
         BlocProvider<SelectedStatusCubit>(
-            create: (_) => SelectedStatusCubit(stay?.status ?? StayStatus.active)),
+            create: (_) =>
+                SelectedStatusCubit(stay?.status ?? StayStatus.active)),
       ],
       child: Builder(builder: (context) {
         return BlocListener<StayCubit, StayState>(
@@ -151,8 +153,7 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
             }
           },
           child: Scaffold(
-            appBar:
-                AppBar(title: Text(_isEditing ? 'Edit Stay' : 'Add Stay')),
+            appBar: AppBar(title: Text(_isEditing ? 'Edit Stay' : 'Add Stay')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -181,8 +182,7 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly
                               ],
-                              validator: (v) =>
-                                  _requiredInteger(v, 'Room ID')),
+                              validator: (v) => _requiredInteger(v, 'Room ID')),
                           const SizedBox(height: AppSpacing.md),
                           AppTextField(
                               controller: _bedId,
@@ -191,16 +191,14 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly
                               ],
-                              validator: (v) =>
-                                  _requiredInteger(v, 'Bed ID')),
+                              validator: (v) => _requiredInteger(v, 'Bed ID')),
                           const SizedBox(height: AppSpacing.md),
                           // Check-in Date
                           BlocBuilder<_CheckInDateCubit, DateTime?>(
                             builder: (context, checkInDate) => _DateInput(
                               label: 'Check-in Date',
                               value: _date(checkInDate),
-                              onTap: () =>
-                                  _pickDate(context, expected: false),
+                              onTap: () => _pickDate(context, expected: false),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -209,8 +207,7 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
                             builder: (context, expectedDate) => _DateInput(
                               label: 'Expected Checkout Date',
                               value: _date(expectedDate),
-                              onTap: () =>
-                                  _pickDate(context, expected: true),
+                              onTap: () => _pickDate(context, expected: true),
                               onClear: expectedDate == null
                                   ? null
                                   : () => context
@@ -241,8 +238,8 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: StayStatus.values
                                   .map((s) => DropdownMenuItem(
                                       value: s, child: Text(s)))
@@ -261,15 +258,11 @@ class _AddEditStayPageState extends State<AddEditStayPage> {
                             builder: (context, submitting) =>
                                 BlocBuilder<StayCubit, StayState>(
                               builder: (context, state) => AppButton(
-                                label: _isEditing
-                                    ? 'Save Changes'
-                                    : 'Add Stay',
-                                isLoading:
-                                    submitting || state is StayLoading,
+                                label: _isEditing ? 'Save Changes' : 'Add Stay',
+                                isLoading: submitting || state is StayLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

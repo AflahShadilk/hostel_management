@@ -160,8 +160,7 @@ class ReportPdfGenerator {
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.white,
             ),
-            headerDecoration:
-                pw.BoxDecoration(color: PdfColors.blueGrey700),
+            headerDecoration: pw.BoxDecoration(color: PdfColors.blueGrey700),
             cellStyle: pw.TextStyle(fontSize: 9),
             cellAlignment: pw.Alignment.centerLeft,
             cellPadding: pw.EdgeInsets.all(6),

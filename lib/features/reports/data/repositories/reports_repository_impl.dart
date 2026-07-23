@@ -16,8 +16,10 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }) async {
     final db = await _appDatabase.database;
 
-    final String fromDate = from != null ? from.toIso8601String() : '0000-01-01T00:00:00.000';
-    final String toDate = to != null ? to.toIso8601String() : '9999-12-31T23:59:59.999';
+    final String fromDate =
+        from != null ? from.toIso8601String() : '0000-01-01T00:00:00.000';
+    final String toDate =
+        to != null ? to.toIso8601String() : '9999-12-31T23:59:59.999';
 
     final result = await db.rawQuery('''
       SELECT 
@@ -40,13 +42,16 @@ class ReportsRepositoryImpl implements ReportsRepository {
             AND expense_date >= ? AND expense_date <= ?
         ) AS totalExpenses
     ''', <Object?>[
-      fromDate, toDate,
-      fromDate, toDate,
-      fromDate, toDate,
+      fromDate,
+      toDate,
+      fromDate,
+      toDate,
+      fromDate,
+      toDate,
     ]);
 
     final row = result.first;
-    
+
     return ProfitLossEntity(
       rentRevenue: (row['rentRevenue'] as num).toDouble(),
       damageChargeRevenue: (row['damageChargeRevenue'] as num).toDouble(),

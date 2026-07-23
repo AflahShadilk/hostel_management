@@ -75,45 +75,36 @@ class _DepositDetailsPageState extends State<DepositDetailsPage> {
                       tooltip: 'Edit',
                       onPressed: () => context.pushNamed(
                           AppRoutes.editDepositName,
-                          pathParameters: {
-                            'depositId': deposit.id!.toString()
-                          },
+                          pathParameters: {'depositId': deposit.id!.toString()},
                           extra: deposit)),
                   BlocBuilder<DeletingCubit, bool>(
                     builder: (context, deleting) => IconButton(
                         icon: const Icon(Icons.delete_outline),
                         tooltip: 'Delete',
-                        onPressed: deleting
-                            ? null
-                            : () => _delete(context, deposit)),
+                        onPressed:
+                            deleting ? null : () => _delete(context, deposit)),
                   )
                 ]),
                 body: ListView(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     children: [
                       AppDashboardCard(
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Status: ${deposit.status}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium),
-                                    const Divider(),
-                                    _Row('Stay ID', '${deposit.stayId}'),
-                                    _Row('Deposit Amount',
-                                        deposit.amount.toStringAsFixed(2)),
-                                    _Row('Refunded Amount',
-                                        deposit.refundedAmount.toStringAsFixed(2)),
-                                    _Row('Received Date',
-                                        _date(deposit.receivedDate)),
-                                    _Row('Refund Date',
-                                        _date(deposit.refundDate)),
-                                    _Row('Created Date',
-                                        _date(deposit.createdAt)),
-                                    _Row('Updated Date',
-                                        _date(deposit.updatedAt))
-                                  ]))
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            Text('Status: ${deposit.status}',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const Divider(),
+                            _Row('Stay ID', '${deposit.stayId}'),
+                            _Row('Deposit Amount',
+                                deposit.amount.toStringAsFixed(2)),
+                            _Row('Refunded Amount',
+                                deposit.refundedAmount.toStringAsFixed(2)),
+                            _Row('Received Date', _date(deposit.receivedDate)),
+                            _Row('Refund Date', _date(deposit.refundDate)),
+                            _Row('Created Date', _date(deposit.createdAt)),
+                            _Row('Updated Date', _date(deposit.updatedAt))
+                          ]))
                     ])));
       }),
     );

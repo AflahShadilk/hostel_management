@@ -33,12 +33,10 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
     final receipt = widget.receipt;
     _paymentId =
         TextEditingController(text: receipt?.paymentId.toString() ?? '');
-    _receiptNumber =
-        TextEditingController(text: receipt?.receiptNumber ?? '');
+    _receiptNumber = TextEditingController(text: receipt?.receiptNumber ?? '');
     _amount = TextEditingController(
         text: receipt?.paymentAmountSnapshot.toString() ?? '');
-    _method =
-        TextEditingController(text: receipt?.paymentMethodSnapshot ?? '');
+    _method = TextEditingController(text: receipt?.paymentMethodSnapshot ?? '');
   }
 
   @override
@@ -50,8 +48,7 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
     super.dispose();
   }
 
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/'
+  String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/'
       '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
   Future<void> _pickDate(BuildContext context) async {
@@ -82,8 +79,7 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
   void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final now = DateTime.now();
-    final issuedAt =
-        context.read<SelectedDateCubit>().state ?? DateTime.now();
+    final issuedAt = context.read<SelectedDateCubit>().state ?? DateTime.now();
     final receipt = ReceiptEntity(
       id: widget.receipt?.id,
       paymentId: int.parse(_paymentId.text.trim()),
@@ -126,9 +122,8 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(
-                title:
-                    Text(_editing ? 'Edit Receipt' : 'Add Receipt')),
+            appBar:
+                AppBar(title: Text(_editing ? 'Edit Receipt' : 'Add Receipt')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -179,10 +174,9 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Issued Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
-                                child: Text(
-                                    _date(issuedAt ?? DateTime.now())),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
+                                child: Text(_date(issuedAt ?? DateTime.now())),
                               ),
                             ),
                           ),
@@ -191,15 +185,13 @@ class _AddEditReceiptPageState extends State<AddEditReceiptPage> {
                             builder: (context, submitting) =>
                                 BlocBuilder<ReceiptCubit, ReceiptState>(
                               builder: (context, state) => AppButton(
-                                label: _editing
-                                    ? 'Save Changes'
-                                    : 'Add Receipt',
+                                label:
+                                    _editing ? 'Save Changes' : 'Add Receipt',
                                 isLoading:
                                     submitting || state is ReceiptLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

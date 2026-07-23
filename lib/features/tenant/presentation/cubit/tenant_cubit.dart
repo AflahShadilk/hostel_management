@@ -36,7 +36,8 @@ class TenantCubit extends Cubit<TenantState> {
         tenants: tenants,
         filteredTenants: _applySearch(tenants, state.searchQuery),
         viewModels: viewModels,
-        filteredViewModels: _applyViewModelSearch(viewModels, state.searchQuery),
+        filteredViewModels:
+            _applyViewModelSearch(viewModels, state.searchQuery),
         registrationContext: registrationContext,
         clearRegistrationContext: registrationContext == null,
       ));
@@ -50,7 +51,8 @@ class TenantCubit extends Cubit<TenantState> {
 
   /// Resolves room and bed display labels for each tenant using the repositories.
   /// This follows Clean Architecture — the Cubit fetches and maps data, not the widget.
-  Future<List<TenantViewModel>> _resolveViewModels(List<TenantEntity> tenants) async {
+  Future<List<TenantViewModel>> _resolveViewModels(
+      List<TenantEntity> tenants) async {
     final result = <TenantViewModel>[];
     for (final tenant in tenants) {
       if (tenant.bedId == null) {

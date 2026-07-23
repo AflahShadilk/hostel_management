@@ -18,16 +18,19 @@ abstract final class SettingsLocalSchema {
       )
     ''');
     final now = DateTime.now().toIso8601String();
-    await database.insert(table, <String, Object>{
-      'id': 1,
-      'theme_mode': 'system',
-      'currency_symbol': r'$',
-      'currency_code': 'USD',
-      'date_format': 'dd/MM/yyyy',
-      'language_code': 'en',
-      'notifications_enabled': 1,
-      'created_at': now,
-      'updated_at': now,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    await database.insert(
+        table,
+        <String, Object>{
+          'id': 1,
+          'theme_mode': 'system',
+          'currency_symbol': r'$',
+          'currency_code': 'USD',
+          'date_format': 'dd/MM/yyyy',
+          'language_code': 'en',
+          'notifications_enabled': 1,
+          'created_at': now,
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

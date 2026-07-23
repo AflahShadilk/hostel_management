@@ -96,10 +96,8 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                       children: [
                         if (saving) const LinearProgressIndicator(),
                         if (saving) const SizedBox(height: 16),
-                        
                         _SummaryCard(registration: registration, state: state),
                         const SizedBox(height: 16),
-                        
                         _SectionCard(
                           title: 'Security Deposit',
                           child: Column(
@@ -108,7 +106,8 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               TextFormField(
                                 controller: _depositAmountController,
                                 enabled: !saving,
-                                keyboardType: const TextInputType.numberWithOptions(
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
                                 decoration: const InputDecoration(
@@ -119,7 +118,8 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               ),
                               const SizedBox(height: 16),
                               _PaymentMethodField(
-                                value: state.depositPaymentMethod ?? PaymentMethod.cash,
+                                value: state.depositPaymentMethod ??
+                                    PaymentMethod.cash,
                                 enabled: !saving,
                                 onChanged: context
                                     .read<FinancialOnboardingCubit>()
@@ -156,7 +156,6 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         _SectionCard(
                           title: 'First Rent',
                           child: Column(
@@ -165,19 +164,22 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               TextFormField(
                                 controller: _rentAmountController,
                                 enabled: !saving,
-                                keyboardType: const TextInputType.numberWithOptions(
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
                                 decoration: const InputDecoration(
                                   labelText: 'Received Amount',
                                   prefixText: '₹ ',
-                                  helperText: 'Leave empty or enter 0 for no payment.',
+                                  helperText:
+                                      'Leave empty or enter 0 for no payment.',
                                   border: OutlineInputBorder(),
                                 ),
                               ),
                               const SizedBox(height: 16),
                               _PaymentMethodField(
-                                value: state.rentPaymentMethod ?? PaymentMethod.cash,
+                                value: state.rentPaymentMethod ??
+                                    PaymentMethod.cash,
                                 enabled: !saving,
                                 onChanged: context
                                     .read<FinancialOnboardingCubit>()
@@ -213,11 +215,9 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                             ],
                           ),
                         ),
-                        
                         const SizedBox(height: 32),
                         const Divider(),
                         const SizedBox(height: 16),
-                        
                         Row(
                           children: [
                             Expanded(
@@ -236,9 +236,8 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: FilledButton(
-                                onPressed: saving
-                                    ? null
-                                    : () => _finish(context),
+                                onPressed:
+                                    saving ? null : () => _finish(context),
                                 child: const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 12),
                                   child: Text('Save & Finish'),
@@ -275,8 +274,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
   }
 
   void _saveRent(BuildContext context) {
-    final rentAmount =
-        double.tryParse(_rentAmountController.text.trim()) ?? 0;
+    final rentAmount = double.tryParse(_rentAmountController.text.trim()) ?? 0;
     context.read<FinancialOnboardingCubit>().saveSection(
           context: widget.registrationContext,
           depositAmount: 0,
@@ -295,8 +293,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
   void _finish(BuildContext context) {
     final depositAmount =
         double.tryParse(_depositAmountController.text.trim()) ?? 0;
-    final rentAmount =
-        double.tryParse(_rentAmountController.text.trim()) ?? 0;
+    final rentAmount = double.tryParse(_rentAmountController.text.trim()) ?? 0;
     context.read<FinancialOnboardingCubit>().finish(
           context: widget.registrationContext,
           depositAmount: depositAmount,
@@ -325,7 +322,8 @@ class _SummaryCard extends StatelessWidget {
           children: [
             _InfoRow('👤 Tenant', registration.tenant.fullName, isBold: true),
             const SizedBox(height: 8),
-            _InfoRow('🏠 Room', '${registration.room.roomNumber} • ${registration.bed.bedNumber}'),
+            _InfoRow('🏠 Room',
+                '${registration.room.roomNumber} • ${registration.bed.bedNumber}'),
             const SizedBox(height: 8),
             _InfoRow('📅 Check-in', _formatDate(registration.stay.checkInDate)),
             const SizedBox(height: 8),
@@ -415,7 +413,8 @@ class _PaymentMethodField extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.label, this.value, {this.isBold = false, this.valueColor});
+  const _InfoRow(this.label, this.value,
+      {this.isBold = false, this.valueColor});
 
   final String label;
   final String value;
@@ -435,7 +434,9 @@ class _InfoRow extends StatelessWidget {
         Text(
           label,
           style: textStyle?.copyWith(
-            color: isBold ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
+            color: isBold
+                ? theme.colorScheme.onSurface
+                : theme.colorScheme.onSurfaceVariant,
           ),
         ),
         Text(
@@ -451,8 +452,18 @@ class _InfoRow extends StatelessWidget {
 
 String _formatDate(DateTime value) {
   const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
   ];
   final day = value.day.toString().padLeft(2, '0');
   final month = monthNames[value.month - 1];

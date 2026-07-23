@@ -37,7 +37,8 @@ class _RentRecordListPageState extends State<RentRecordListPage> {
       listener: (context, state) {
         if (state is RentRecordError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(
+                content: Text(state.message), backgroundColor: AppColors.error),
           );
         }
       },
@@ -62,7 +63,8 @@ class _RentRecordListPageState extends State<RentRecordListPage> {
             }
             if (state is RentRecordLoaded) {
               return RefreshIndicator(
-                onRefresh: () => context.read<RentRecordCubit>().loadAllRentRecords(),
+                onRefresh: () =>
+                    context.read<RentRecordCubit>().loadAllRentRecords(),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final records = state.records;
@@ -70,20 +72,24 @@ class _RentRecordListPageState extends State<RentRecordListPage> {
                       return ListView.separated(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         itemCount: records.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (context, index) => _RentRecordCard(record: records[index], date: _date),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.sm),
+                        itemBuilder: (context, index) => _RentRecordCard(
+                            record: records[index], date: _date),
                       );
                     }
                     return GridView.builder(
                       padding: const EdgeInsets.all(AppSpacing.md),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: AppSpacing.md,
                         mainAxisSpacing: AppSpacing.md,
                         childAspectRatio: 2.1,
                       ),
                       itemCount: records.length,
-                      itemBuilder: (context, index) => _RentRecordCard(record: records[index], date: _date),
+                      itemBuilder: (context, index) =>
+                          _RentRecordCard(record: records[index], date: _date),
                     );
                   },
                 ),
@@ -120,7 +126,9 @@ class _RentRecordCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Expanded(child: Text(record.formattedPeriod, style: Theme.of(context).textTheme.titleMedium)),
+                Expanded(
+                    child: Text(record.formattedPeriod,
+                        style: Theme.of(context).textTheme.titleMedium)),
                 Chip(label: Text(record.status)),
               ]),
               const SizedBox(height: AppSpacing.sm),

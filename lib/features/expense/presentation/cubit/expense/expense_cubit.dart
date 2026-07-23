@@ -14,8 +14,6 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
   ExpenseQuery get query => _query;
 
-  
-
   Future<void> loadExpenses() async {
     emit(const ExpenseLoading());
     try {

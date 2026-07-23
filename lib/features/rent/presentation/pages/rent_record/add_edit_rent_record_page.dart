@@ -60,8 +60,7 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
     super.dispose();
   }
 
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/'
+  String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/'
       '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
   Future<void> _pickDate(
@@ -122,8 +121,7 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
   @override
   Widget build(BuildContext context) {
     final record = widget.record;
-    final initialBalance =
-        (record?.amountDue ?? 0) - (record?.amountPaid ?? 0);
+    final initialBalance = (record?.amountDue ?? 0) - (record?.amountPaid ?? 0);
     final initialStart = record?.startDate ?? DateTime.now();
     final initialEnd = record?.endDate ??
         DateTime(initialStart.year, initialStart.month + 1, initialStart.day)
@@ -134,13 +132,11 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
         BlocProvider<SubmittingCubit>(create: (_) => SubmittingCubit()),
         BlocProvider<_StartDateCubit>(
             create: (_) => _StartDateCubit(initialStart)),
-        BlocProvider<_EndDateCubit>(
-            create: (_) => _EndDateCubit(initialEnd)),
+        BlocProvider<_EndDateCubit>(create: (_) => _EndDateCubit(initialEnd)),
         BlocProvider<SelectedStatusCubit>(
             create: (_) =>
                 SelectedStatusCubit(record?.status ?? RentStatus.pending)),
-        BlocProvider<BalanceCubit>(
-            create: (_) => BalanceCubit(initialBalance)),
+        BlocProvider<BalanceCubit>(create: (_) => BalanceCubit(initialBalance)),
       ],
       child: Builder(builder: (context) {
         return BlocListener<RentRecordCubit, RentRecordState>(
@@ -150,14 +146,13 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
               context.pop(true);
             } else if (state is RentRecordError) {
               context.read<SubmittingCubit>().stop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)));
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           child: Scaffold(
             appBar: AppBar(
-                title: Text(
-                    _editing ? 'Edit Rent Record' : 'Add Rent Record')),
+                title: Text(_editing ? 'Edit Rent Record' : 'Add Rent Record')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -193,10 +188,9 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Billing Start Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
-                                child: Text(
-                                    _date(startDate ?? DateTime.now())),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
+                                child: Text(_date(startDate ?? DateTime.now())),
                               ),
                             ),
                           ),
@@ -209,10 +203,9 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Billing End Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
-                                child: Text(
-                                    _date(endDate ?? DateTime.now())),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
+                                child: Text(_date(endDate ?? DateTime.now())),
                               ),
                             ),
                           ),
@@ -220,9 +213,8 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                           AppTextField(
                             controller: _amountDue,
                             label: 'Rent Amount',
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                                    decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             onChanged: (_) => _updateBalance(context),
                             validator: (v) => _amount(v, 'Rent amount'),
                           ),
@@ -230,9 +222,8 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                           AppTextField(
                             controller: _amountPaid,
                             label: 'Paid Amount',
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                                    decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             onChanged: (_) => _updateBalance(context),
                             validator: (v) => _amount(v, 'Paid amount'),
                           ),
@@ -249,8 +240,8 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: RentStatus.values
                                   .map((v) => DropdownMenuItem(
                                       value: v, child: Text(v)))
@@ -267,18 +258,16 @@ class _AddEditRentRecordPageState extends State<AddEditRentRecordPage> {
                           const SizedBox(height: AppSpacing.xl),
                           BlocBuilder<SubmittingCubit, bool>(
                             builder: (context, submitting) =>
-                                BlocBuilder<RentRecordCubit,
-                                    RentRecordState>(
+                                BlocBuilder<RentRecordCubit, RentRecordState>(
                               builder: (context, state) => AppButton(
                                 label: _editing
                                     ? 'Save Changes'
                                     : 'Add Rent Record',
-                                isLoading: submitting ||
-                                    state is RentRecordLoading,
+                                isLoading:
+                                    submitting || state is RentRecordLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

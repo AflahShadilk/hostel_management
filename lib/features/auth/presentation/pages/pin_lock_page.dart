@@ -89,8 +89,7 @@ class _PinLockPageState extends State<PinLockPage>
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
       listenWhen: (prev, curr) =>
-          prev.status != curr.status ||
-          prev.errorMessage != curr.errorMessage,
+          prev.status != curr.status || prev.errorMessage != curr.errorMessage,
       listener: (context, state) {
         if (state.status == AuthStatus.failure ||
             (state.status == AuthStatus.pinLockRequired &&
@@ -128,7 +127,8 @@ class _PinLockPageState extends State<PinLockPage>
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400, maxHeight: 750),
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 750),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 32.0, vertical: 16.0),
@@ -154,11 +154,10 @@ class _PinLockPageState extends State<PinLockPage>
                       // ── Welcome Text ─────────────────────────────────────
                       Text(
                         'Welcome back',
-                        style:
-                            Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  letterSpacing: 0.3,
-                                ),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: AppColors.textSecondary,
+                              letterSpacing: 0.3,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -175,10 +174,9 @@ class _PinLockPageState extends State<PinLockPage>
                       const SizedBox(height: 8),
                       Text(
                         'Enter your PIN to continue',
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                       ),
                       const Spacer(flex: 2),
 
@@ -248,8 +246,8 @@ class _PinDotIndicator extends StatelessWidget {
           animation: shakeAnimation,
           builder: (context, child) {
             final offset =
-                (shakeAnimation.value * 12 * (1 - shakeAnimation.value)).clamp(
-                    -8.0, 8.0);
+                (shakeAnimation.value * 12 * (1 - shakeAnimation.value))
+                    .clamp(-8.0, 8.0);
             return Transform.translate(
               offset: Offset(offset * (shakeAnimation.value > 0.5 ? -1 : 1), 0),
               child: child,
@@ -269,8 +267,7 @@ class _PinDotIndicator extends StatelessWidget {
                     height: 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color:
-                          filled ? AppColors.primary : Colors.transparent,
+                      color: filled ? AppColors.primary : Colors.transparent,
                       border: Border.all(
                         color: filled
                             ? AppColors.primary

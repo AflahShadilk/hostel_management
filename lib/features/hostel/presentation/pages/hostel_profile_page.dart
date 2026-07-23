@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -108,13 +110,11 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
         name: _nameController.text,
         address: _addressController.text,
         phone: _phoneController.text,
-        email: _emailController.text.trim().isEmpty
-            ? null
-            : _emailController.text,
+        email:
+            _emailController.text.trim().isEmpty ? null : _emailController.text,
         ownerName: _ownerNameController.text,
-        gstNumber: _gstController.text.trim().isEmpty
-            ? null
-            : _gstController.text,
+        gstNumber:
+            _gstController.text.trim().isEmpty ? null : _gstController.text,
         website: _websiteController.text.trim().isEmpty
             ? null
             : _websiteController.text,
@@ -127,13 +127,11 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
         name: _nameController.text,
         address: _addressController.text,
         phone: _phoneController.text,
-        email: _emailController.text.trim().isEmpty
-            ? null
-            : _emailController.text,
+        email:
+            _emailController.text.trim().isEmpty ? null : _emailController.text,
         ownerName: _ownerNameController.text,
-        gstNumber: _gstController.text.trim().isEmpty
-            ? null
-            : _gstController.text,
+        gstNumber:
+            _gstController.text.trim().isEmpty ? null : _gstController.text,
         website: _websiteController.text.trim().isEmpty
             ? null
             : _websiteController.text,
@@ -155,7 +153,8 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
     if (d.isEmpty || int.tryParse(d) == null) {
       return 'Please enter a valid phone number.';
     }
-    if (d.length < 6 || d.length > 15) return 'Please enter a valid phone number.';
+    if (d.length < 6 || d.length > 15)
+      return 'Please enter a valid phone number.';
     return null;
   }
 
@@ -176,7 +175,8 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
     return BlocListener<HostelCubit, HostelState>(
       listenWhen: (p, c) => p.status != c.status,
       listener: (context, state) {
-        if (state.status == HostelStatus.failure && state.errorMessage != null) {
+        if (state.status == HostelStatus.failure &&
+            state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage!),
@@ -439,8 +439,7 @@ class _HostelProfilePageState extends State<HostelProfilePage> {
                             : (_existingLogoPath != null &&
                                     _existingLogoPath!.isNotEmpty)
                                 ? DecorationImage(
-                                    image: FileImage(
-                                        File(_existingLogoPath!)),
+                                    image: FileImage(File(_existingLogoPath!)),
                                     fit: BoxFit.cover,
                                   )
                                 : null,

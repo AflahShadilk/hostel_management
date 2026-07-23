@@ -79,7 +79,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
       final monthlyRent = bed.monthlyRent;
       final dailyRate = (monthlyRent / 30).roundToDouble();
       final now = DateTime.now().toIso8601String();
-      
+
       final stayMap = {
         'tenant_id': tenantId,
         'room_id': bed.roomId,
@@ -96,11 +96,13 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
 
       // Create initial rent record (billing period: checkInDate to checkInDate + 1 month - 1 day)
       final checkIn = tenant.checkInDate;
-      final periodEndDate = DateTime(checkIn.year, checkIn.month + 1, checkIn.day)
-          .subtract(const Duration(days: 1));
-          
-      final firstMonthRent = RentCalculator.calculateFirstMonthRent(monthlyRent, checkIn);
-      
+      final periodEndDate =
+          DateTime(checkIn.year, checkIn.month + 1, checkIn.day)
+              .subtract(const Duration(days: 1));
+
+      final firstMonthRent =
+          RentCalculator.calculateFirstMonthRent(monthlyRent, checkIn);
+
       final rentRecordMap = {
         'stay_id': stayId,
         'start_date': checkIn.toIso8601String(),
@@ -358,7 +360,7 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
     if (newBed.status != BedStatus.vacant) {
       throw StateError('This bed is no longer available.');
     }
-    
+
     final oldBed = await _bedRepository.getBedById(oldBedId);
     if (oldBed == null) {
       throw StateError('Original bed not found.');
@@ -381,49 +383,25 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
       // Find old stay ID
       final oldStayRows = await txn.query(
         RentLocalSchema.tableStays,
-        columns: ['id', 'monthly_rent_snapshot'],
+        columns: ['id'],
         where: 'tenant_id = ? AND status = ?',
         whereArgs: [tenantId, StayStatus.active],
         limit: 1,
       );
       if (oldStayRows.isEmpty) throw StateError('Active stay not found.');
-      final oldStayId = oldStayRows.first['id'] as int;
-      final oldMonthlyRent = (oldStayRows.first['monthly_rent_snapshot'] as num).toDouble();
+      final activeStayId = oldStayRows.first['id'] as int;
 
-      // Prorate old stay's current month rent record
-      final oldCurrentMonthCharge = RentCalculator.calculateCurrentMonthRent(oldMonthlyRent, now);
-      final currentMonthPrefix = '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
-      final existingOldMonthRecords = await txn.query(
-        RentLocalSchema.tableRentRecords,
-        columns: ['id', 'amount_paid'],
-        where: 'stay_id = ? AND start_date LIKE ?',
-        whereArgs: <Object?>[oldStayId, '$currentMonthPrefix%'],
-        limit: 1,
+      // Update the active stay with the new room and bed
+      await txn.update(
+        RentLocalSchema.tableStays,
+        {
+          'room_id': newBed.roomId,
+          'bed_id': newBedId,
+          'updated_at': nowText,
+        },
+        where: 'id = ?',
+        whereArgs: [activeStayId],
       );
-      if (existingOldMonthRecords.isNotEmpty) {
-        final record = existingOldMonthRecords.first;
-        final amountPaid = (record['amount_paid'] as num).toDouble();
-        final status = amountPaid >= oldCurrentMonthCharge ? RentStatus.paid : RentStatus.pending;
-        await txn.update(RentLocalSchema.tableRentRecords, {
-          'end_date': nowText,
-          'amount_due': oldCurrentMonthCharge,
-          'status': status,
-          'updated_at': nowText,
-        }, where: 'id = ?', whereArgs: [record['id']]);
-      } else {
-        await txn.insert(RentLocalSchema.tableRentRecords, {
-          'stay_id': oldStayId,
-          'start_date': DateTime(now.year, now.month, 1).toIso8601String(),
-          'end_date': nowText,
-          'generated_at': nowText,
-          'due_date': nowText,
-          'amount_due': oldCurrentMonthCharge,
-          'amount_paid': 0.0,
-          'status': RentStatus.pending,
-          'created_at': nowText,
-          'updated_at': nowText,
-        });
-      }
 
       // Release old bed
       await txn.update(
@@ -436,18 +414,6 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         whereArgs: [oldBedId],
       );
 
-      // Close old Stay
-      await txn.update(
-        RentLocalSchema.tableStays,
-        {
-          'status': StayStatus.checkedOut,
-          'check_out_date': nowText,
-          'updated_at': nowText,
-        },
-        where: 'id = ?',
-        whereArgs: [oldStayId],
-      );
-
       // Occupy new bed
       await txn.update(
         RoomLocalSchema.tableBeds,
@@ -458,51 +424,6 @@ class TenantManagementRepositoryImpl implements TenantManagementRepository {
         where: 'id = ?',
         whereArgs: [newBedId],
       );
-
-      // Create new Stay for the new bed
-      final monthlyRent = newBed.monthlyRent;
-      final dailyRate = (monthlyRent / 30).roundToDouble();
-      final stayMap = {
-        'tenant_id': tenantId,
-        'room_id': newBed.roomId,
-        'bed_id': newBedId,
-        'check_in_date': nowText,
-        'expected_checkout_date': tenant.checkOutDate?.toIso8601String(),
-        'monthly_rent_snapshot': monthlyRent,
-        'daily_rate': dailyRate,
-        'status': StayStatus.active,
-        'created_at': nowText,
-        'updated_at': nowText,
-      };
-      final stayId = await txn.insert(RentLocalSchema.tableStays, stayMap);
-
-      // Transfer deposit to new stay
-      await txn.update(
-        RentLocalSchema.tableDeposits,
-        {'stay_id': stayId, 'updated_at': nowText},
-        where: 'stay_id = ?',
-        whereArgs: [oldStayId],
-      );
-
-      // Create rent record for the new stay (billing period: transfer date to transfer date + 1 month - 1 day)
-      final transferPeriodEnd = DateTime(now.year, now.month + 1, now.day)
-          .subtract(const Duration(days: 1));
-          
-      final firstMonthRent = RentCalculator.calculateFirstMonthRent(monthlyRent, now);
-      
-      final rentRecordMap = {
-        'stay_id': stayId,
-        'start_date': nowText,
-        'end_date': transferPeriodEnd.toIso8601String(),
-        'generated_at': nowText,
-        'due_date': nowText,
-        'amount_due': firstMonthRent,
-        'amount_paid': 0.0,
-        'status': RentStatus.pending,
-        'created_at': nowText,
-        'updated_at': nowText,
-      };
-      await txn.insert(RentLocalSchema.tableRentRecords, rentRecordMap);
 
       // Update tenant
       await txn.update(

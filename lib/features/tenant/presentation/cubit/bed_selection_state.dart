@@ -5,7 +5,7 @@ import '../../../room/domain/entities/bed_entity.dart';
 class RoomWithBeds extends Equatable {
   final RoomEntity room;
   final List<BedEntity> beds;
-  
+
   const RoomWithBeds(this.room, this.beds);
 
   @override
@@ -14,7 +14,7 @@ class RoomWithBeds extends Equatable {
 
 abstract class BedSelectionState extends Equatable {
   const BedSelectionState();
-  
+
   @override
   List<Object?> get props => [];
 }

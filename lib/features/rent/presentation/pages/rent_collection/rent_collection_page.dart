@@ -17,7 +17,6 @@ import '../../../../../../core/di/injection.dart';
 import '../../cubit/payment/payment_cubit.dart';
 import '../../cubit/payment/payment_state.dart';
 
-
 class RentCollectionPage extends StatefulWidget {
   const RentCollectionPage({super.key});
 
@@ -49,8 +48,7 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
         if (state is RentCollectionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error),
+                content: Text(state.message), backgroundColor: AppColors.error),
           );
         }
       },
@@ -93,7 +91,8 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
                         child: AppEmptyState(
                           icon: Icons.receipt_long,
                           title: 'No Rent Records Found',
-                          message: 'There are no active rent records matching the current filters.',
+                          message:
+                              'There are no active rent records matching the current filters.',
                         ),
                       )
                     else
@@ -162,32 +161,32 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: AppDashboardCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.receipt,
-                              size: 20, color: AppColors.primary),
-                          const SizedBox(width: AppSpacing.xs),
-                          Expanded(
-                            child: Text(
-                              'Pending Bills',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.receipt,
+                            size: 20, color: AppColors.primary),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            'Pending Bills',
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        '${state.pendingRecordsCount}',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '${state.pendingRecordsCount}',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -207,7 +206,8 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
             hintText: 'Search by tenant name, room, or bed...',
             prefixIcon: const Icon(Icons.search),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           ),
           onChanged: (value) =>
               context.read<RentCollectionCubit>().setSearchQuery(value),
@@ -352,16 +352,21 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
             Row(
               children: [
                 Expanded(
-                  child: _buildAmountColumn(
-                      context, 'Total Rent', r.amountDue, AppColors.textPrimary),
+                  child: _buildAmountColumn(context, 'Total Rent', r.amountDue,
+                      AppColors.textPrimary),
                 ),
                 Expanded(
                   child: _buildAmountColumn(
                       context, 'Amount Paid', r.amountPaid, AppColors.success),
                 ),
                 Expanded(
-                  child: _buildAmountColumn(context, 'Outstanding', r.outstanding,
-                      r.outstanding > 0 ? AppColors.error : AppColors.textPrimary),
+                  child: _buildAmountColumn(
+                      context,
+                      'Outstanding',
+                      r.outstanding,
+                      r.outstanding > 0
+                          ? AppColors.error
+                          : AppColors.textPrimary),
                 ),
               ],
             ),
@@ -409,9 +414,9 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
                             );
                             context
                                 .pushNamed(
-                                  AppRoutes.addPaymentName,
-                                  extra: dummyPayment,
-                                )
+                              AppRoutes.addPaymentName,
+                              extra: dummyPayment,
+                            )
                                 .then((_) {
                               if (context.mounted) {
                                 context.read<RentCollectionCubit>().load();
@@ -441,7 +446,7 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
       builder: (bottomSheetContext) {
         // I will use a generic query or existing PaymentCubit to load and filter
         // Wait, PaymentCubit loads all payments. We can just use a local future builder for history!
-        // To keep it perfectly clean within Clean Architecture: The standard approach is to use PaymentCubit 
+        // To keep it perfectly clean within Clean Architecture: The standard approach is to use PaymentCubit
         // to get all payments, but it might be overkill. Let's just create a quick local cubit or future for history,
         // or actually since PaymentCubit is registered as a factory, we can provide it.
         // But let me create a clean stateless widget for it.
@@ -499,7 +504,8 @@ class _RentCollectionPageState extends State<RentCollectionPage> {
         break;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
@@ -536,29 +542,29 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppDashboardCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: color),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              '₹${amount.toStringAsFixed(0)}',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-            ),
-          ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '₹${amount.toStringAsFixed(0)}',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -608,7 +614,8 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
           final history = state.payments
               .where((p) => p.rentRecordId == widget.rentRecordId)
               .toList()
-            ..sort((a, b) => b.paymentDate.compareTo(a.paymentDate)); // Newest first
+            ..sort((a, b) =>
+                b.paymentDate.compareTo(a.paymentDate)); // Newest first
 
           if (history.isEmpty) {
             return const Center(
@@ -636,56 +643,65 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
                   controller: widget.scrollController,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: history.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final payment = history[index];
                     return AppDashboardCard(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _date(payment.paymentDate),
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                Text(
-                                  '₹${payment.amount.toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.success,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Method: ${payment.paymentMethod}',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                if (payment.receiptNumber.isNotEmpty)
-                                  Text(
-                                    'Receipt: ${payment.receiptNumber}',
-                                    style: Theme.of(context).textTheme.bodySmall,
+                            Text(
+                              _date(payment.paymentDate),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
                                   ),
-                              ],
                             ),
-                            if (payment.notes != null && payment.notes!.isNotEmpty) ...[
-                              const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              '₹${payment.amount.toStringAsFixed(2)}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.success,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Method: ${payment.paymentMethod}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            if (payment.receiptNumber.isNotEmpty)
                               Text(
-                                'Notes: ${payment.notes}',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                'Receipt: ${payment.receiptNumber}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                          ],
+                        ),
+                        if (payment.notes != null &&
+                            payment.notes!.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Notes: ${payment.notes}',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
                                       fontStyle: FontStyle.italic,
                                     ),
-                              ),
-                            ]
-                          ],
+                          ),
+                        ]
+                      ],
                     ));
                   },
                 ),

@@ -29,7 +29,8 @@ class BackupLocalDataSourceImpl implements BackupLocalDataSource {
       }
 
       final timestamp = DateTime.now();
-      final fileName = 'hostel_backup_${timestamp.year.toString().padLeft(4, '0')}'
+      final fileName =
+          'hostel_backup_${timestamp.year.toString().padLeft(4, '0')}'
           '${timestamp.month.toString().padLeft(2, '0')}'
           '${timestamp.day.toString().padLeft(2, '0')}_'
           '${timestamp.hour.toString().padLeft(2, '0')}'
@@ -73,15 +74,18 @@ class BackupLocalDataSourceImpl implements BackupLocalDataSource {
 
       final source = File(selectedPath);
       if (!await source.exists() || await source.length() == 0) {
-        return const BackupFailure('The selected backup file is missing or empty.');
+        return const BackupFailure(
+            'The selected backup file is missing or empty.');
       }
       await source.openRead(0, 1).first;
 
       databasePath = await _databasePath();
       final activeFile = File(databasePath);
       final directory = activeFile.parent;
-      stagedPath = path.join(directory.path, '.restore_${DateTime.now().microsecondsSinceEpoch}.db');
-      rollbackPath = path.join(directory.path, '.rollback_${DateTime.now().microsecondsSinceEpoch}.db');
+      stagedPath = path.join(directory.path,
+          '.restore_${DateTime.now().microsecondsSinceEpoch}.db');
+      rollbackPath = path.join(directory.path,
+          '.rollback_${DateTime.now().microsecondsSinceEpoch}.db');
 
       await _appDatabase.close();
       connectionClosed = true;
@@ -110,7 +114,8 @@ class BackupLocalDataSourceImpl implements BackupLocalDataSource {
         await _restoreOriginal(databasePath, rollbackPath);
         await _appDatabase.reopen();
         connectionClosed = false;
-        return BackupFailure('The backup could not be opened. The original database was restored.');
+        return BackupFailure(
+            'The backup could not be opened. The original database was restored.');
       }
 
       return const BackupSuccess('Database restored successfully.');
@@ -142,7 +147,8 @@ class BackupLocalDataSourceImpl implements BackupLocalDataSource {
     await database.close();
   }
 
-  Future<void> _restoreOriginal(String databasePath, String rollbackPath) async {
+  Future<void> _restoreOriginal(
+      String databasePath, String rollbackPath) async {
     final rollback = File(rollbackPath);
     if (!await rollback.exists()) return;
     final replacement = File(databasePath);

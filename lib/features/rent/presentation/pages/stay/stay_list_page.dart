@@ -70,8 +70,7 @@ class _StayListPageState extends State<StayListPage>
         if (state is StayError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error),
+                content: Text(state.message), backgroundColor: AppColors.error),
           );
         }
       },
@@ -149,7 +148,9 @@ class _StayListPageState extends State<StayListPage>
                     return RefreshIndicator(
                       onRefresh: () async {
                         await context.read<StayCubit>().loadAllStays();
-                        await context.read<CheckoutCubit>().loadAllCheckoutSettlements();
+                        await context
+                            .read<CheckoutCubit>()
+                            .loadAllCheckoutSettlements();
                       },
                       child: TabBarView(
                         controller: _tabController,
@@ -226,7 +227,8 @@ class _StayList extends StatelessWidget {
         child: AppEmptyState(
           icon: query.isNotEmpty ? Icons.search_off : Icons.hotel_outlined,
           title: query.isNotEmpty ? 'No results found' : emptyMessage,
-          message: query.isNotEmpty ? 'No stay records match your search.' : null,
+          message:
+              query.isNotEmpty ? 'No stay records match your search.' : null,
         ),
       );
     }
@@ -244,16 +246,16 @@ class _StayList extends StatelessWidget {
   }
 
   String _tenantName(TenantState tenantState, int tenantId) {
-    final matches = tenantState.tenants
-        .where((tenant) => tenant.id == tenantId)
-        .toList();
-    return matches.isEmpty ? 'Tenant information unavailable' : matches.first.fullName;
+    final matches =
+        tenantState.tenants.where((tenant) => tenant.id == tenantId).toList();
+    return matches.isEmpty
+        ? 'Tenant information unavailable'
+        : matches.first.fullName;
   }
 
   String? _tenantPhone(TenantState tenantState, int tenantId) {
-    final matches = tenantState.tenants
-        .where((tenant) => tenant.id == tenantId)
-        .toList();
+    final matches =
+        tenantState.tenants.where((tenant) => tenant.id == tenantId).toList();
     return matches.isEmpty ? null : matches.first.phoneNumber;
   }
 }
@@ -268,7 +270,8 @@ class _CheckoutHistory extends StatelessWidget {
   final String searchQuery;
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CheckoutCubit, CheckoutState>(
+  Widget build(BuildContext context) =>
+      BlocBuilder<CheckoutCubit, CheckoutState>(
         builder: (context, state) {
           if (state is CheckoutLoading || state is CheckoutInitial) {
             return const Center(child: AppLoadingIndicator());
@@ -291,7 +294,8 @@ class _CheckoutHistory extends StatelessWidget {
                     final matchingStays = allStays
                         .where((stay) => stay.id == settlement.stayId)
                         .toList();
-                    final stay = matchingStays.isEmpty ? null : matchingStays.first;
+                    final stay =
+                        matchingStays.isEmpty ? null : matchingStays.first;
                     final tenantId = stay?.tenantId;
                     final tenants = tenantId == null
                         ? const []
@@ -320,9 +324,15 @@ class _CheckoutHistory extends StatelessWidget {
             if (filteredSettlements.isEmpty) {
               return Center(
                 child: AppEmptyState(
-                  icon: query.isNotEmpty ? Icons.search_off : Icons.history_outlined,
-                  title: query.isNotEmpty ? 'No results found' : 'No checkout history',
-                  message: query.isNotEmpty ? 'No checkout records match your search.' : null,
+                  icon: query.isNotEmpty
+                      ? Icons.search_off
+                      : Icons.history_outlined,
+                  title: query.isNotEmpty
+                      ? 'No results found'
+                      : 'No checkout history',
+                  message: query.isNotEmpty
+                      ? 'No checkout records match your search.'
+                      : null,
                 ),
               );
             }
@@ -330,21 +340,29 @@ class _CheckoutHistory extends StatelessWidget {
             return ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.md),
               itemCount: filteredSettlements.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final settlement = filteredSettlements[index];
                 final matchingStays = allStays
                     .where((stay) => stay.id == settlement.stayId)
                     .toList();
-                final tenantId = matchingStays.isEmpty ? null : matchingStays.first.tenantId;
-                final tenants = tenantId == null ? const [] : tenantState.tenants.where((tenant) => tenant.id == tenantId).toList();
+                final tenantId =
+                    matchingStays.isEmpty ? null : matchingStays.first.tenantId;
+                final tenants = tenantId == null
+                    ? const []
+                    : tenantState.tenants
+                        .where((tenant) => tenant.id == tenantId)
+                        .toList();
                 final tenant = tenants.isEmpty ? null : tenants.first;
                 return AppDashboardCard(
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(tenant?.fullName ?? 'Tenant unavailable'),
-                    subtitle: Text('Refund: ₹${settlement.refundAmount.toStringAsFixed(2)}'),
-                    trailing: Text('₹${settlement.finalAmount.toStringAsFixed(2)}'),
+                    subtitle: Text(
+                        'Refund: ₹${settlement.refundAmount.toStringAsFixed(2)}'),
+                    trailing:
+                        Text('₹${settlement.finalAmount.toStringAsFixed(2)}'),
                     onTap: () => context.pushNamed(
                       AppRoutes.checkoutDetailsName,
                       pathParameters: {'checkoutId': settlement.id!.toString()},
@@ -432,8 +450,8 @@ class _StayCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: statusColor.withValues(alpha: 0.4)),
+                      border:
+                          Border.all(color: statusColor.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       _statusLabel(stay.status),

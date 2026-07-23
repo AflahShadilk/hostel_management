@@ -23,7 +23,8 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     final name = category.name.trim().toLowerCase();
     if (categories.any(
       (existing) =>
-          existing.id != excludingId && existing.name.trim().toLowerCase() == name,
+          existing.id != excludingId &&
+          existing.name.trim().toLowerCase() == name,
     )) {
       throw StateError('An expense category with this name already exists.');
     }

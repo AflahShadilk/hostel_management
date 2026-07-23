@@ -221,8 +221,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final recentCheckIns = recentCheckInsResult.map((row) {
       return RecentStayItemEntity(
         tenantName: row['tenantName'] as String? ?? 'Unknown',
-        roomNumber: row['roomNumber'] != null ? 'Room ${row['roomNumber']}' : 'Unknown',
-        bedNumber: row['bedNumber'] != null ? 'Bed ${row['bedNumber']}' : 'Unknown',
+        roomNumber:
+            row['roomNumber'] != null ? 'Room ${row['roomNumber']}' : 'Unknown',
+        bedNumber:
+            row['bedNumber'] != null ? 'Bed ${row['bedNumber']}' : 'Unknown',
         date: DateTime.tryParse(row['date'] as String? ?? '') ?? DateTime.now(),
       );
     }).toList();
@@ -230,42 +232,59 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final recentCheckOuts = recentCheckOutsResult.map((row) {
       return RecentStayItemEntity(
         tenantName: row['tenantName'] as String? ?? 'Unknown',
-        roomNumber: row['roomNumber'] != null ? 'Room ${row['roomNumber']}' : 'Unknown',
-        bedNumber: row['bedNumber'] != null ? 'Bed ${row['bedNumber']}' : 'Unknown',
+        roomNumber:
+            row['roomNumber'] != null ? 'Room ${row['roomNumber']}' : 'Unknown',
+        bedNumber:
+            row['bedNumber'] != null ? 'Bed ${row['bedNumber']}' : 'Unknown',
         date: DateTime.tryParse(row['date'] as String? ?? '') ?? DateTime.now(),
       );
     }).toList();
 
-    final roomRow    = roomResult.isNotEmpty    ? roomResult.first    : const <String, Object?>{};
-    final bedRow     = bedResult.isNotEmpty     ? bedResult.first     : const <String, Object?>{};
-    final tenantRow  = tenantResult.isNotEmpty  ? tenantResult.first  : const <String, Object?>{};
-    final stayRow    = activeStaysResult.isNotEmpty ? activeStaysResult.first : const <String, Object?>{};
-    final rentRow    = rentResult.isNotEmpty    ? rentResult.first    : const <String, Object?>{};
-    final mRentRow   = monthlyRentResult.isNotEmpty ? monthlyRentResult.first : const <String, Object?>{};
-    final mExpRow    = monthlyExpensesResult.isNotEmpty ? monthlyExpensesResult.first : const <String, Object?>{};
-    final checkoutRow = checkoutResult.isNotEmpty ? checkoutResult.first : const <String, Object?>{};
+    final roomRow =
+        roomResult.isNotEmpty ? roomResult.first : const <String, Object?>{};
+    final bedRow =
+        bedResult.isNotEmpty ? bedResult.first : const <String, Object?>{};
+    final tenantRow = tenantResult.isNotEmpty
+        ? tenantResult.first
+        : const <String, Object?>{};
+    final stayRow = activeStaysResult.isNotEmpty
+        ? activeStaysResult.first
+        : const <String, Object?>{};
+    final rentRow =
+        rentResult.isNotEmpty ? rentResult.first : const <String, Object?>{};
+    final mRentRow = monthlyRentResult.isNotEmpty
+        ? monthlyRentResult.first
+        : const <String, Object?>{};
+    final mExpRow = monthlyExpensesResult.isNotEmpty
+        ? monthlyExpensesResult.first
+        : const <String, Object?>{};
+    final checkoutRow = checkoutResult.isNotEmpty
+        ? checkoutResult.first
+        : const <String, Object?>{};
 
     return DashboardSummaryEntity(
-      totalRooms:              (roomRow['totalRooms']              as num?)?.toInt()    ?? 0,
-      vacantRooms:             (roomRow['vacantRooms']             as num?)?.toInt()    ?? 0,
-      partiallyOccupiedRooms:  (roomRow['partiallyOccupiedRooms']  as num?)?.toInt()    ?? 0,
-      occupiedRooms:           (roomRow['occupiedRooms']           as num?)?.toInt()    ?? 0,
-      inactiveRooms:           (roomRow['inactiveRooms']           as num?)?.toInt()    ?? 0,
-      totalBeds:               (bedRow['totalBeds']                as num?)?.toInt()    ?? 0,
-      vacantBeds:              (bedRow['vacantBeds']               as num?)?.toInt()    ?? 0,
-      occupiedBeds:            (bedRow['occupiedBeds']             as num?)?.toInt()    ?? 0,
-      inactiveBeds:            (bedRow['inactiveBeds']             as num?)?.toInt()    ?? 0,
-      totalTenants:            (tenantRow['totalTenants']          as num?)?.toInt()    ?? 0,
+      totalRooms: (roomRow['totalRooms'] as num?)?.toInt() ?? 0,
+      vacantRooms: (roomRow['vacantRooms'] as num?)?.toInt() ?? 0,
+      partiallyOccupiedRooms:
+          (roomRow['partiallyOccupiedRooms'] as num?)?.toInt() ?? 0,
+      occupiedRooms: (roomRow['occupiedRooms'] as num?)?.toInt() ?? 0,
+      inactiveRooms: (roomRow['inactiveRooms'] as num?)?.toInt() ?? 0,
+      totalBeds: (bedRow['totalBeds'] as num?)?.toInt() ?? 0,
+      vacantBeds: (bedRow['vacantBeds'] as num?)?.toInt() ?? 0,
+      occupiedBeds: (bedRow['occupiedBeds'] as num?)?.toInt() ?? 0,
+      inactiveBeds: (bedRow['inactiveBeds'] as num?)?.toInt() ?? 0,
+      totalTenants: (tenantRow['totalTenants'] as num?)?.toInt() ?? 0,
       // Active tenants == active stays (per specification)
-      activeTenants:           (stayRow['activeStays']             as num?)?.toInt()    ?? 0,
-      checkedOutTenants:       (tenantRow['checkedOutTenants']     as num?)?.toInt()    ?? 0,
-      pendingRent:             (rentRow['pendingRent']             as num?)?.toDouble() ?? 0.0,
-      monthlyRentCollected:    (mRentRow['monthlyRent']            as num?)?.toDouble() ?? 0.0,
-      monthlyExpenses:         (mExpRow['monthlyExpenses']         as num?)?.toDouble() ?? 0.0,
-      todayCheckouts:          (checkoutRow['checkoutCount']       as num?)?.toInt()    ?? 0,
+      activeTenants: (stayRow['activeStays'] as num?)?.toInt() ?? 0,
+      checkedOutTenants: (tenantRow['checkedOutTenants'] as num?)?.toInt() ?? 0,
+      pendingRent: (rentRow['pendingRent'] as num?)?.toDouble() ?? 0.0,
+      monthlyRentCollected:
+          (mRentRow['monthlyRent'] as num?)?.toDouble() ?? 0.0,
+      monthlyExpenses: (mExpRow['monthlyExpenses'] as num?)?.toDouble() ?? 0.0,
+      todayCheckouts: (checkoutRow['checkoutCount'] as num?)?.toInt() ?? 0,
       recentActivities: activities,
-      recentCheckIns:   recentCheckIns,
-      recentCheckOuts:  recentCheckOuts,
+      recentCheckIns: recentCheckIns,
+      recentCheckOuts: recentCheckOuts,
     );
   }
 }

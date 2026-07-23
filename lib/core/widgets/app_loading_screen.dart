@@ -34,7 +34,7 @@ class AppLoadingScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         message!,
-                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w500,
                             ),

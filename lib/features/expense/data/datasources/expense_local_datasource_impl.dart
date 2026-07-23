@@ -27,7 +27,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     final database = await _appDatabase.database;
     return _perform('create expense category', () async {
       final map = category.toMap();
-      final id = await database.insert(ExpenseLocalSchema.tableExpenseCategories, map);
+      final id =
+          await database.insert(ExpenseLocalSchema.tableExpenseCategories, map);
       return ExpenseCategoryModel.fromMap(<String, dynamic>{...map, 'id': id});
     });
   }
@@ -85,7 +86,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
   Future<List<ExpenseCategoryModel>> getAllCategories() async {
     final database = await _appDatabase.database;
     return _perform('get all expense categories', () async {
-      final rows = await database.query(ExpenseLocalSchema.tableExpenseCategories);
+      final rows =
+          await database.query(ExpenseLocalSchema.tableExpenseCategories);
       return rows.map(ExpenseCategoryModel.fromMap).toList();
     });
   }
@@ -203,7 +205,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     return _perform('get expense summary', () async {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day).toIso8601String();
-      final tomorrow = DateTime(now.year, now.month, now.day + 1).toIso8601String();
+      final tomorrow =
+          DateTime(now.year, now.month, now.day + 1).toIso8601String();
       final month = DateTime(now.year, now.month).toIso8601String();
       final nextMonth = DateTime(now.year, now.month + 1).toIso8601String();
       final year = DateTime(now.year).toIso8601String();

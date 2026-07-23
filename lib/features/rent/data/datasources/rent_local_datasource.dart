@@ -1,10 +1,13 @@
+import '../models/checkout_data_bundle.dart';
 import '../models/checkout_settlement_model.dart';
 import '../models/damage_charge_model.dart';
 import '../models/deposit_model.dart';
 import '../models/payment_model.dart';
+import '../models/persist_checkout_command.dart';
 import '../models/receipt_model.dart';
 import '../models/rent_record_model.dart';
 import '../models/stay_model.dart';
+import '../models/upsert_rent_record_command.dart';
 
 abstract class RentLocalDataSource {
   Future<StayModel> createStay(StayModel stay);
@@ -69,4 +72,20 @@ abstract class RentLocalDataSource {
     CheckoutSettlementModel checkoutSettlement,
   );
   Future<void> deleteCheckoutSettlement(int id);
+
+  // ---------------------------------------------------------------------------
+  // Checkout workflow — dedicated methods to keep SQL out of the repository.
+  // ---------------------------------------------------------------------------
+
+  /// Loads everything the checkout calculators need in a single round-trip:
+  /// the active stay, all rent records for the stay, and the held deposit.
+  Future<CheckoutDataBundle> loadCheckoutData(int stayId);
+
+  /// Inserts a new rent record for the checkout month, or updates the existing
+  /// one if a record already exists for that billing period.
+  Future<void> upsertCurrentMonthRentRecord(UpsertRentRecordCommand cmd);
+
+  /// Commits the full checkout in a single atomic transaction:
+  /// settlement row, damage charge, deposit update, stay/tenant/bed/room updates.
+  Future<CheckoutSettlementModel> persistCheckout(PersistCheckoutCommand cmd);
 }

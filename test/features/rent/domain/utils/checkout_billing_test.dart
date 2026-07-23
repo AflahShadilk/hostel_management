@@ -65,6 +65,57 @@ void main() {
     });
 
     // ---------------------------------------------------------------
+    // Current month check-in proration tests
+    // ---------------------------------------------------------------
+    test('same-day check-in and checkout (23 Jul → 23 Jul) charges 1 day', () {
+      final checkInDate = DateTime(2026, 7, 23);
+      final checkoutDate = DateTime(2026, 7, 23);
+      // July has 31 days. 3100 / 31 = 100 per day. 1 day = 100.
+      final result = RentCalculator.calculateCurrentMonthRent(
+        3100,
+        checkoutDate,
+        checkInDate: checkInDate,
+      );
+      expect(result, equals(100.0));
+    });
+
+    test('check-in 23 Jul and checkout 28 Jul charges 6 days (23–28 Jul)', () {
+      final checkInDate = DateTime(2026, 7, 23);
+      final checkoutDate = DateTime(2026, 7, 28);
+      // July has 31 days. 3100 / 31 = 100 per day. 6 days = 600.
+      final result = RentCalculator.calculateCurrentMonthRent(
+        3100,
+        checkoutDate,
+        checkInDate: checkInDate,
+      );
+      expect(result, equals(600.0));
+    });
+
+    test('check-in 23 Jul and checkout 31 Jul charges 9 days (23–31 Jul)', () {
+      final checkInDate = DateTime(2026, 7, 23);
+      final checkoutDate = DateTime(2026, 7, 31);
+      // July has 31 days. 3100 / 31 = 100 per day. 9 days = 900.
+      final result = RentCalculator.calculateCurrentMonthRent(
+        3100,
+        checkoutDate,
+        checkInDate: checkInDate,
+      );
+      expect(result, equals(900.0));
+    });
+
+    test('check-in in previous month (10 Jun) and checkout 23 Jul charges from 1 Jul (23 days)', () {
+      final checkInDate = DateTime(2026, 6, 10);
+      final checkoutDate = DateTime(2026, 7, 23);
+      // July has 31 days. 3100 / 31 = 100 per day. 23 days = 2300.
+      final result = RentCalculator.calculateCurrentMonthRent(
+        3100,
+        checkoutDate,
+        checkInDate: checkInDate,
+      );
+      expect(result, equals(2300.0));
+    });
+
+    // ---------------------------------------------------------------
     // Rounding — amounts should be rounded to nearest rupee
     // ---------------------------------------------------------------
     test('result is always rounded to nearest rupee (no decimals)', () {

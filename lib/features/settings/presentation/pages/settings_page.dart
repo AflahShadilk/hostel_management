@@ -41,7 +41,8 @@ class _SettingsPageState extends State<SettingsPage> {
         final message = switch (state) {
           SettingsError(:final message) ||
           SettingsOperationError(:final message) ||
-          SettingsOperationSuccess(:final message) => message,
+          SettingsOperationSuccess(:final message) =>
+            message,
           _ => null,
         };
         if (message != null) {
@@ -225,13 +226,20 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: 'Export Data',
                       child: Column(
                         children: [
-                          _exportTile('Export Tenant CSV', ExportDataType.tenantCsv, isProcessing),
-                          _exportTile('Export Room CSV', ExportDataType.roomCsv, isProcessing),
-                          _exportTile('Export Rent CSV', ExportDataType.rentCsv, isProcessing),
-                          _exportTile('Export Expense CSV', ExportDataType.expenseCsv, isProcessing),
-                          _exportTile('Export Tenant PDF', ExportDataType.tenantPdf, isProcessing),
-                          _exportTile('Export Rent PDF', ExportDataType.rentPdf, isProcessing),
-                          _exportTile('Export Expense PDF', ExportDataType.expensePdf, isProcessing),
+                          _exportTile('Export Tenant CSV',
+                              ExportDataType.tenantCsv, isProcessing),
+                          _exportTile('Export Room CSV', ExportDataType.roomCsv,
+                              isProcessing),
+                          _exportTile('Export Rent CSV', ExportDataType.rentCsv,
+                              isProcessing),
+                          _exportTile('Export Expense CSV',
+                              ExportDataType.expenseCsv, isProcessing),
+                          _exportTile('Export Tenant PDF',
+                              ExportDataType.tenantPdf, isProcessing),
+                          _exportTile('Export Rent PDF', ExportDataType.rentPdf,
+                              isProcessing),
+                          _exportTile('Export Expense PDF',
+                              ExportDataType.expensePdf, isProcessing),
                         ],
                       ),
                     ),
@@ -278,7 +286,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               SettingsTile(
                 title: 'Copyright',
-                subtitle: 'Copyright ${DateTime.now().year} Hostel Management System',
+                subtitle:
+                    'Copyright ${DateTime.now().year} Hostel Management System',
                 trailing: const Icon(Icons.copyright_outlined),
               ),
               SettingsTile(

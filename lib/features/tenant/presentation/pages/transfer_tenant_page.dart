@@ -107,27 +107,27 @@ class TransferTenantPage extends StatelessWidget {
                       const SizedBox(height: AppSpacing.xl),
                       BlocBuilder<TenantCubit, TenantState>(
                         builder: (context, tenantState) {
-                          final isTransferring =
+                          final isTransferring = tenantState.status ==
+                                  TenantOperationStatus.transferring ||
                               tenantState.status ==
-                                      TenantOperationStatus.transferring ||
-                                  tenantState.status ==
-                                      TenantOperationStatus.loading;
+                                  TenantOperationStatus.loading;
                           return BlocBuilder<TransferTenantFormCubit, dynamic>(
                             builder: (context, selectedBed) {
                               return AppButton(
                                 label: 'Transfer Tenant',
                                 isLoading: isTransferring,
-                                onPressed: (selectedBed == null || isTransferring)
-                                    ? null
-                                    : () {
-                                        context
-                                            .read<TenantCubit>()
-                                            .transferTenant(
-                                              tenant!.id!,
-                                              oldBedId: tenant!.bedId!,
-                                              newBedId: selectedBed.id!,
-                                            );
-                                      },
+                                onPressed:
+                                    (selectedBed == null || isTransferring)
+                                        ? null
+                                        : () {
+                                            context
+                                                .read<TenantCubit>()
+                                                .transferTenant(
+                                                  tenant!.id!,
+                                                  oldBedId: tenant!.bedId!,
+                                                  newBedId: selectedBed.id!,
+                                                );
+                                          },
                               );
                             },
                           );

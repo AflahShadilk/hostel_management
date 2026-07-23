@@ -226,16 +226,13 @@ Future<void> configureDependencies() async {
     () => RentLocalDataSourceImpl(getIt<AppDatabase>()),
   );
   getIt.registerLazySingleton<RentRepository>(
-    () => RentRepositoryImpl(
-      getIt<RentLocalDataSource>(),
-      getIt<AppDatabase>(),
-    ),
+    () => RentRepositoryImpl(getIt<RentLocalDataSource>()),
   );
   getIt.registerFactory<StayCubit>(() => StayCubit(getIt<RentRepository>()));
   getIt.registerFactory<RentRecordCubit>(
     () => RentRecordCubit(getIt<RentRepository>()),
   );
-  
+
   getIt.registerLazySingleton<RentCollectionRepository>(
     () => RentCollectionRepositoryImpl(getIt<AppDatabase>()),
   );
@@ -287,8 +284,10 @@ Future<void> configureDependencies() async {
   );
   getIt.registerFactory<SearchCubit>(
       () => SearchCubit(getIt<SearchRepository>()));
-  getIt.registerLazySingleton<SettingsLocalDataSource>(() => SettingsLocalDataSourceImpl(getIt<AppDatabase>()));
-  getIt.registerLazySingleton<SettingsRepository>(() => SettingsRepositoryImpl(getIt<SettingsLocalDataSource>()));
+  getIt.registerLazySingleton<SettingsLocalDataSource>(
+      () => SettingsLocalDataSourceImpl(getIt<AppDatabase>()));
+  getIt.registerLazySingleton<SettingsRepository>(
+      () => SettingsRepositoryImpl(getIt<SettingsLocalDataSource>()));
   getIt.registerLazySingleton<BackupLocalDataSource>(
     () => BackupLocalDataSourceImpl(getIt<AppDatabase>()),
   );
@@ -325,7 +324,8 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<SelectedDateCubit>(() => SelectedDateCubit(null));
   getIt.registerFactory<SelectedStatusCubit>(() => SelectedStatusCubit(''));
   getIt.registerFactory<BalanceCubit>(() => BalanceCubit(0.0));
-  getIt.registerFactory<CheckoutSummaryCubit>(() => CheckoutSummaryCubit(getIt<RentRepository>()));
+  getIt.registerFactory<CheckoutSummaryCubit>(
+      () => CheckoutSummaryCubit(getIt<RentRepository>()));
 
   // Reports
   getIt.registerLazySingleton<ReportsRepository>(
@@ -357,7 +357,3 @@ Future<void> configureDependencies() async {
     ),
   );
 }
-
-
-
-

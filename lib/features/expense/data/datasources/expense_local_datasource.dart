@@ -13,7 +13,8 @@ abstract class ExpenseLocalDataSource {
   Future<ExpenseModel> updateExpense(ExpenseModel expense);
   Future<void> deleteExpense(int id);
   Future<ExpenseModel?> getExpenseById(int id);
-  Future<List<ExpenseModel>> getAllExpenses([ExpenseQuery query = const ExpenseQuery()]);
+  Future<List<ExpenseModel>> getAllExpenses(
+      [ExpenseQuery query = const ExpenseQuery()]);
   Future<ExpenseSummaryData> getExpenseSummary();
 }
 

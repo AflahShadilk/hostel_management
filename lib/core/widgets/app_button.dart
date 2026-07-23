@@ -28,7 +28,9 @@ class AppButton extends StatelessWidget {
           ? AppButtonLoading(
               color: Theme.of(context).colorScheme.onPrimary,
             )
-          : icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
+          : icon == null
+              ? const SizedBox.shrink()
+              : Icon(icon, size: 18),
       label: Text(label),
     );
 
@@ -38,5 +40,4 @@ class AppButton extends StatelessWidget {
 
     return button;
   }
-
 }

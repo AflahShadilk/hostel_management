@@ -58,10 +58,12 @@ abstract interface class RentRepository {
   Future<DepositEntity> updateDeposit(DepositEntity deposit);
   Future<void> deleteDeposit(int id);
 
-  Future<DamageChargeEntity> createDamageCharge(DamageChargeEntity damageCharge);
+  Future<DamageChargeEntity> createDamageCharge(
+      DamageChargeEntity damageCharge);
   Future<List<DamageChargeEntity>> getDamageChargesByStayId(int stayId);
   Future<List<DamageChargeEntity>> getAllDamageCharges();
-  Future<DamageChargeEntity> updateDamageCharge(DamageChargeEntity damageCharge);
+  Future<DamageChargeEntity> updateDamageCharge(
+      DamageChargeEntity damageCharge);
   Future<void> deleteDamageCharge(int id);
 
   Future<CheckoutSettlementEntity> createCheckoutSettlement(

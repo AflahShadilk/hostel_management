@@ -33,10 +33,8 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
   void initState() {
     super.initState();
     final deposit = widget.deposit;
-    _stayId =
-        TextEditingController(text: deposit?.stayId.toString() ?? '');
-    _amount =
-        TextEditingController(text: deposit?.amount.toString() ?? '');
+    _stayId = TextEditingController(text: deposit?.stayId.toString() ?? '');
+    _amount = TextEditingController(text: deposit?.amount.toString() ?? '');
     _refundedAmount =
         TextEditingController(text: deposit?.refundedAmount.toString() ?? '');
   }
@@ -73,12 +71,11 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
     }
   }
 
-  String? _idValidator(String? value) =>
-      value == null || value.trim().isEmpty
-          ? 'Stay ID is required.'
-          : int.tryParse(value.trim()) == null
-              ? 'Enter a valid stay ID.'
-              : null;
+  String? _idValidator(String? value) => value == null || value.trim().isEmpty
+      ? 'Stay ID is required.'
+      : int.tryParse(value.trim()) == null
+          ? 'Enter a valid stay ID.'
+          : null;
 
   String? _amountValidator(String? value, String label) {
     if (value == null || value.trim().isEmpty) return '$label is required.';
@@ -122,8 +119,7 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
         BlocProvider<_RefundDateCubit>(
             create: (_) => _RefundDateCubit(deposit?.refundDate)),
         BlocProvider<SelectedStatusCubit>(
-            create: (_) =>
-                SelectedStatusCubit(deposit?.status ?? 'pending')),
+            create: (_) => SelectedStatusCubit(deposit?.status ?? 'pending')),
       ],
       child: Builder(builder: (context) {
         return BlocListener<DepositCubit, DepositState>(
@@ -138,9 +134,8 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
             }
           },
           child: Scaffold(
-            appBar: AppBar(
-                title:
-                    Text(_editing ? 'Edit Deposit' : 'Add Deposit')),
+            appBar:
+                AppBar(title: Text(_editing ? 'Edit Deposit' : 'Add Deposit')),
             body: SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -186,8 +181,8 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
                               child: InputDecorator(
                                 decoration: const InputDecoration(
                                     labelText: 'Received Date',
-                                    suffixIcon: Icon(
-                                        Icons.calendar_today_outlined)),
+                                    suffixIcon:
+                                        Icon(Icons.calendar_today_outlined)),
                                 child: Text(_date(receivedDate)),
                               ),
                             ),
@@ -217,8 +212,8 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
                             builder: (context, status) =>
                                 DropdownButtonFormField<String>(
                               value: status,
-                              decoration: const InputDecoration(
-                                  labelText: 'Status'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Status'),
                               items: const [
                                 'pending',
                                 'held',
@@ -241,15 +236,13 @@ class _AddEditDepositPageState extends State<AddEditDepositPage> {
                             builder: (context, submitting) =>
                                 BlocBuilder<DepositCubit, DepositState>(
                               builder: (context, state) => AppButton(
-                                label: _editing
-                                    ? 'Save Changes'
-                                    : 'Add Deposit',
+                                label:
+                                    _editing ? 'Save Changes' : 'Add Deposit',
                                 isLoading:
                                     submitting || state is DepositLoading,
                                 isFullWidth: true,
-                                onPressed: submitting
-                                    ? null
-                                    : () => _submit(context),
+                                onPressed:
+                                    submitting ? null : () => _submit(context),
                               ),
                             ),
                           ),

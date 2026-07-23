@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/repositories/reports_repository.dart';
@@ -11,8 +13,13 @@ class ProfitLossCubit extends Cubit<ProfitLossState> {
 
   /// Load data for a preset filter.
   Future<void> loadWithFilter(ReportsDateFilter filter) async {
-    if (filter == ReportsDateFilter.custom) return; // caller must use [loadWithCustomRange]
-    emit(state.copyWith(isLoading: true, clearError: true, activeFilter: filter, clearCustomDates: true));
+    if (filter == ReportsDateFilter.custom)
+      return; // caller must use [loadWithCustomRange]
+    emit(state.copyWith(
+        isLoading: true,
+        clearError: true,
+        activeFilter: filter,
+        clearCustomDates: true));
     try {
       final now = DateTime.now();
       final (from, to) = filter.resolve(now);

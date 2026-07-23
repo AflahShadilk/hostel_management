@@ -87,7 +87,8 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     return _roomRepository.getRoomsByHostelId(hostel.id!);
   }
 
-  _ExportContent _tenantContent(List<TenantEntity> tenants, ExportDataType type) {
+  _ExportContent _tenantContent(
+      List<TenantEntity> tenants, ExportDataType type) {
     return _ExportContent(
       title: 'Tenant Summary',
       isPdf: type == ExportDataType.tenantPdf,
@@ -109,7 +110,15 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     return _ExportContent(
       title: 'Room List',
       isPdf: false,
-      headers: const ['ID', 'Room', 'Floor', 'Type', 'Beds', 'Monthly Rent', 'Status'],
+      headers: const [
+        'ID',
+        'Room',
+        'Floor',
+        'Type',
+        'Beds',
+        'Monthly Rent',
+        'Status'
+      ],
       rows: rooms
           .map((room) => [
                 '${room.id ?? ''}',
@@ -124,13 +133,25 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     );
   }
 
-  _ExportContent _rentContent(List<RentRecordEntity> records, ExportDataType type) {
-    final totalDue = records.fold<double>(0, (total, record) => total + record.amountDue);
-    final totalPaid = records.fold<double>(0, (total, record) => total + record.amountPaid);
+  _ExportContent _rentContent(
+      List<RentRecordEntity> records, ExportDataType type) {
+    final totalDue =
+        records.fold<double>(0, (total, record) => total + record.amountDue);
+    final totalPaid =
+        records.fold<double>(0, (total, record) => total + record.amountPaid);
     return _ExportContent(
       title: 'Rent Report',
       isPdf: type == ExportDataType.rentPdf,
-      headers: const ['ID', 'Stay', 'Billing', 'Due Date', 'Amount Due', 'Amount Paid', 'Balance', 'Status'],
+      headers: const [
+        'ID',
+        'Stay',
+        'Billing',
+        'Due Date',
+        'Amount Due',
+        'Amount Paid',
+        'Balance',
+        'Status'
+      ],
       rows: records
           .map((record) => [
                 '${record.id ?? ''}',
@@ -149,12 +170,22 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
     );
   }
 
-  _ExportContent _expenseContent(List<ExpenseEntity> expenses, ExportDataType type) {
-    final total = expenses.fold<double>(0, (value, expense) => value + expense.amount);
+  _ExportContent _expenseContent(
+      List<ExpenseEntity> expenses, ExportDataType type) {
+    final total =
+        expenses.fold<double>(0, (value, expense) => value + expense.amount);
     return _ExportContent(
       title: 'Expense Report',
       isPdf: type == ExportDataType.expensePdf,
-      headers: const ['ID', 'Category', 'Title', 'Amount', 'Date', 'Payment Method', 'Reference'],
+      headers: const [
+        'ID',
+        'Category',
+        'Title',
+        'Amount',
+        'Date',
+        'Payment Method',
+        'Reference'
+      ],
       rows: expenses
           .map((expense) => [
                 '${expense.id ?? ''}',
@@ -199,7 +230,9 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         build: (_) => [
-          pw.Text(content.title, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.Text(content.title,
+              style:
+                  pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 6),
           pw.Text('Generated: ${_date(DateTime.now())}'),
           pw.SizedBox(height: 16),
@@ -212,7 +245,8 @@ class ExportLocalDataSourceImpl implements ExportLocalDataSource {
           ),
           if (content.total != null) ...[
             pw.SizedBox(height: 16),
-            pw.Text(content.total!, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(content.total!,
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           ],
         ],
       ),

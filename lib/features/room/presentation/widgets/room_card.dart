@@ -28,96 +28,95 @@ class RoomCard extends StatelessWidget {
 
     return AppDashboardCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row: Room Number + Status chip
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Room ${room.roomNumber}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row: Room Number + Status chip
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Room ${room.roomNumber}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Floor: ${room.floor}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Floor: ${room.floor}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                _RoomStatusChip(status: room.status),
-              ],
-            ),
+              ),
+              _RoomStatusChip(status: room.status),
+            ],
+          ),
 
-            const SizedBox(height: AppSpacing.sm),
-            const Divider(height: 1, color: AppColors.border),
-            const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: AppSpacing.sm),
 
-            // Info grid
-            _InfoRow(
-              icon: Icons.hotel_outlined,
-              label: 'Type',
-              value: room.roomType.label,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _InfoRow(
-              icon: Icons.bed_outlined,
-              label: 'Beds',
-              value: room.numberOfBeds.toString(),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _InfoRow(
-              icon: Icons.currency_rupee_outlined,
-              label: 'Rent',
-              value: formatRent(room.monthlyRent),
-            ),
+          // Info grid
+          _InfoRow(
+            icon: Icons.hotel_outlined,
+            label: 'Type',
+            value: room.roomType.label,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _InfoRow(
+            icon: Icons.bed_outlined,
+            label: 'Beds',
+            value: room.numberOfBeds.toString(),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _InfoRow(
+            icon: Icons.currency_rupee_outlined,
+            label: 'Rent',
+            value: formatRent(room.monthlyRent),
+          ),
 
-            const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm),
 
-            // Action row
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: actionsEnabled ? onManageBeds : null,
-                      icon:
-                          const Icon(Icons.manage_accounts_outlined, size: 18),
-                      label: const Text('Manage Beds'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        padding: EdgeInsets.zero,
-                      ),
+          // Action row
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: actionsEnabled ? onManageBeds : null,
+                    icon: const Icon(Icons.manage_accounts_outlined, size: 18),
+                    label: const Text('Manage Beds'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  tooltip: 'Edit Room',
-                  color: AppColors.primary,
-                  onPressed: actionsEnabled ? onEdit : null,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  tooltip: 'Delete Room',
-                  color: AppColors.error,
-                  onPressed: actionsEnabled ? onDelete : null,
-                ),
-              ],
-            ),
-          ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                tooltip: 'Edit Room',
+                color: AppColors.primary,
+                onPressed: actionsEnabled ? onEdit : null,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: 'Delete Room',
+                color: AppColors.error,
+                onPressed: actionsEnabled ? onDelete : null,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

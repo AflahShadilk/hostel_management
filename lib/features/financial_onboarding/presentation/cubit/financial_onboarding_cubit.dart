@@ -253,7 +253,7 @@ class FinancialOnboardingCubit extends Cubit<FinancialOnboardingState> {
         return 'Select a deposit payment method.';
       }
     }
-    
+
     if (processRent) {
       if (rentAmount < 0) return 'Rent amount cannot be negative.';
       if (rentAmount > state.firstMonthRent) {

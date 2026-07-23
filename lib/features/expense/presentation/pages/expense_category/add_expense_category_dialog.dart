@@ -72,11 +72,12 @@ class _AddExpenseCategoryDialogState extends State<AddExpenseCategoryDialog> {
     return BlocProvider<SubmittingCubit>(
       create: (_) => SubmittingCubit(),
       child: Builder(
-        builder: (context) => BlocListener<ExpenseCategoryCubit,
-            ExpenseCategoryState>(
+        builder: (context) =>
+            BlocListener<ExpenseCategoryCubit, ExpenseCategoryState>(
           listener: (context, state) {
             if (!context.read<SubmittingCubit>().state) return;
-            if (state is ExpenseCategoryLoaded || state is ExpenseCategoryEmpty) {
+            if (state is ExpenseCategoryLoaded ||
+                state is ExpenseCategoryEmpty) {
               Navigator.of(context).pop(true);
             } else if (state is ExpenseCategoryError) {
               context.read<SubmittingCubit>().stop();
@@ -97,9 +98,10 @@ class _AddExpenseCategoryDialogState extends State<AddExpenseCategoryDialog> {
                       AppTextField(
                         controller: _nameController,
                         label: 'Name',
-                        validator: (value) => value == null || value.trim().isEmpty
-                            ? 'Name is required.'
-                            : null,
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? 'Name is required.'
+                                : null,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
@@ -110,13 +112,15 @@ class _AddExpenseCategoryDialogState extends State<AddExpenseCategoryDialog> {
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<bool>(
                         value: _isActiveController.text == 'true',
-                        decoration: const InputDecoration(labelText: 'Active Status'),
+                        decoration:
+                            const InputDecoration(labelText: 'Active Status'),
                         items: const [
                           DropdownMenuItem(value: true, child: Text('Active')),
-                          DropdownMenuItem(value: false, child: Text('Inactive')),
+                          DropdownMenuItem(
+                              value: false, child: Text('Inactive')),
                         ],
-                        onChanged: (value) =>
-                            _isActiveController.text = (value ?? true).toString(),
+                        onChanged: (value) => _isActiveController.text =
+                            (value ?? true).toString(),
                       ),
                     ],
                   ),

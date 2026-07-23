@@ -26,42 +26,42 @@ class BedCard extends StatelessWidget {
 
     return AppDashboardCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.single_bed_outlined,
-                          color: AppColors.textSecondary, size: 20),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        bed.bedNumber,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.single_bed_outlined,
+                        color: AppColors.textSecondary, size: 20),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      bed.bedNumber,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                _BedStatusChip(status: bed.status),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const Divider(height: 1, color: AppColors.border),
-            const SizedBox(height: AppSpacing.sm),
+              ),
+              _BedStatusChip(status: bed.status),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: AppSpacing.sm),
 
-            // Context/Action row
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: _buildActionRow(context),
-            ),
-          ],
+          // Context/Action row
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: _buildActionRow(context),
+          ),
+        ],
       ),
     );
   }

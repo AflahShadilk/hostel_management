@@ -32,15 +32,15 @@ class AddTenantPage extends StatelessWidget {
             }
             Navigator.of(context)
                 .push<bool>(
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider(
-                      create: (_) => getIt<FinancialOnboardingCubit>(),
-                      child: FinancialOnboardingPage(
-                        registrationContext: registrationContext,
-                      ),
-                    ),
+              MaterialPageRoute(
+                builder: (_) => BlocProvider(
+                  create: (_) => getIt<FinancialOnboardingCubit>(),
+                  child: FinancialOnboardingPage(
+                    registrationContext: registrationContext,
                   ),
-                )
+                ),
+              ),
+            )
                 .then((_) {
               if (context.mounted && context.canPop()) context.pop(true);
             });

@@ -27,13 +27,11 @@ class CheckoutLoaded extends CheckoutState {
   const CheckoutLoaded(this.settlements);
 
   /// Read-only preview data for receipt-oriented checkout presentation.
-  List<CheckoutReceiptPreviewViewModel> get receiptPreviews =>
-      settlements
-          .map(
-            (settlement) =>
-                CheckoutReceiptPreviewViewModel(settlement: settlement),
-          )
-          .toList(growable: false);
+  List<CheckoutReceiptPreviewViewModel> get receiptPreviews => settlements
+      .map(
+        (settlement) => CheckoutReceiptPreviewViewModel(settlement: settlement),
+      )
+      .toList(growable: false);
 
   @override
   List<Object?> get props => [settlements];

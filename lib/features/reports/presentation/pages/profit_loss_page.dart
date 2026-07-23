@@ -101,8 +101,7 @@ class _ProfitLossPageState extends State<ProfitLossPage> {
       ProfitLossPdfExportService service,
       String hostelName,
       String? logoPath,
-    )
-        action, {
+    ) action, {
     String? successMessage,
   }) async {
     final hostel = context.read<HostelCubit>().state.hostel;
@@ -233,7 +232,10 @@ class _Header extends StatelessWidget {
                     children: <Widget>[
                       Text(
                         'Profit & Loss',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
                               color: colors.onPrimary,
                               fontWeight: FontWeight.w800,
                             ),
@@ -249,8 +251,9 @@ class _Header extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: 'Export report',
-                  onPressed:
-                      state.data == null ? null : () => page._showExportSheet(state),
+                  onPressed: state.data == null
+                      ? null
+                      : () => page._showExportSheet(state),
                   icon: Icon(
                     Icons.file_download_outlined,
                     color: colors.onPrimary,
@@ -301,7 +304,9 @@ class _ReportContent extends StatelessWidget {
                 children: <Widget>[
                   Chip(
                     avatar: Icon(
-                      profit ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      profit
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
                       color: accent,
                       size: 18,
                     ),
@@ -313,7 +318,8 @@ class _ReportContent extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
-              Text('Net Profit', style: TextStyle(color: Colors.white.withValues(alpha: .76))),
+              Text('Net Profit',
+                  style: TextStyle(color: Colors.white.withValues(alpha: .76))),
               Text(
                 '${profit ? '' : '−'}${money(data.netProfit)}',
                 maxLines: 1,
@@ -328,7 +334,8 @@ class _ReportContent extends StatelessWidget {
                 children: <Widget>[
                   _HeroMetric('Revenue', money(data.totalRevenue)),
                   _HeroMetric('Expenses', money(data.totalExpenses)),
-                  _HeroMetric('Margin', '${data.profitMargin.toStringAsFixed(1)}%'),
+                  _HeroMetric(
+                      'Margin', '${data.profitMargin.toStringAsFixed(1)}%'),
                 ],
               ),
             ],
@@ -346,10 +353,36 @@ class _ReportContent extends StatelessWidget {
               mainAxisSpacing: AppSpacing.sm,
               childAspectRatio: constraints.maxWidth < 360 ? .92 : 1.05,
               children: <Widget>[
-                AppStatTile(icon: Icons.payments_rounded, iconColor: const Color(0xFF1976D2), iconBackground: const Color(0xFFE3F2FD), label: 'Total Revenue', value: money(data.totalRevenue), subtitle: 'Collected payments'),
-                AppStatTile(icon: Icons.receipt_long_rounded, iconColor: const Color(0xFFC62828), iconBackground: const Color(0xFFFFEBEE), label: 'Total Expenses', value: money(data.totalExpenses), subtitle: 'Operational costs'),
-                AppStatTile(icon: profit ? Icons.trending_up_rounded : Icons.trending_down_rounded, iconColor: accent, iconBackground: accent.withValues(alpha: .12), label: 'Net Profit', value: '${profit ? '' : '−'}${money(data.netProfit)}', subtitle: profit ? 'Profitable period' : 'Loss period'),
-                AppStatTile(icon: Icons.donut_large_rounded, iconColor: const Color(0xFF6A1B9A), iconBackground: const Color(0xFFF3E5F5), label: 'Profit Margin', value: '${data.profitMargin.toStringAsFixed(1)}%', subtitle: 'Revenue efficiency'),
+                AppStatTile(
+                    icon: Icons.payments_rounded,
+                    iconColor: const Color(0xFF1976D2),
+                    iconBackground: const Color(0xFFE3F2FD),
+                    label: 'Total Revenue',
+                    value: money(data.totalRevenue),
+                    subtitle: 'Collected payments'),
+                AppStatTile(
+                    icon: Icons.receipt_long_rounded,
+                    iconColor: const Color(0xFFC62828),
+                    iconBackground: const Color(0xFFFFEBEE),
+                    label: 'Total Expenses',
+                    value: money(data.totalExpenses),
+                    subtitle: 'Operational costs'),
+                AppStatTile(
+                    icon: profit
+                        ? Icons.trending_up_rounded
+                        : Icons.trending_down_rounded,
+                    iconColor: accent,
+                    iconBackground: accent.withValues(alpha: .12),
+                    label: 'Net Profit',
+                    value: '${profit ? '' : '−'}${money(data.netProfit)}',
+                    subtitle: profit ? 'Profitable period' : 'Loss period'),
+                AppStatTile(
+                    icon: Icons.donut_large_rounded,
+                    iconColor: const Color(0xFF6A1B9A),
+                    iconBackground: const Color(0xFFF3E5F5),
+                    label: 'Profit Margin',
+                    value: '${data.profitMargin.toStringAsFixed(1)}%',
+                    subtitle: 'Revenue efficiency'),
               ],
             );
           },
@@ -359,25 +392,56 @@ class _ReportContent extends StatelessWidget {
           title: 'Revenue Breakdown',
           icon: Icons.pie_chart_outline_rounded,
           child: Column(children: <Widget>[
-            AppProgressRow(label: 'Rent', amount: money(data.rentRevenue), percentage: data.totalRevenue == 0 ? 0 : data.rentRevenue / data.totalRevenue, color: const Color(0xFF1976D2)),
+            AppProgressRow(
+                label: 'Rent',
+                amount: money(data.rentRevenue),
+                percentage: data.totalRevenue == 0
+                    ? 0
+                    : data.rentRevenue / data.totalRevenue,
+                color: const Color(0xFF1976D2)),
             const SizedBox(height: AppSpacing.md),
-            AppProgressRow(label: 'Damage Charges', amount: money(data.damageChargeRevenue), percentage: data.totalRevenue == 0 ? 0 : data.damageChargeRevenue / data.totalRevenue, color: const Color(0xFFE65100)),
+            AppProgressRow(
+                label: 'Damage Charges',
+                amount: money(data.damageChargeRevenue),
+                percentage: data.totalRevenue == 0
+                    ? 0
+                    : data.damageChargeRevenue / data.totalRevenue,
+                color: const Color(0xFFE65100)),
             const SizedBox(height: AppSpacing.md),
-            AppProgressRow(label: 'Other Income', amount: money(data.otherRevenue), percentage: data.totalRevenue == 0 ? 0 : data.otherRevenue / data.totalRevenue, color: const Color(0xFF388E3C)),
+            AppProgressRow(
+                label: 'Other Income',
+                amount: money(data.otherRevenue),
+                percentage: data.totalRevenue == 0
+                    ? 0
+                    : data.otherRevenue / data.totalRevenue,
+                color: const Color(0xFF388E3C)),
           ]),
         ),
         const SizedBox(height: AppSpacing.md),
         AppSectionCard(
           title: 'Quick Insights',
           icon: Icons.lightbulb_outline_rounded,
-          child: Wrap(spacing: AppSpacing.sm, runSpacing: AppSpacing.sm, children: <Widget>[
-            _Insight('Best Revenue', data.rentRevenue >= data.damageChargeRevenue ? 'Rent' : 'Damage Charges'),
-            _Insight('Margin Health', data.profitMargin >= 20 ? 'Healthy' : profit ? 'Watch closely' : 'Loss'),
-            _Insight(
-              'Rent Share',
-              '${data.totalRevenue == 0 ? 0 : (data.rentRevenue / data.totalRevenue * 100).toStringAsFixed(0)}%',
-            ),
-          ]),
+          child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                _Insight(
+                    'Best Revenue',
+                    data.rentRevenue >= data.damageChargeRevenue
+                        ? 'Rent'
+                        : 'Damage Charges'),
+                _Insight(
+                    'Margin Health',
+                    data.profitMargin >= 20
+                        ? 'Healthy'
+                        : profit
+                            ? 'Watch closely'
+                            : 'Loss'),
+                _Insight(
+                  'Rent Share',
+                  '${data.totalRevenue == 0 ? 0 : (data.rentRevenue / data.totalRevenue * 100).toStringAsFixed(0)}%',
+                ),
+              ]),
         ),
       ],
     );
@@ -389,7 +453,19 @@ class _HeroMetric extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text(label, style: TextStyle(color: Colors.white.withValues(alpha: .65))), const SizedBox(height: 2), Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))]));
+  Widget build(BuildContext context) => Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+            Text(label,
+                style: TextStyle(color: Colors.white.withValues(alpha: .65))),
+            const SizedBox(height: 2),
+            Text(value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w700))
+          ]));
 }
 
 class _Insight extends StatelessWidget {
@@ -397,24 +473,48 @@ class _Insight extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => AppDashboardCard(padding: const EdgeInsets.all(AppSpacing.sm), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text(label, style: Theme.of(context).textTheme.bodySmall), Text(value, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700))]));
+  Widget build(BuildContext context) => AppDashboardCard(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(label, style: Theme.of(context).textTheme.bodySmall),
+            Text(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(fontWeight: FontWeight.w700))
+          ]));
 }
 
 class _LoadingContent extends StatelessWidget {
   const _LoadingContent();
   @override
-  Widget build(BuildContext context) => const SizedBox(height: 360, child: Center(child: CircularProgressIndicator()));
+  Widget build(BuildContext context) => const SizedBox(
+      height: 360, child: Center(child: CircularProgressIndicator()));
 }
 
 class _EmptyContent extends StatelessWidget {
   const _EmptyContent();
   @override
-  Widget build(BuildContext context) => const SizedBox(height: 360, child: Center(child: Text('No financial data for this period.')));
+  Widget build(BuildContext context) => const SizedBox(
+      height: 360,
+      child: Center(child: Text('No financial data for this period.')));
 }
 
 class _ErrorContent extends StatelessWidget {
   const _ErrorContent({required this.error});
   final String error;
   @override
-  Widget build(BuildContext context) => AppDashboardCard(child: Column(children: <Widget>[const Icon(Icons.error_outline_rounded, size: 48), const SizedBox(height: AppSpacing.md), Text(error, textAlign: TextAlign.center), const SizedBox(height: AppSpacing.md), FilledButton(onPressed: () => context.read<ProfitLossCubit>().refresh(), child: const Text('Retry'))]));
+  Widget build(BuildContext context) => AppDashboardCard(
+          child: Column(children: <Widget>[
+        const Icon(Icons.error_outline_rounded, size: 48),
+        const SizedBox(height: AppSpacing.md),
+        Text(error, textAlign: TextAlign.center),
+        const SizedBox(height: AppSpacing.md),
+        FilledButton(
+            onPressed: () => context.read<ProfitLossCubit>().refresh(),
+            child: const Text('Retry'))
+      ]));
 }

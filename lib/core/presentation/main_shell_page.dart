@@ -268,7 +268,10 @@ class _MainShellPageState extends State<MainShellPage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -288,7 +291,8 @@ class _MainShellPageState extends State<MainShellPage> {
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return ListTile(
-                      leading: Icon(item.icon, color: Theme.of(context).colorScheme.primary),
+                      leading: Icon(item.icon,
+                          color: Theme.of(context).colorScheme.primary),
                       title: Text(
                         item.label,
                         style: const TextStyle(fontWeight: FontWeight.w500),
@@ -307,7 +311,8 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = _getSelectedIndex(widget.navigationShell.currentIndex);
+    final selectedIndex =
+        _getSelectedIndex(widget.navigationShell.currentIndex);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -317,9 +322,11 @@ class _MainShellPageState extends State<MainShellPage> {
               children: [
                 NavigationRail(
                   selectedIndex: selectedIndex,
-                  onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                  onDestinationSelected: (index) =>
+                      _onDestinationSelected(context, index),
                   labelType: NavigationRailLabelType.all,
-                  selectedIconTheme: const IconThemeData(color: AppColors.primary),
+                  selectedIconTheme:
+                      const IconThemeData(color: AppColors.primary),
                   selectedLabelTextStyle: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -358,9 +365,13 @@ class _MainShellPageState extends State<MainShellPage> {
           body: BottomBar(
             controller: _bottomBarController,
             borderRadius: BorderRadius.circular(500),
-            barColor: Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(240),
+            barColor: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHigh
+                .withAlpha(240),
             hideOnScroll: true,
-            width: constraints.maxWidth > 500 ? 400 : constraints.maxWidth * 0.9,
+            width:
+                constraints.maxWidth > 500 ? 400 : constraints.maxWidth * 0.9,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
@@ -399,7 +410,8 @@ class _MainShellPageState extends State<MainShellPage> {
                 ],
               ),
             ),
-            body: (context, controller) => NotificationListener<UserScrollNotification>(
+            body: (context, controller) =>
+                NotificationListener<UserScrollNotification>(
               onNotification: (notification) {
                 if (notification.direction == ScrollDirection.forward) {
                   _bottomBarController.show();
@@ -435,7 +447,7 @@ class _BottomBarItem extends StatelessWidget {
     final color = isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
-    
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -443,7 +455,8 @@ class _BottomBarItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             decoration: isSelected
                 ? BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,

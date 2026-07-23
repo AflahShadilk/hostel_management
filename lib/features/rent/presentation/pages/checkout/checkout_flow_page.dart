@@ -47,8 +47,7 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
     });
   }
 
-  Future<void> _confirmCheckout(
-      BuildContext context, StayEntity stay) async {
+  Future<void> _confirmCheckout(BuildContext context, StayEntity stay) async {
     await context.pushNamed(
       AppRoutes.checkoutSettlementFormName,
       extra: stay,
@@ -121,14 +120,12 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
                 );
               }
 
-              final isMutating =
-                  context.watch<TenantCubit>().state.status ==
-                      TenantOperationStatus.checkingOut;
+              final isMutating = context.watch<TenantCubit>().state.status ==
+                  TenantOperationStatus.checkingOut;
               final tenantState = context.watch<TenantCubit>().state;
 
               return RefreshIndicator(
-                onRefresh: () =>
-                    context.read<StayCubit>().loadAllStays(),
+                onRefresh: () => context.read<StayCubit>().loadAllStays(),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: activeStays.length,
@@ -139,32 +136,29 @@ class _CheckoutFlowPageState extends State<CheckoutFlowPage> {
                     final tenantMatches = tenantState.tenants
                         .where((tenant) => tenant.id == stay.tenantId)
                         .toList();
-                    final tenant = tenantMatches.isEmpty
-                        ? null
-                        : tenantMatches.first;
+                    final tenant =
+                        tenantMatches.isEmpty ? null : tenantMatches.first;
                     final tenantViewMatches = tenantState.viewModels
-                        .where((viewModel) =>
-                            viewModel.tenant.id == stay.tenantId)
+                        .where(
+                            (viewModel) => viewModel.tenant.id == stay.tenantId)
                         .toList();
                     final tenantView = tenantViewMatches.isEmpty
                         ? null
                         : tenantViewMatches.first;
                     return _ActiveStayCard(
                       stay: stay,
-                      tenantName: tenant?.fullName ?? 'Tenant information unavailable',
+                      tenantName:
+                          tenant?.fullName ?? 'Tenant information unavailable',
                       phoneNumber: tenant?.phoneNumber ?? 'Phone not available',
                       roomName: tenantView?.roomName ?? 'Room ${stay.roomId}',
                       bedName: tenantView?.bedName ?? 'Bed ${stay.bedId}',
                       isMutating: isMutating,
                       onDetails: () => context.pushNamed(
                         AppRoutes.stayDetailsName,
-                        pathParameters: {
-                          'stayId': stay.id!.toString()
-                        },
+                        pathParameters: {'stayId': stay.id!.toString()},
                         extra: stay,
                       ),
-                      onCheckout: () =>
-                          _confirmCheckout(context, stay),
+                      onCheckout: () => _confirmCheckout(context, stay),
                     );
                   },
                 ),
@@ -210,119 +204,109 @@ class _ActiveStayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppDashboardCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    tenantName,
-                    style:
-                        Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppColors.success.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    'Active',
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              '$roomName / $bedName',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              phoneNumber,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                const Icon(Icons.meeting_room_outlined,
-                    size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
-                Text(
-                  'Room ${stay.roomId}  •  Bed ${stay.bedId}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  tenantName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                const Icon(Icons.login_outlined,
-                    size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
-                Text(
-                  'Check-in: ${_date(stay.checkInDate)}',
-                  style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.success.withValues(alpha: 0.4)),
                 ),
-                const Spacer(),
-                Text(
-                  '₹${stay.monthlyRentSnapshot.toStringAsFixed(0)}/mo',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                child: Text(
+                  'Active',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onDetails,
-                    icon: const Icon(Icons.info_outline, size: 16),
-                    label: const Text('View Details'),
-                  ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '$roomName / $bedName',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: isMutating ? null : onCheckout,
-                    style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.warning),
-                    icon: const Icon(Icons.logout_rounded, size: 16),
-                    label: const Text('Checkout'),
-                  ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            phoneNumber,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
                 ),
-              ],
-            ),
-          ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              const Icon(Icons.meeting_room_outlined,
+                  size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                'Room ${stay.roomId}  •  Bed ${stay.bedId}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              const Icon(Icons.login_outlined,
+                  size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                'Check-in: ${_date(stay.checkInDate)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const Spacer(),
+              Text(
+                '₹${stay.monthlyRentSnapshot.toStringAsFixed(0)}/mo',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDetails,
+                  icon: const Icon(Icons.info_outline, size: 16),
+                  label: const Text('View Details'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: isMutating ? null : onCheckout,
+                  style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.warning),
+                  icon: const Icon(Icons.logout_rounded, size: 16),
+                  label: const Text('Checkout'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
-
-
-
-
-
-

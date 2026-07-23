@@ -257,7 +257,8 @@ class HostelCubit extends Cubit<HostelState> {
 
     try {
       await _hostelRepository.updateHostel(updatedHostel);
-      emit(state.copyWith(status: HostelStatus.configured, hostel: updatedHostel));
+      emit(state.copyWith(
+          status: HostelStatus.configured, hostel: updatedHostel));
     } catch (_) {
       emit(state.copyWith(
         status: HostelStatus.failure,

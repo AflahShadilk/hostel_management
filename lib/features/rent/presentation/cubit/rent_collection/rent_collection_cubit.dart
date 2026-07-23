@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/constants/rent_status_constants.dart';
@@ -96,11 +98,11 @@ class RentCollectionCubit extends Cubit<RentCollectionState> {
       if (r.status == RentStatus.overdue) {
         totalOverdue += r.outstanding;
       }
-      
+
       // Assuming 'generatedAt' or 'createdAt' within this month represents current billing cycle for simple "Collected This Month"
       // More accurate: we should check payments, but this asks for "Total Collected This Month".
       // Without adding a massive payment fetch, we can sum amountPaid of rent records whose billing period overlaps this month,
-      // or simply rent records whose due date falls in this month. 
+      // or simply rent records whose due date falls in this month.
       if (r.dueDate.isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
           r.dueDate.isBefore(endOfMonth.add(const Duration(days: 1)))) {
         totalCollectedThisMonth += r.amountPaid;
@@ -110,12 +112,15 @@ class RentCollectionCubit extends Cubit<RentCollectionState> {
     // 2. Filter
     var filtered = items.where((item) {
       final r = item.rentRecord;
-      
+
       // Status filter
-      if (activeFilter == 'pending' && r.status != RentStatus.pending) return false;
-      if (activeFilter == 'partial' && r.status != RentStatus.partial) return false;
+      if (activeFilter == 'pending' && r.status != RentStatus.pending)
+        return false;
+      if (activeFilter == 'partial' && r.status != RentStatus.partial)
+        return false;
       if (activeFilter == 'paid' && r.status != RentStatus.paid) return false;
-      if (activeFilter == 'overdue' && r.status != RentStatus.overdue) return false;
+      if (activeFilter == 'overdue' && r.status != RentStatus.overdue)
+        return false;
 
       // Search filter
       if (searchQuery.isNotEmpty) {

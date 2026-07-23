@@ -198,72 +198,71 @@ abstract final class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                    name: AppRoutes.roomManagementName,
-                    path: AppRoutes.roomManagementPath,
-                    builder: (context, state) => const RoomManagementPage(),
-                    routes: [
-                      GoRoute(
-                        name: AppRoutes.addRoomName,
-                        path: AppRoutes.addRoomPath,
-                        builder: (context, state) => const AddRoomPage(),
-                      ),
-                      GoRoute(
-                        name: AppRoutes.editRoomName,
-                        path: AppRoutes.editRoomPath,
-                        builder: (context, state) {
-                          final room = state.extra as RoomEntity?;
-                          return EditRoomPage(room: room);
-                        },
-                      ),
-                      GoRoute(
-                        name: AppRoutes.bedManagementName,
-                        path: AppRoutes.bedManagementPath,
-                        builder: (context, state) {
-                          final roomIdStr =
-                              state.pathParameters['roomId'] ?? '';
-                          final room = state.extra as RoomEntity?;
-                          return BlocProvider(
-                            create: (_) => getIt<BedCubit>(),
-                            child: BedManagementPage(
-                                roomIdStr: roomIdStr, room: room),
-                          );
-                        },
-                      ),
-                    ],
+                name: AppRoutes.roomManagementName,
+                path: AppRoutes.roomManagementPath,
+                builder: (context, state) => const RoomManagementPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.addRoomName,
+                    path: AppRoutes.addRoomPath,
+                    builder: (context, state) => const AddRoomPage(),
                   ),
+                  GoRoute(
+                    name: AppRoutes.editRoomName,
+                    path: AppRoutes.editRoomPath,
+                    builder: (context, state) {
+                      final room = state.extra as RoomEntity?;
+                      return EditRoomPage(room: room);
+                    },
+                  ),
+                  GoRoute(
+                    name: AppRoutes.bedManagementName,
+                    path: AppRoutes.bedManagementPath,
+                    builder: (context, state) {
+                      final roomIdStr = state.pathParameters['roomId'] ?? '';
+                      final room = state.extra as RoomEntity?;
+                      return BlocProvider(
+                        create: (_) => getIt<BedCubit>(),
+                        child:
+                            BedManagementPage(roomIdStr: roomIdStr, room: room),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
           // Branch 2: Tenant Management
           StatefulShellBranch(
             routes: [
               GoRoute(
-                    name: AppRoutes.tenantManagementName,
-                    path: AppRoutes.tenantManagementPath,
-                    builder: (context, state) => const TenantManagementPage(),
-                    routes: [
-                      GoRoute(
-                        name: AppRoutes.addTenantName,
-                        path: AppRoutes.addTenantPath,
-                        builder: (context, state) => const AddTenantPage(),
-                      ),
-                      GoRoute(
-                        name: AppRoutes.editTenantName,
-                        path: AppRoutes.editTenantPath,
-                        builder: (context, state) {
-                          final tenant = state.extra as TenantEntity?;
-                          return EditTenantPage(tenant: tenant);
-                        },
-                      ),
-                      GoRoute(
-                        name: AppRoutes.transferTenantName,
-                        path: AppRoutes.transferTenantPath,
-                        builder: (context, state) {
-                          final tenant = state.extra as TenantEntity?;
-                          return TransferTenantPage(tenant: tenant);
-                        },
-                      ),
-                    ],
+                name: AppRoutes.tenantManagementName,
+                path: AppRoutes.tenantManagementPath,
+                builder: (context, state) => const TenantManagementPage(),
+                routes: [
+                  GoRoute(
+                    name: AppRoutes.addTenantName,
+                    path: AppRoutes.addTenantPath,
+                    builder: (context, state) => const AddTenantPage(),
                   ),
+                  GoRoute(
+                    name: AppRoutes.editTenantName,
+                    path: AppRoutes.editTenantPath,
+                    builder: (context, state) {
+                      final tenant = state.extra as TenantEntity?;
+                      return EditTenantPage(tenant: tenant);
+                    },
+                  ),
+                  GoRoute(
+                    name: AppRoutes.transferTenantName,
+                    path: AppRoutes.transferTenantPath,
+                    builder: (context, state) {
+                      final tenant = state.extra as TenantEntity?;
+                      return TransferTenantPage(tenant: tenant);
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
           // Branch 3: Stay Management
@@ -315,9 +314,8 @@ abstract final class AppRouter {
                       builder: (context, state) {
                         final extra = state.extra;
                         return AddEditCheckoutPage(
-                          settlement: extra is CheckoutSettlementEntity
-                              ? extra
-                              : null,
+                          settlement:
+                              extra is CheckoutSettlementEntity ? extra : null,
                         );
                       }),
                   GoRoute(
@@ -343,9 +341,8 @@ abstract final class AppRouter {
                       builder: (context, state) {
                         final extra = state.extra;
                         return CheckoutDetailsPage(
-                          settlement: extra is CheckoutSettlementEntity
-                              ? extra
-                              : null,
+                          settlement:
+                              extra is CheckoutSettlementEntity ? extra : null,
                         );
                       }),
                 ],
@@ -574,6 +571,3 @@ class _RouteErrorPage extends StatelessWidget {
     );
   }
 }
-
-
-

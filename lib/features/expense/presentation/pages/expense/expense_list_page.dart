@@ -64,13 +64,15 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
     }
   }
 
-  Future<void> _openExpensePage(String routeName, {ExpenseEntity? expense}) async {
+  Future<void> _openExpensePage(String routeName,
+      {ExpenseEntity? expense}) async {
     await context.pushNamed(routeName, extra: expense);
     if (mounted) await context.read<ExpenseCubit>().loadExpenses();
   }
 
   @override
-  Widget build(BuildContext context) => BlocListener<ExpenseCubit, ExpenseState>(
+  Widget build(BuildContext context) =>
+      BlocListener<ExpenseCubit, ExpenseState>(
         listener: (context, state) {
           if (state is ExpenseError) {
             ScaffoldMessenger.of(context)
@@ -116,9 +118,10 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                       return BlocBuilder<ExpenseCategoryCubit,
                           ExpenseCategoryState>(
                         builder: (context, categoryState) {
-                          final categories = categoryState is ExpenseCategoryLoaded
-                              ? categoryState.categories
-                              : const <ExpenseCategoryEntity>[];
+                          final categories =
+                              categoryState is ExpenseCategoryLoaded
+                                  ? categoryState.categories
+                                  : const <ExpenseCategoryEntity>[];
                           return RefreshIndicator(
                             onRefresh: () =>
                                 context.read<ExpenseCubit>().loadExpenses(),
@@ -274,9 +277,8 @@ class _ExpenseControls extends StatelessWidget {
             ),
             _DateFilterButton(label: 'Custom Range', onPressed: onCustomRange),
             TextButton(
-              onPressed: () => context
-                  .read<ExpenseCubit>()
-                  .filterExpensesByDateRange(),
+              onPressed: () =>
+                  context.read<ExpenseCubit>().filterExpensesByDateRange(),
               child: const Text('Clear dates'),
             ),
           ],
