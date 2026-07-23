@@ -4,13 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/di/injection.dart';
+import '../../../../../core/pdf/widgets/export_pdf_bottom_sheet.dart';
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../hostel/domain/entities/hostel_entity.dart';
+import '../../../../hostel/presentation/cubit/hostel_cubit.dart';
 import '../../../domain/entities/receipt_entity.dart';
 import '../../../../communication/domain/repositories/communication_repository.dart';
 import '../../cubit/receipt/receipt_cubit.dart';
 import '../../cubit/receipt/receipt_state.dart';
 import '../../cubit/ui/deleting_cubit.dart';
+import '../../services/receipt_pdf_export_service.dart';
 
 class ReceiptDetailsPage extends StatefulWidget {
   final ReceiptEntity? receipt;
@@ -62,6 +66,63 @@ class _ReceiptDetailsPageState extends State<ReceiptDetailsPage> {
     );
   }
 
+  void _showPdfExportSheet(ReceiptEntity receipt) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => ExportPdfBottomSheet(
+        onExportPdf: () {
+          Navigator.pop(sheetContext);
+          _previewPdf(receipt);
+        },
+        onSharePdf: () {
+          Navigator.pop(sheetContext);
+          _sharePdf(receipt);
+        },
+        onSavePdf: () {
+          Navigator.pop(sheetContext);
+          _savePdf(receipt);
+        },
+      ),
+    );
+  }
+
+  Future<void> _previewPdf(ReceiptEntity receipt) => _runPdfExport(
+        (service, hostel) => service.preview(receipt: receipt, hostel: hostel),
+      );
+
+  Future<void> _sharePdf(ReceiptEntity receipt) => _runPdfExport(
+        (service, hostel) => service.share(receipt: receipt, hostel: hostel),
+      );
+
+  Future<void> _savePdf(ReceiptEntity receipt) => _runPdfExport(
+        (service, hostel) async {
+          await service.save(receipt: receipt, hostel: hostel);
+        },
+        successMessage: 'Receipt saved to Hostel Management/Receipts.',
+      );
+
+  Future<void> _runPdfExport(
+    Future<void> Function(
+      ReceiptPdfExportService service,
+      HostelEntity? hostel,
+    ) action, {
+    String? successMessage,
+  }) async {
+    final hostel = context.read<HostelCubit>().state.hostel;
+    try {
+      await action(getIt<ReceiptPdfExportService>(), hostel);
+      if (!mounted || successMessage == null) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to export the receipt.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final receipt = widget.receipt;
@@ -86,6 +147,10 @@ class _ReceiptDetailsPageState extends State<ReceiptDetailsPage> {
             },
             child: Scaffold(
               appBar: AppBar(title: const Text('Receipt Details'), actions: [
+                IconButton(
+                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    tooltip: 'Export PDF',
+                    onPressed: () => _showPdfExportSheet(receipt)),
                 IconButton(
                     icon: const Icon(Icons.share_outlined),
                     tooltip: 'Share Receipt',

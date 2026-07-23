@@ -89,6 +89,8 @@ import '../../features/reports/data/repositories/reports_repository_impl.dart';
 import '../../features/reports/presentation/cubit/profit_loss_cubit.dart';
 import '../../features/reports/presentation/mappers/profit_loss_pdf_data_mapper.dart';
 import '../../features/reports/presentation/services/profit_loss_pdf_export_service.dart';
+import '../../features/rent/presentation/mappers/receipt_pdf_data_mapper.dart';
+import '../../features/rent/presentation/services/receipt_pdf_export_service.dart';
 
 /// Global access point for the service locator.
 /// Feature modules import this to resolve their dependencies.
@@ -341,6 +343,17 @@ Future<void> configureDependencies() async {
       getIt<PdfStorageService>(),
       getIt<PdfShareService>(),
       getIt<ProfitLossPdfDataMapper>(),
+    ),
+  );
+  getIt.registerLazySingleton<ReceiptPdfDataMapper>(
+    () => const ReceiptPdfDataMapper(),
+  );
+  getIt.registerLazySingleton<ReceiptPdfExportService>(
+    () => ReceiptPdfExportService(
+      getIt<PdfService>(),
+      getIt<PdfStorageService>(),
+      getIt<PdfShareService>(),
+      getIt<ReceiptPdfDataMapper>(),
     ),
   );
 }

@@ -120,20 +120,19 @@ flutter:
 # Run: dart run flutter_native_splash:create
 # -----------------------------------------------------------------------
 flutter_native_splash:
-  # Brand background
   color: "#F8FAFC"
 
-  # Android 12+
-  android_12:
-    color: "#F8FAFC"
-    icon_background_color: "#F8FAFC"
+  image: assets/lauch/hostel_manager-removebg-preview.png
 
-  # Platform targets
   android: true
   ios: true
 
-  # Do not force full-screen mode
   fullscreen: false
+
+  android_12:
+    color: "#F8FAFC"
+    image: assets/lauch/hostel_manager-removebg-preview.png
+    icon_background_color: "#F8FAFC"
 
 flutter_launcher_icons:
   android: true
